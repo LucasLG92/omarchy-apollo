@@ -1,0 +1,21 @@
+pkgname=pd-mapper-apollo
+pkgver=0.0.0.r1
+pkgrel=1
+pkgdesc='Qualcomm userspace PD mapper required by Apollo external-modem kernel'
+arch=(aarch64)
+url='https://github.com/linux-msm/pd-mapper'
+license=(BSD-3-Clause)
+depends=(glibc apollo-qcom-core xz)
+makedepends=(gcc make)
+provides=(pd-mapper)
+conflicts=(pd-mapper)
+_commit=5ecd2fe926aca7abfe40724177f63b942cff3947
+source=("pd-mapper-$_commit.tar.gz::https://github.com/linux-msm/pd-mapper/archive/$_commit.tar.gz")
+sha512sums=(d8dda67fac505141fc021e66c563672e76dc8202358a2b493db8c4a6034dac27db1a0dcda04406ef001bb62cfcafe7c8f8343a3846c935525407d53551c9f6c4)
+build() {
+  make -C "pd-mapper-$_commit" -j 4
+}
+package() {
+  make -C "pd-mapper-$_commit" DESTDIR="$pkgdir" prefix=/usr install
+  install -Dm644 "pd-mapper-$_commit/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

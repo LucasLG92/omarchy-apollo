@@ -1,0 +1,17 @@
+[Unit]
+Description=Bring up Apollo SDX55 after its own NV and userspace are ready
+Requires=apollo-efs-extract.service pd-mapper.service pm-service-native.service mdm-helper-native.service tqftpserv-sdx55.service
+After=apollo-efs-extract.service pd-mapper.service pm-service-native.service mdm-helper-native.service tqftpserv-sdx55.service
+Wants=mhi-efs-sync.service
+Before=ModemManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/usr/bin/test -s /usr/lib/firmware/sdx55m/efs1.bin
+ExecStartPre=/usr/bin/test -s /usr/lib/firmware/sdx55m/efs2.bin
+ExecStartPre=/usr/bin/test -s /usr/lib/firmware/sdx55m/efs3.bin
+ExecStart=/usr/bin/modprobe mhi_pci_generic
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,152 @@
+#!/usr/bin/python3
+"""Validate the standard ModemManager GPS API without saving coordinates."""
+from pathlib import Path
+import json, math, re, subprocess, time
+
+out = Path('/run/apollo-audit/desktop-gps')
+out.mkdir(parents=True, exist_ok=True)
+out.chmod(0o700)
+result = {'provider': 'ModemManager', 'coordinates_saved': False,
+          'nmea_saved': False, 'sim_required': False, 'stages': []}
+modem = '0'
+
+def save():
+    (out/'result.json').write_text(json.dumps(result, indent=2)+'\n')
+
+def command(args, timeout=25):
+    if args[0] == 'mmcli' and '-m' in args:
+        args = list(args)
+        args[args.index('-m')+1] = modem
+    try:
+        p = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        return p.returncode, p.stdout, p.stderr
+    except subprocess.TimeoutExpired:
+        return 124, '', 'Command timed out'
+
+def select_modem():
+    global modem
+    code, text, _ = command(['mmcli','-L'],12)
+    match = re.search(r'/org/freedesktop/ModemManager1/Modem/\d+', text)
+    if not code and match:
+        modem = match[0]
+        return True
+    return False
+
+def flatten(value, prefix=''):
+    if isinstance(value, dict):
+        items = {}
+        for key, sub in value.items():
+            items.update(flatten(sub, prefix+'.'+key if prefix else key))
+        return items
+    return {prefix: value}
+
+def number(value):
+    try:
+        n = float(value)
+        return n if math.isfinite(n) else None
+    except (ValueError, TypeError):
+        return None
+
+def sample():
+    code, text, _ = command(['mmcli','-m','0','--location-get','--output-json'], 12)
+    if code: return {'api_ok': False, 'exit': code}
+    try:
+        values = flatten(json.loads(text))
+    except ValueError:
+        return {'api_ok': False, 'invalid_json': True}
+    lat = number(values.get('modem.location.gps.latitude'))
+    lon = number(values.get('modem.location.gps.longitude'))
+    valid = lat is not None and lon is not None and -90 <= lat <= 90 and -180 <= lon <= 180
+    nmea = values.get('modem.location.gps.nmea', [])
+    if isinstance(nmea, str): nmea = nmea.splitlines()
+    max_used, quality, rf_signals, max_cno, gsa_dimension = 0, 0, 0, 0, 0
+    sentence_types=[]
+    for line in nmea or []:
+        fields = str(line).split(',')
+        sentence_types.append(fields[0].lstrip('$'))
+        if fields[0].endswith('GGA') and len(fields) > 7:
+            try:
+                quality = max(quality, int(fields[6] or 0))
+                max_used = max(max_used, int(fields[7] or 0))
+            except ValueError: pass
+        if fields[0].endswith('GSV'):
+            for i in range(7,len(fields),4):
+                cno=number(fields[i].split('*')[0])
+                if cno is not None and cno>0:
+                    rf_signals+=1; max_cno=max(max_cno,cno)
+        if fields[0].endswith('GSA') and len(fields)>2:
+            try: gsa_dimension=max(gsa_dimension,int(fields[2] or 0))
+            except ValueError: pass
+    return {'api_ok': True, 'coordinates_valid': valid, 'nmea_count': len(nmea or []),
+            'gga_quality': quality, 'satellites_used': max_used,
+            'nmea_sentence_types':sentence_types,'gsv_signals_with_cno':rf_signals,
+            'gsv_max_cno':max_cno,'gsa_fix_dimension':gsa_dimension,
+            'real_gnss_fix': valid and quality > 0 and max_used >= 3}
+
+def enable_observe(label, seconds):
+    stage = {'label': label, 'samples': []}
+    result['stages'].append(stage)
+    code, _, error = command(['mmcli','-m','0','--location-enable-gps-nmea','--location-enable-gps-raw'], 35)
+    stage['enable_exit'] = code
+    if code:
+        stage['enable_error'] = error.strip()[:300]
+        save()
+        return False
+    code, _, _ = command(['mmcli','-m','0','--location-set-gps-refresh-rate=1'])
+    stage['refresh_rate_exit'] = code
+    deadline = time.monotonic()+seconds
+    while time.monotonic() < deadline:
+        stage['samples'].append(sample())
+        save()
+        if sum(bool(x.get('real_gnss_fix')) for x in stage['samples']) >= 3:
+            break
+        time.sleep(5)
+    stage['fix_samples'] = sum(bool(x.get('real_gnss_fix')) for x in stage['samples'])
+    stage['passed'] = stage['fix_samples'] >= 3
+    save()
+    return stage['passed']
+
+try:
+    if not select_modem(): raise RuntimeError('No modem object available')
+    code, text, _ = command(['mmcli','-m','0','--location-status','--output-json'])
+    result['location_status_exit'] = code
+    if code: raise RuntimeError('Standard location interface is unavailable')
+    # Location status contains capabilities and policy, never position values.
+    (out/'capabilities.json').write_text(text)
+    if 'gps-nmea' not in text:
+        code, text, error = command(['qmicli','-d','qrtr://3','--loc-get-nmea-types'],18)
+        result['independent_loc_get_nmea_exit'] = code
+        (out/'loc-nmea-configuration.txt').write_text(text+error)
+        # Test whether the modem exported LOC only after MM captured its
+        # initial service list. Reinitialization remains confined to this boot.
+        Path('/run/systemd/system/ModemManager.service.d/zzz-apollo-init-observation.conf').unlink(missing_ok=True)
+        command(['systemctl','daemon-reload'])
+        code, _, _ = command(['systemctl','restart','ModemManager.service'],35)
+        result['restart_after_loc_ready_exit'] = code
+        for _ in range(50):
+            if select_modem():
+                code, text, _ = command(['mmcli','-m','0','--location-status','--output-json'],10)
+                if not code: break
+            time.sleep(1)
+        command(['mmcli','--set-logging=INFO'])
+        (out/'capabilities-after-loc-ready.json').write_text(text)
+    passed = enable_observe('unmodified-standard-api', 45)
+    if not passed:
+        command(['mmcli','-m','0','--location-disable-gps-nmea','--location-disable-gps-raw'])
+        result['runtime_preparation'] = []
+        for option in ('--loc-set-engine-lock=none', '--loc-inject-time', '--loc-set-operation-mode=standalone'):
+            code, _, error = command(['qmicli','-d','qrtr://3',option], 18)
+            result['runtime_preparation'].append({'operation': option, 'exit': code,
+                                                  'error': error.strip()[:240] if code else None})
+        save()
+        passed = enable_observe('engine-unlocked-current-utc', 300)
+    result['passed'] = passed
+except Exception as error:
+    result['passed'] = False
+    result['error'] = str(error)
+finally:
+    code, _, _ = command(['mmcli','-m','0','--location-disable-gps-nmea','--location-disable-gps-raw'])
+    result['cleanup_disable_exit'] = code
+    save()
+print('ModemManager GPS verified' if result.get('passed') else 'ModemManager GPS needs further work')
+raise SystemExit(0 if result.get('passed') else 1)

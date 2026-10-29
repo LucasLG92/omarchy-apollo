@@ -1,0 +1,65 @@
+#!/bin/bash
+set -uo pipefail
+OUT=${APOLLO_FPC_AUDIT_OUT:-/run/apollo-audit/fingerprint}
+mkdir -p "$OUT" /run/apollo-qsee-state
+chmod 700 "$OUT" /run/apollo-qsee-state
+run() {
+  local name=$1; shift
+  local limit=25
+  if [ "$name" = finger-presence ]; then
+    local seconds=${APOLLO_FPC_PRESENCE_SECONDS:-100}
+    [[ $seconds =~ ^[0-9]+$ && $seconds -ge 30 && $seconds -le 600 ]] || return 2
+    limit=$((seconds + 20))
+  fi
+  timeout -k 3 "$limit" "$@" > "$OUT/$name.txt" 2>&1
+  local code=$?
+  echo "$name $code" | tee -a "$OUT/exit-status.txt"
+  return "$code"
+}
+cleanup() {
+  systemctl stop apollo-fpc-loader-test.service apollo-qsee-test.service
+  if [ -w /sys/devices/platform/apollo-fpc-test/enable ]; then
+    echo 0 > /sys/devices/platform/apollo-fpc-test/enable
+    cat /sys/devices/platform/apollo-fpc-test/enable > "$OUT/power-after.txt"
+  fi
+  # Log only the count; never include secure state contents in reports.
+  find /run/apollo-qsee-state -type f | wc -l > "$OUT/state-file-count.txt"
+  journalctl -b -u apollo-qsee-test -u apollo-fpc-loader-test --no-pager > "$OUT/service-journal.txt"
+  dmesg | grep -i -e qsee -e tee -e scm > "$OUT/kernel.txt"
+}
+trap cleanup EXIT
+run module modprobe qseecomtee || exit 1
+echo 'file drivers/firmware/qcom/qcom_scm.c +p' > /sys/kernel/debug/dynamic_debug/control
+echo 'file drivers/tee/qseecom/core.c +p' > /sys/kernel/debug/dynamic_debug/control
+chmod 600 /dev/tee[0-9]* /dev/teepriv[0-9]*
+run devices bash -c 'ls -l /dev/tee*; grep -i qsee /proc/modules; cat /sys/module/firmware_class/parameters/path'
+# Firmware was read from this phone's signed, read-only firmware partition.
+# Firmware stays local to this device; no Android data is mounted.
+install -m644 /tmp/apollo-fpc-firmware/fpcapo.* /usr/lib/firmware/
+if [ "${APOLLO_FPC_SKIP_GPIO:-0}" != 1 ] && [ -f /tmp/apollo-fpc-test.dtbo ]; then
+  if [ -d /proc/device-tree/apollo-fpc-test ]; then
+    run gpio-module modprobe apollo-fpc-gpio || exit 1
+  else
+    test -f /tmp/apollo-fpc-gpio.ko || exit 1
+    run gpio-module insmod /tmp/apollo-fpc-gpio.ko || exit 1
+  fi
+  modprobe overlay_loader || exit 1
+  install -Dm644 /tmp/apollo-fpc-test.dtbo /usr/lib/firmware/apollo/fpc-test.dtbo
+  if [ ! -w /sys/devices/platform/apollo-fpc-test/enable ]; then
+    echo apollo/fpc-test.dtbo > /sys/kernel/debug/of_overlay_loader/apply || exit 1
+  fi
+  test -w /sys/devices/platform/apollo-fpc-test/enable || exit 1
+  echo 1 > /sys/devices/platform/apollo-fpc-test/enable || exit 1
+  run gpio-state bash -c 'cat /sys/devices/platform/apollo-fpc-test/{enable,irq}; grep -A8 -B2 vreg_l8c /sys/kernel/debug/regulator/regulator_summary'
+fi
+run supplicant systemd-run --unit=apollo-qsee-test --collect --property=Type=notify --property=TimeoutStartSec=15 --property=ProtectSystem=strict --property=ProtectHome=yes --property=ReadWritePaths=/run/apollo-qsee-state /usr/local/sbin/qsee-supplicant --state-dir /run/apollo-qsee-state || exit 1
+run loader systemd-run --unit=apollo-fpc-loader-test --collect --property=Type=notify --property=TimeoutStartSec=20 /usr/local/sbin/qsee-app-loader fpcapo || exit 1
+if run build-info /usr/local/sbin/apollo-fpc-info; then
+  run sensor-info /usr/local/sbin/apollo-fpc-info --sensor-info
+  if [ "${APOLLO_FPC_SKIP_GPIO:-0}" != 1 ] && [ -w /sys/devices/platform/apollo-fpc-test/enable ]; then
+    run sensor-initialization /usr/local/sbin/apollo-fpc-info --sensor-init-info
+    if [ "${APOLLO_FPC_PRESENCE:-0}" = 1 ]; then
+      run finger-presence /usr/local/sbin/apollo-fpc-info --finger-presence
+    fi
+  fi
+fi

@@ -1,0 +1,101 @@
+#!/usr/bin/python3
+"""Real Wi-Fi Internet test. Passwords and SSID are never logged here."""
+from pathlib import Path
+import configparser,json,secrets,socket,struct,subprocess,time
+out=Path('/run/apollo-audit/network'); out.mkdir(parents=True,exist_ok=True); out.chmod(0o700)
+def run(args,timeout=60):
+    p=subprocess.run(args,capture_output=True,text=True,timeout=timeout)
+    if p.returncode: raise RuntimeError(args[0]+' failed: '+p.stderr.strip()[:180])
+    return p.stdout
+def save(name,value): (out/name).write_text(json.dumps(value,indent=2)+'\n')
+profile=Path('/run/NetworkManager/system-connections/apollo-wifi.nmconnection')
+cfg=configparser.ConfigParser(interpolation=None); cfg.read(profile)
+uuid=cfg['connection']['uuid']
+devices=run(['nmcli','-t','-f','DEVICE,TYPE','device']).splitlines()
+iface=next(x.rsplit(':',1)[0] for x in devices if x.endswith(':wifi'))
+assert '/' not in iface and '\x00' not in iface
+result={'interface':iface,'transport':'Wi-Fi','ssid_logged':False,'credentials_logged':False,'tests':[]}
+def name_end(data,offset):
+    for _ in range(128):
+        length=data[offset]; offset+=1
+        if length==0: return offset
+        if length&0xc0==0xc0: return offset+1
+        if length>63: raise ValueError('Invalid DNS label')
+        offset+=length
+    raise ValueError('DNS name exceeds limit')
+def resolve(host):
+    servers=run(['nmcli','-g','IP4.DNS','device','show',iface]).splitlines()
+    query_id=secrets.randbelow(65536)
+    question=b''.join(bytes([len(x)])+x.encode('ascii') for x in host.split('.'))+b'\0'+struct.pack('!HH',1,1)
+    query=struct.pack('!HHHHHH',query_id,0x100,1,0,0,0)+question
+    errors=[]
+    for server in servers[:3]:
+        try:
+            with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as s:
+                s.setsockopt(socket.SOL_SOCKET,socket.SO_BINDTODEVICE,iface.encode()+b'\0')
+                s.settimeout(5); s.sendto(query,(server,53)); response,_=s.recvfrom(65535)
+            ident,flags,questions,answers,_,_=struct.unpack_from('!HHHHHH',response)
+            assert ident==query_id and flags&0x8000 and flags&15==0
+            offset=12
+            for _ in range(questions): offset=name_end(response,offset)+4
+            addresses=[]
+            for _ in range(answers):
+                offset=name_end(response,offset)
+                kind,cls,_,length=struct.unpack_from('!HHIH',response,offset); offset+=10
+                if kind==1 and cls==1 and length==4: addresses.append(socket.inet_ntoa(response[offset:offset+4]))
+                offset+=length
+            if addresses: return addresses[0]
+        except Exception as e: errors.append(type(e).__name__)
+    raise RuntimeError('DNS over Wi-Fi did not return IPv4: '+','.join(errors))
+def counters():
+    return {x:int((Path('/sys/class/net')/iface/'statistics'/x).read_text()) for x in ('rx_bytes','tx_bytes')}
+def https(host,label):
+    address=resolve(host)
+    route=json.loads(run(['ip','-j','route','get',address]))[0]
+    assert route['dev']==iface,'Internet route does not use Wi-Fi'
+    before=counters()
+    response=run(['curl','--noproxy','*','--interface',iface,'--resolve',host+':443:'+address,
+                  '--proto','=https','--fail','--connect-timeout','12','--max-time','35',
+                  '--output','/dev/null','--write-out','%{json}','https://'+host+'/'],45)
+    metadata=json.loads(response); after=counters()
+    check={'label':label,'hostname':host,'dns_bound_to_wifi':True,'route_device':route['dev'],
+           'curl_bound_to_wifi':True,'http_status':metadata['http_code'],
+           'tls_verification_result':metadata['ssl_verify_result'],'downloaded_bytes':int(metadata['size_download']),
+           'elapsed_seconds':metadata['time_total'],
+           'rx_bytes_delta':after['rx_bytes']-before['rx_bytes'],'tx_bytes_delta':after['tx_bytes']-before['tx_bytes']}
+    check['passed']=check['http_status']==200 and check['tls_verification_result']==0 and check['downloaded_bytes']>0 and check['rx_bytes_delta']>0 and check['tx_bytes_delta']>0
+    result['tests'].append(check); save('result.json',result)
+    assert check['passed'],'HTTPS test failed'
+try:
+    run(['nmcli','radio','wifi','on'])
+    run(['nmcli','connection','load',str(profile)])
+    run(['nmcli','--wait','45','connection','up','uuid',uuid,'ifname',iface],55)
+    state=run(['nmcli','-g','GENERAL.STATE','device','show',iface]).strip()
+    assert state.startswith('100'),'Wi-Fi did not reach connected state'
+    result['connection_state']='connected'
+    # TLS needs a trustworthy clock. This image also tests a cold RTC without
+    # the host setting UTC; let the phone obtain its time through its own Wi-Fi.
+    for _ in range(45):
+        if run(['timedatectl','show','-p','NTPSynchronized','--value']).strip()=='yes':
+            result['phone_ntp_synchronized']=True
+            break
+        time.sleep(1)
+    else:
+        result['phone_ntp_synchronized']=False
+        raise RuntimeError('Phone has not synchronized UTC before certificate verification')
+    # example.com currently resets TLS on the host as well. Use two independent
+    # reachable sites, and retain the earlier failed audit as a control.
+    https('www.kernel.org','initial-kernel')
+    https('archlinux.org','initial-arch')
+    run(['nmcli','--wait','20','connection','down','uuid',uuid],30)
+    result['disconnect_command_completed']=True
+    run(['nmcli','--wait','45','connection','up','uuid',uuid,'ifname',iface],55)
+    https('www.kernel.org','after-reconnect')
+    result['reconnect_verified']=True
+    result['passed']=all(x['passed'] for x in result['tests'])
+    save('result.json',result)
+    print('Wi-Fi Internet verified: DNS, validated HTTPS, traffic on Wi-Fi and reconnect')
+except Exception as e:
+    result['passed']=False; result['error']=str(e); save('result.json',result)
+    print('Wi-Fi audit failed:',type(e).__name__)
+    raise SystemExit(1)

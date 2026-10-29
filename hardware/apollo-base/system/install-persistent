@@ -1,0 +1,74 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-2.0-only
+"""On-phone installer. Default is read-only preflight. Erase requires explicit token.
+
+Run from the tested RAM system, never from the persistent installation itself.
+Host must not reboot the device while a detached installation is running.
+"""
+from pathlib import Path
+import argparse,hashlib,json,os,subprocess,time
+if not __debug__: raise SystemExit('Python optimization disables safety assertions; refusing to run')
+p=argparse.ArgumentParser()
+p.add_argument('--base',type=Path,required=True)
+p.add_argument('--boot',type=Path,required=True)
+p.add_argument('--manifest',type=Path,required=True)
+p.add_argument('--erase-android-userdata',action='store_true')
+p.add_argument('--accept-data-loss',default='')
+a=p.parse_args()
+assert os.geteuid()==0,'Root required'
+assert not Path('/run/apollo-persistent').exists(),'Refusing to erase the running root'
+assert Path('/sys/firmware/devicetree/base/model').read_bytes().rstrip(b'\0')==b'Xiaomi Mi 10T Pro','Exact tested model required'
+manifest=json.loads(a.manifest.read_text())
+for name,file in [('base',a.base),('boot',a.boot)]:
+    with file.open('rb') as f: digest=hashlib.file_digest(f,'sha256').hexdigest()
+    assert digest==manifest[name]['sha256'] and file.stat().st_size==manifest[name]['size'],name+' mismatch'
+def run(*args): return subprocess.check_output(args,text=True).strip()
+def partition(name):
+    matches=[x.parent.name for x in Path('/sys/class/block').glob('*/uevent') if f'PARTNAME={name}' in x.read_text().splitlines()]
+    assert len(matches)==1,'Partition must be unique: '+name
+    return Path('/dev')/matches[0]
+target=partition('userdata'); boot=partition('boot'); dtbo=partition('dtbo')
+target_number=target.stat().st_rdev
+mounts=json.loads(run('findmnt','--json','--output','SOURCE,TARGET,MAJ:MIN'))
+def check_mounts(nodes):
+    for node in nodes:
+        assert node.get('maj:min')!=f'{os.major(target_number)}:{os.minor(target_number)}','userdata already mounted'
+        check_mounts(node.get('children',[]))
+check_mounts(mounts['filesystems'])
+assert not list((Path('/sys/class/block')/target.name/'holders').iterdir()),'userdata has active holders'
+size=int(run('blockdev','--getsize64',str(target)))
+assert size==manifest['userdata_size'],'Unexpected userdata geometry'
+assert int(run('blockdev','--getsize64',str(boot)))>a.boot.stat().st_size
+assert size>a.base.stat().st_size+8*1024**3,'Insufficient space'
+print(json.dumps({'preflight':'passed','format_target':'userdata','userdata_bytes':size,'writes_requested':a.erase_android_userdata}),flush=True)
+if not a.erase_android_userdata: raise SystemExit(0)
+assert a.accept_data_loss=='ERASE-ANDROID-USERDATA-AND-INSTALL-APOLLO','Explicit informed data-loss token required'
+assert Path('/run/apollo-install-authorized').is_file(),'Local authorization marker absent'
+stage=Path('/run/apollo-install'); stage.mkdir(exist_ok=True)
+assert not (stage/'started').exists(),'Do not restart a partial transaction blindly'
+(stage/'started').write_text(str(time.time()))
+subprocess.run(['mkfs.ext4','-F','-L','apollo-linux',str(target)],check=True)
+root=stage/'storage'; root.mkdir(exist_ok=True)
+subprocess.run(['mount','-t','ext4',str(target),str(root)],check=True)
+try:
+    import shutil
+    (root/'base').mkdir(); (root/'state/upper').mkdir(parents=True); (root/'state/work').mkdir()
+    shutil.copyfile(a.base,root/'base/arch-apollo.sqfs.part')
+    with (root/'base/arch-apollo.sqfs.part').open('rb') as f: assert hashlib.file_digest(f,'sha256').hexdigest()==manifest['base']['sha256']
+    (root/'base/arch-apollo.sqfs.part').rename(root/'base/arch-apollo.sqfs')
+    (root/'.apollo-storage-v1').write_text('apollo-persistent-v1\n')
+    (root/'install-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+    os.sync()
+finally: subprocess.run(['umount',str(root)],check=True)
+# The RAM kernel is already mainline. Commit boot only after verified local base.
+subprocess.run(['dd','if='+str(a.boot),'of='+str(boot),'bs=4M','conv=fsync'],check=True)
+with boot.open('rb') as f: assert hashlib.sha256(f.read(a.boot.stat().st_size)).hexdigest()==manifest['boot']['sha256']
+# Empty vendor DTBO is required by the tested mainline DTB. Boot/recovery backups
+# remain private on the host. No GPT, firmware, persist, EFS or metadata writes.
+with dtbo.open('wb',buffering=0) as f:
+    remaining=int(run('blockdev','--getsize64',str(dtbo)))
+    while remaining:
+        data=b'\0'*min(1024*1024,remaining); f.write(data); remaining-=len(data)
+    os.fsync(f.fileno())
+os.sync(); (stage/'complete').write_text('verified\n')
+print('INSTALL-COMPLETE: base and boot verified; ready for a controlled reboot',flush=True)

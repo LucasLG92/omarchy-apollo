@@ -1,0 +1,31 @@
+From: Apollo port contributors
+Subject: [PATCH] libipa: register the Apollo Samsung linear analogue gain models
+
+The device's original sensor libraries encode analogue gain as unsigned Q5:
+gain_code = trunc(real_gain * 32), real_gain = gain_code / 32.
+Register helpers so the software ISP uses physical gain rather than treating
+the V4L2 register value as a multiplier. No unmeasured black level is supplied.
+
+--- a/src/ipa/libipa/camera_sensor_helper.cpp
++++ b/src/ipa/libipa/camera_sensor_helper.cpp
+@@ -930,5 +930,20 @@
+ REGISTER_CAMERA_SENSOR_HELPER("ov13b10", CameraSensorHelperOv13b10)
+ 
++class CameraSensorHelperApolloSamsung : public CameraSensorHelper
++{
++public:
++	CameraSensorHelperApolloSamsung()
++	{
++		gain_ = AnalogueGainLinear{ 1, 0, 0, 32 };
++	}
++};
++using CameraSensorHelperS5khmx = CameraSensorHelperApolloSamsung;
++using CameraSensorHelperS5k3t2 = CameraSensorHelperApolloSamsung;
++using CameraSensorHelperS5k5e9 = CameraSensorHelperApolloSamsung;
++REGISTER_CAMERA_SENSOR_HELPER("s5khmx", CameraSensorHelperS5khmx)
++REGISTER_CAMERA_SENSOR_HELPER("s5k3t2", CameraSensorHelperS5k3t2)
++REGISTER_CAMERA_SENSOR_HELPER("s5k5e9", CameraSensorHelperS5k5e9)
++
+ class CameraSensorHelperVd55g1 : public CameraSensorHelper
+ {
+ public:

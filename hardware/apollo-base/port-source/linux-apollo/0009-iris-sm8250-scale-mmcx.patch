@@ -1,0 +1,18 @@
+From: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Subject: [PATCH] media: iris: scale MMCX power domain on SM8250
+
+Source: https://lists.openwall.net/linux-kernel/2026/02/01/170
+Backport note: retain the SM8250 domain-list hunk. The legacy-DT fallback
+is unnecessary here: patches 0007 and 0008 update our bundled Apollo DTB.
+
+--- a/drivers/media/platform/qcom/iris/iris_platform_gen1.c
++++ b/drivers/media/platform/qcom/iris/iris_platform_gen1.c
+@@ -281,7 +281,7 @@
+ 
+ static const char * const sm8250_pmdomain_table[] = { "venus", "vcodec0" };
+ 
+-static const char * const sm8250_opp_pd_table[] = { "mx" };
++static const char * const sm8250_opp_pd_table[] = { "mx", "mmcx" };
+ 
+ static const struct platform_clk_data sm8250_clk_table[] = {
+ 	{IRIS_AXI_CLK,  "iface"        },

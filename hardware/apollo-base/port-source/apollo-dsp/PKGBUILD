@@ -1,0 +1,56 @@
+pkgname=apollo-dsp
+pkgver=0.4.0
+pkgrel=1
+pkgdesc='Apollo FastRPC daemon, sensor registry and DSP configuration'
+arch=(aarch64)
+url='https://github.com/royka1/Xiaomi-Apollo-pmOS-packages'
+license=(GPL-2.0-or-later LicenseRef-proprietary)
+depends=(glibc)
+makedepends=(meson ninja gcc)
+options=(!strip)
+source=(https://github.com/linux-msm/hexagonrpc/archive/93f3467dcfe1601bb70547611866a069ae914de5.tar.gz
+        apollo-sensor-fixes.patch apollo-sensors-1.0.tar.gz
+        apollo-fastrpc.conf 10-apollo-fastrpc.rules
+        0001-tests-pass-apollo-registry-path.patch)
+sha512sums=(
+  0ebbd854c34c7e8a57b40432f6293b52a1dcd459096644b7d8d2fc132a23818d121e4d39891e32c392819dbe9dd0696f291769a4c83d04c2f732edeed1fad896
+  8905444355573f66fb907d298be7fa6f36b318bf6e28c239b23ef5456165980c6327f661d187964ce62bd040254464898c61662db92b2efb7e12d2102d47c30d
+  b6c0b2009e008db90f32bd6ca1e9df0f3bd8737f98c89a8090d88a89ab6950d2e112a1313f274b3363b533e59ecba0edd1462f06e1469d8856dfc2dba94c6343
+  b6a400edaebb128ef1d4654f6c3afab5b17fe59a3c0a1f20456daa00bf64fc20cf612a3f2d72eea5cc4fa2130e3bced378897cf83ac144d73d3f601c3333dc13
+  a7dd6a1e80d9f327691f577a6e70c8172701dff69b6af46aee54aaa809ee8ec7d95cd3294031c313c7640519c112bdd2bcabe968e6a994edd4e12787d41cc6dc
+  6c9f1e0081e20f6b83dc3513b42d29e8d1c006fac204f2a4a3e794afca27a9da463692f565a0833d3047d995df4d4f1bd0ebb17620a5a9bb1906e9048dabdfa8)
+
+prepare() {
+  cd hexagonrpc-93f3467dcfe1601bb70547611866a069ae914de5
+  patch -Np1 --fuzz=0 < "$srcdir/apollo-sensor-fixes.patch"
+  patch -Np1 --fuzz=0 < "$srcdir/0001-tests-pass-apollo-registry-path.patch"
+}
+
+build() {
+  meson setup hexagonrpc-93f3467dcfe1601bb70547611866a069ae914de5 build \
+    --prefix=/usr --libdir=lib --libexecdir=lib --buildtype=release
+  meson compile -C build -j 4
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build --no-rebuild
+  install -Dm644 apollo-fastrpc.conf "$pkgdir/usr/lib/sysusers.d/apollo-fastrpc.conf"
+  install -Dm644 10-apollo-fastrpc.rules "$pkgdir/usr/lib/udev/rules.d/10-apollo-fastrpc.rules"
+  install -d "$pkgdir/usr/share/qcom"
+  cp -a sm8250 "$pkgdir/usr/share/qcom/"
+  # Keep mutable sensor state away from the firmware and Android persist.
+  install -d "$pkgdir/usr/lib/systemd/system/hexagonrpcd-sdsp.service.d"
+  cat > "$pkgdir/usr/lib/systemd/system/hexagonrpcd-sdsp.service.d/10-apollo.conf" <<'EOF'
+[Service]
+StateDirectory=apollo-dsp
+ExecStartPre=/usr/bin/cp -rn /usr/share/qcom/sm8250/Xiaomi/apollo/. /var/lib/apollo-dsp/
+ExecStart=
+ExecStart=/usr/bin/hexagonrpcd -f /dev/fastrpc-sdsp -d sdsp -s -R /var/lib/apollo-dsp
+EOF
+  install -Dm644 hexagonrpc-93f3467dcfe1601bb70547611866a069ae914de5/COPYING \
+    "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}

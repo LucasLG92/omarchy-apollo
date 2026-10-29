@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euo pipefail
+for image in /usr/lib/firmware/sdx55m/efs{1,2,3}.bin; do
+    test "$(stat -c %s "$image")" = 8388608
+done
+ready=0
+for attempt in $(seq 1 60); do
+    for device in /sys/bus/pci/devices/*; do
+        [ -f "$device/vendor" ] && [ -f "$device/device" ] || continue
+        [ "$(cat "$device/vendor")" = 0x17cb ] || continue
+        [ "$(cat "$device/device")" = 0x0306 ] || continue
+        if [ "$(basename "$(readlink "$device/driver")")" = mhi-pci-generic ]; then
+            ready=1
+            break
+        fi
+    done
+    [ "$ready" = 1 ] && break
+    sleep 0.25
+done
+[ "$ready" = 1 ] || { echo 'SDX55 PCIe driver did not bind' >&2; exit 1; }
+for remote in /sys/class/remoteproc/remoteproc*; do
+    [ "$(cat "$remote/name")" = esoc0 ] || continue
+    state=$(cat "$remote/state")
+    case "$state" in
+        running) echo 'SDX55 processor is already running'; exit 0;;
+        offline) echo 'Starting SDX55 through its ESOC remote processor'; echo start > "$remote/state"; exit 0;;
+        *) echo "SDX55 processor has unexpected state: $state" >&2; exit 1;;
+    esac
+done
+echo 'SDX55 ESOC remote processor was not found' >&2
+exit 1

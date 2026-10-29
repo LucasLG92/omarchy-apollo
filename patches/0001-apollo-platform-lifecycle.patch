@@ -1,0 +1,83 @@
+--- a/bin/omarchy-hw-platform
++++ b/bin/omarchy-hw-platform
+@@ -1,6 +1,6 @@
+ #!/bin/bash -p
+ 
+-# omarchy:summary=Print the hardware platform: x86, aarch64, aarch64-apple, aarch64-qualcomm, aarch64-n1x or aarch64-gb10.
++# omarchy:summary=Print the hardware platform: x86, aarch64, aarch64-apple, aarch64-qualcomm, aarch64-apollo, aarch64-n1x or aarch64-gb10.
+ 
+ # Platform names are the CPU architecture, then the hardware family when it
+ # needs handling of its own: x86, aarch64 (every ARM machine without one),
+@@ -147,7 +147,7 @@
+     generic) platform=x86 ;;
+     qualcomm) platform=aarch64-qualcomm ;;
+   esac
+-  if [[ ! $platform =~ ^(x86|aarch64|aarch64-apple|aarch64-qualcomm|aarch64-n1x|aarch64-gb10)$ ]]; then
++  if [[ ! $platform =~ ^(x86|aarch64|aarch64-apple|aarch64-qualcomm|aarch64-apollo|aarch64-n1x|aarch64-gb10)$ ]]; then
+     echo "Error: the image manifest $manifest names no known platform: ${platform:-none}" >&2
+     return 1
+   fi
+@@ -168,6 +168,7 @@
+ 
+ vendor=""
+ vendor_source=""
++apollo=0
+ for source in "${sources[@]}"; do
+   [[ -r $source ]] || continue
+ 
+@@ -175,6 +176,7 @@
+   qcom=0
+   mapfile -d '' -t tokens <"$source"
+   for token in "${tokens[@]}"; do
++    [[ $token == "xiaomi,apollo" ]] && apollo=1
+     [[ $token == "apple,"* ]] && apple=1
+     [[ $token == "qcom,"* ]] && qcom=1
+   done
+@@ -195,6 +197,13 @@
+   vendor=$found
+   vendor_source=$source
+ done
++
++# Apollo phones use Android boot images, not the Snapdragon laptop layout.
++if (( apollo )); then
++  [[ $machine == "aarch64" && $vendor == "qcom" ]] || contradiction "Apollo must be Qualcomm aarch64 hardware"
++  echo aarch64-apollo
++  exit 0
++fi
+ 
+ # An NVIDIA N1x: ACPI NVDA0200, or PCI 10de:2e06.
+ n1x_source=""
+--- /dev/null
++++ b/bin/omarchy-hw-aarch64-apollo
+@@ -0,0 +1,4 @@
++#!/bin/bash
++# omarchy:summary=Check whether this is a Xiaomi Apollo phone
++# omarchy:hidden=true
++[[ $(omarchy-hw-platform) == "aarch64-apollo" ]]
+--- a/bin/omarchy-lifecycle-dispatch
++++ b/bin/omarchy-lifecycle-dispatch
+@@ -104,6 +104,11 @@
+ # test/shell.d/lifecycle-dispatch-test.sh and the Apple column and registration
+ # table in docs/lifecycle-dispatch.md.
+ case $platform:$operation in
++  aarch64-apollo:*)
++    implementation=/usr/lib/omarchy/apollo
++    package=omarchy-apollo
++    required=("${operations[@]}")
++    ;;
+   aarch64-apple:setup-system | aarch64-apple:setup-user | aarch64-apple:post-install | aarch64-apple:pre-remove | \
+     aarch64-apple:enable-fingerprint | aarch64-apple:disable-fingerprint)
+     implementation=/usr/lib/omarchy/mac
+--- a/bin/omarchy-provision-first-run
++++ b/bin/omarchy-provision-first-run
+@@ -5,6 +5,10 @@
+ # omarchy:hidden=true
+ 
+ set -e
++
++if omarchy-hw-aarch64-apollo; then
++  exec omarchy-apollo-first-run "$@"
++fi
+ 
+ usage() {
+   cat <<USAGE

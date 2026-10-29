@@ -1,0 +1,28 @@
+Subject: [PATCH] media: i2c: ak7375: preserve runtime idle across system sleep
+
+System resume calls the runtime resume implementation directly, enabling
+supplies for an idle lens while runtime PM still reports it suspended.
+Apollo kernel19 observed both rail use counts remain1 for20s after s2idle;
+normal focus controls before sleep passed300 cycles across three boots.
+
+Use paired runtime-PM system-sleep helpers. Already-suspended idle devices
+remain idle; in-use devices suspend and restore their state through the
+existing callbacks, which retain the AK7377 post-mode settling interval.
+Do not change regulator routing, voltages, focus values or error handling.
+
+Reference: https://kernel.org/doc/html/next/power/runtime_pm.html
+Native validation on Apollo is required; this does not prove optical focus.
+
+---
+
+--- a/drivers/media/i2c/ak7375.c
++++ b/drivers/media/i2c/ak7375.c
+@@ -367,7 +367,7 @@
+ MODULE_DEVICE_TABLE(of, ak7375_of_table);
+ 
+ static const struct dev_pm_ops ak7375_pm_ops = {
+-	SET_SYSTEM_SLEEP_PM_OPS(ak7375_vcm_suspend, ak7375_vcm_resume)
++	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
+ 	SET_RUNTIME_PM_OPS(ak7375_vcm_suspend, ak7375_vcm_resume, NULL)
+ };
+ 

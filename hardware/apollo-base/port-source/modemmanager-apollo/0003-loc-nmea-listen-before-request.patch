@@ -1,0 +1,168 @@
+--- a/src/mm-shared-qmi.c
++++ b/src/mm-shared-qmi.c
+@@ -5233,6 +5233,9 @@
+     QmiClientLoc *client;
+     guint         timeout_id;
+     gulong        indication_id;
++    gboolean      response_received;
++    QmiIndicationLocGetNmeaTypesOutput *early_get;
++    QmiIndicationLocSetNmeaTypesOutput *early_set;
+ } SetupRequiredNmeaTracesContext;
+ 
+ static void
+@@ -5252,6 +5255,8 @@
+ setup_required_nmea_traces_context_free (SetupRequiredNmeaTracesContext *ctx)
+ {
+     setup_required_nmea_traces_cleanup_action (ctx);
++    g_clear_pointer (&ctx->early_get, qmi_indication_loc_get_nmea_types_output_unref);
++    g_clear_pointer (&ctx->early_set, qmi_indication_loc_set_nmea_types_output_unref);
+     g_clear_object (&ctx->client);
+     g_slice_free (SetupRequiredNmeaTracesContext, ctx);
+ }
+@@ -5272,7 +5277,6 @@
+     ctx = g_task_get_task_data (task);
+     g_assert (ctx->timeout_id);
+     setup_required_nmea_traces_cleanup_action (ctx);
+-
+     g_task_return_new_error (task, MM_CORE_ERROR, MM_CORE_ERROR_ABORTED,
+                              "Operation timed out");
+     g_object_unref (task);
+@@ -5289,9 +5293,15 @@
+     GError                         *error = NULL;
+ 
+     ctx = g_task_get_task_data (task);
++    /* The indication can be dispatched before the async response callback.
++     * Keep it until that callback has consumed its task ownership. */
++    if (!ctx->response_received) {
++        g_clear_pointer (&ctx->early_set, qmi_indication_loc_set_nmea_types_output_unref);
++        ctx->early_set = qmi_indication_loc_set_nmea_types_output_ref (output);
++        return;
++    }
+     g_assert (ctx->indication_id);
+     setup_required_nmea_traces_cleanup_action (ctx);
+-
+     if (!qmi_indication_loc_set_nmea_types_output_get_indication_status (output, &status, &error) ||
+         !mm_error_from_qmi_loc_indication_status (status, &error))
+         g_task_return_error (task, error);
+@@ -5309,21 +5319,23 @@
+     GError                                     *error = NULL;
+     g_autoptr(QmiMessageLocSetNmeaTypesOutput)  output = NULL;
+ 
++    ctx = g_task_get_task_data (task);
+     output = qmi_client_loc_set_nmea_types_finish (client, res, &error);
+     if (!output || !qmi_message_loc_set_nmea_types_output_get_result (output, &error)) {
++        setup_required_nmea_traces_cleanup_action (ctx);
+         g_task_return_error (task, error);
+         g_object_unref (task);
+         return;
+     }
+-
+-    /* The task ownership is shared between signal and timeout; the one which is
+-     * scheduled first will cancel the other. */
+-    ctx = g_task_get_task_data (task);
+-    g_assert (!ctx->indication_id);
+-    ctx->indication_id = g_signal_connect (ctx->client,
+-                                           "set-nmea-types",
+-                                           G_CALLBACK (loc_set_nmea_types_indication_cb),
+-                                           task);
++    ctx->response_received = TRUE;
++    if (ctx->early_set) {
++        g_autoptr(QmiIndicationLocSetNmeaTypesOutput) indication = g_steal_pointer (&ctx->early_set);
++        loc_set_nmea_types_indication_cb (client, indication, task);
++        return;
++    }
++    /* The response has consumed its ownership. Signal and timeout now share
++     * the remaining task; whichever completes first cancels the other. */
++    g_assert (ctx->indication_id);
+     g_assert (!ctx->timeout_id);
+     ctx->timeout_id = g_timeout_add_seconds (10,
+                                              (GSourceFunc)setup_required_nmea_traces_timeout,
+@@ -5343,28 +5355,32 @@
+     g_autoptr(QmiMessageLocSetNmeaTypesInput)  input = NULL;
+ 
+     ctx = g_task_get_task_data (task);
++    if (!ctx->response_received) {
++        g_clear_pointer (&ctx->early_get, qmi_indication_loc_get_nmea_types_output_unref);
++        ctx->early_get = qmi_indication_loc_get_nmea_types_output_ref (output);
++        return;
++    }
+     g_assert (ctx->indication_id);
+     setup_required_nmea_traces_cleanup_action (ctx);
+-
+     if (!qmi_indication_loc_get_nmea_types_output_get_indication_status (output, &status, &error) ||
+         !mm_error_from_qmi_loc_indication_status (status, &error)) {
+         g_task_return_error (task, error);
+         g_object_unref (task);
+         return;
+     }
+-
+     qmi_indication_loc_get_nmea_types_output_get_nmea_types (output, &nmea_types_mask, NULL);
+-
+-    /* If the configured NMEA types already include GGA, GSV and GSA, we're fine. For raw
+-     * GPS sources GGA is the only required one, the other two are given for completeness */
+     if ((nmea_types_mask & desired_nmea_types_mask) == desired_nmea_types_mask) {
+         g_task_return_boolean (task, TRUE);
+         g_object_unref (task);
+         return;
+     }
+-
+     input = qmi_message_loc_set_nmea_types_input_new ();
+     qmi_message_loc_set_nmea_types_input_set_nmea_types (input, (nmea_types_mask | desired_nmea_types_mask), NULL);
++    ctx->response_received = FALSE;
++    ctx->indication_id = g_signal_connect (ctx->client,
++                                           "set-nmea-types",
++                                           G_CALLBACK (loc_set_nmea_types_indication_cb),
++                                           task);
+     qmi_client_loc_set_nmea_types (ctx->client,
+                                    input,
+                                    10,
+@@ -5382,26 +5398,27 @@
+     GError                                     *error = NULL;
+     g_autoptr(QmiMessageLocGetNmeaTypesOutput)  output = NULL;
+ 
++    ctx = g_task_get_task_data (task);
+     output = qmi_client_loc_get_nmea_types_finish (client, res, &error);
+     if (!output || !qmi_message_loc_get_nmea_types_output_get_result (output, &error)) {
++        setup_required_nmea_traces_cleanup_action (ctx);
+         g_task_return_error (task, error);
+         g_object_unref (task);
+         return;
+     }
+-
+-    /* The task ownership is shared between signal and timeout; the one which is
+-     * scheduled first will cancel the other. */
+-    ctx = g_task_get_task_data (task);
+-    g_assert (!ctx->indication_id);
+-    ctx->indication_id = g_signal_connect (ctx->client,
+-                                           "get-nmea-types",
+-                                           G_CALLBACK (loc_get_nmea_types_indication_cb),
+-                                           task);
++    ctx->response_received = TRUE;
++    if (ctx->early_get) {
++        g_autoptr(QmiIndicationLocGetNmeaTypesOutput) indication = g_steal_pointer (&ctx->early_get);
++        loc_get_nmea_types_indication_cb (client, indication, task);
++        return;
++    }
++    g_assert (ctx->indication_id);
+     g_assert (!ctx->timeout_id);
+     ctx->timeout_id = g_timeout_add_seconds (10,
+                                              (GSourceFunc)setup_required_nmea_traces_timeout,
+                                              task);
+ }
++
+ 
+ static void
+ setup_required_nmea_traces (MMSharedQmi         *self,
+@@ -5436,6 +5453,12 @@
+         ctx->client = QMI_CLIENT_LOC (g_object_ref (client));
+         g_task_set_task_data (task, ctx, (GDestroyNotify)setup_required_nmea_traces_context_free);
+ 
++        /* Subscribe before sending: a fast LOC indication may be dispatched
++         * before the asynchronous response callback runs. */
++        ctx->indication_id = g_signal_connect (ctx->client,
++                                               "get-nmea-types",
++                                               G_CALLBACK (loc_get_nmea_types_indication_cb),
++                                               task);
+         qmi_client_loc_get_nmea_types (ctx->client,
+                                        NULL,
+                                        10,

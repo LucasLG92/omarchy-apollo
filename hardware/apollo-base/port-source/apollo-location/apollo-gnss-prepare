@@ -1,0 +1,8 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+set -euo pipefail
+# These requests configure the current modem lifetime, without starting a fix
+# session or injecting a position. GeoClue and ModemManager control sessions.
+for option in --loc-set-engine-lock=none --loc-inject-time --loc-set-operation-mode=standalone; do
+    timeout -k 2 18 /usr/bin/qmicli -d qrtr://3 "$option"
+done

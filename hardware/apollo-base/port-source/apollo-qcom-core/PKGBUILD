@@ -1,0 +1,36 @@
+pkgname=apollo-qcom-core
+pkgver=1.2
+pkgrel=1
+pkgdesc='Pinned QRTR and read-only RMTFS support for Apollo mainline Linux'
+arch=(aarch64)
+url='https://github.com/linux-msm'
+license=(BSD-3-Clause)
+depends=(glibc systemd-libs)
+makedepends=(gcc make meson ninja)
+provides=(qrtr rmtfs 'libqrtr.so=1-64')
+conflicts=(qrtr rmtfs)
+_qrtr=29e36ae164389580a0f8ea7a7fdb728140ae978d
+_qmic=4574736afce75aa5eec1e1069a19563410167c9f
+_rmtfs=b30a3eb38f9af283f18dbd3c7755653efc52c094
+source=("qrtr-$_qrtr.tar.gz::https://github.com/linux-msm/qrtr/archive/$_qrtr.tar.gz"
+        "qmic-$_qmic.tar.gz::https://github.com/linux-msm/qmic/archive/$_qmic.tar.gz"
+        "rmtfs-$_rmtfs.tar.gz::https://github.com/linux-msm/rmtfs/archive/$_rmtfs.tar.gz")
+sha512sums=(aa5a5eb672fc32ce9e7612f6763d3e4988be8178218d64655cd3713070f145bfc664e2b122fdd4573e271e36c24422a62bc81501574aed0190929cae19e10862 695d75e751d57f2d2902fc4ca02a427c8b98d22e5ac383844f83efcae47bd5bb77414f8daf2922364d5c2e06bbde1db1dfd4c9ba4ab3219b0b248c3f298736a9 f4129cb50b1fd4b75c8903b94faabf2767673fb8ff0f6970fc4456e03c5d08c876e68ec3d2e79da36f61f5068f04186c45e9bc703fce0e778249fc5773a5e401)
+
+build() {
+  meson setup "qrtr-$_qrtr" qrtr-build --prefix=/usr --libdir=lib --buildtype=release
+  meson compile -C qrtr-build -j 4
+  make -C "qmic-$_qmic" -j 4
+  PATH="$srcdir/qmic-$_qmic:$PATH" make -C "rmtfs-$_rmtfs" -j 4 \
+    CFLAGS="$CFLAGS -I$srcdir/qrtr-$_qrtr/include" \
+    LDFLAGS="$LDFLAGS -L$srcdir/qrtr-build/lib -lqrtr -ludev -lpthread"
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C qrtr-build --no-rebuild
+  make -C "rmtfs-$_rmtfs" DESTDIR="$pkgdir" prefix=/usr install
+  # Only the upstream read-only partition service is used on this prototype.
+  rm "$pkgdir/usr/lib/systemd/system/rmtfs-dir.service"
+  install -Dm644 "qrtr-$_qrtr/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE-qrtr"
+  install -Dm644 "rmtfs-$_rmtfs/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE-rmtfs"
+}

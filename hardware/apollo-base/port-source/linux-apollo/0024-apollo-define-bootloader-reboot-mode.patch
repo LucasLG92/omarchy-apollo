@@ -1,0 +1,20 @@
+Subject: [PATCH] arm64: dts: qcom: apollo: define the bootloader reboot mode
+
+Apollo currently registers qcom-pon without any reboot mode definitions,
+so reboot("bootloader") writes no reason and returns to normal Linux.
+Use the bootloader reason already used by SM8250 MTP and the downstream
+PON_RESTART_REASON_BOOTLOADER value. No power, voltage or partition change.
+
+--- a/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo.dts
++++ b/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo.dts
+@@ -1723,6 +1723,10 @@
+ 	};
+ };
+ 
++&pon {
++	mode-bootloader = <0x2>;
++};
++
+ &pon_pwrkey {
+ 	status = "okay";
+ };

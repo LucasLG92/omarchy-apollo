@@ -1,0 +1,17 @@
+[Unit]
+Description=Prepare Apollo standalone GNSS when location is requested
+BindsTo=ModemManager.service
+After=ModemManager.service time-sync.target
+Before=geoclue.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/apollo-gnss-prepare
+RemainAfterExit=yes
+TimeoutStartSec=65
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RestrictAddressFamilies=AF_QIPCRTR AF_UNIX AF_NETLINK

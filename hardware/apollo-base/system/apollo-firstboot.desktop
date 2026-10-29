@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Configurar contraseña de Apollo Linux
+Exec=sh -c "test -e /run/apollo-persistent && test -f /etc/apollo/firstboot-needed && exec sudo -n /usr/local/sbin/apollo-firstboot-password"
+OnlyShowIn=KDE;
+X-KDE-autostart-phase=2
+NoDisplay=true

@@ -1,0 +1,159 @@
+#!/usr/bin/python3
+"""A/B supply test through normal V4L2 controls. No photos/audio/calibration."""
+from pathlib import Path
+import errno,fcntl,hashlib,json,os,signal,struct,subprocess,sys,time
+with_stream='--with-stream' in sys.argv[1:]
+stage='focus-stream' if with_stream else 'focus-supply'
+out=Path('/run/apollo-audit')/stage; out.mkdir(parents=True,exist_ok=True)
+module=Path('/run/apollo-focus-supply-audit.ko')
+params=Path('/sys/module/apollo_focus_supply_audit/parameters')
+result={'audio_used':False,'camera_frames_saved':False,'eeprom_accessed':False,
+    'firmware_uploaded':False,'voltage_changed':False,'register_readback_performed':False,
+    'optical_focus_verified':False,'cycles':[],'module_sha256':hashlib.sha256(module.read_bytes()).hexdigest(),
+    'scope':'Normal V4L2 actuator opens and acknowledged focus controls with existing L7 supply, comparing additional board-defined 2.8-V L6 off/on; not optical focus or OIS validation'}
+before=subprocess.check_output(['dmesg'],text=True)
+result['main_sensor_capture_requested']=with_stream
+(out/'kernel-before.txt').write_text(before)
+devices=[p for p in Path('/sys/bus/i2c/devices').glob('*-000c')
+    if (p/'of_node/compatible').exists() and b'asahi-kasei,ak7377\0' in (p/'of_node/compatible').read_bytes()]
+assert len(devices)==1
+device=devices[0]; driver=Path('/sys/bus/i2c/drivers/ak7375')
+assert (device/'driver').resolve()==driver
+name=device.name
+loaded=False
+stream=None; stream_log=None
+def start_stream():
+    global stream,stream_log
+    stream_log=(out/'main-capture.txt').open('wb',buffering=0)
+    stream=subprocess.Popen(['cam','--camera=/base/soc@0/cci@ac4f000/i2c-bus@0/camera@3d',
+        '--capture=2000','--stream=role=viewfinder,width=640,height=480,pixelformat=RGB888'],
+        stdout=stream_log,stderr=subprocess.STDOUT)
+    deadline=time.monotonic()+12
+    while True:
+        count=(out/'main-capture.txt').read_text(errors='replace').count('cam0-stream0 seq:')
+        if count>=3:
+            result['main_capture_initial_frames']=count
+            break
+        assert stream.poll() is None,'Main capture exited before delivering frames'
+        assert time.monotonic()<deadline,'Main capture did not deliver frames'
+        time.sleep(.1)
+def stop_stream():
+    global stream,stream_log
+    if stream is not None:
+        if stream.poll() is None:
+            stream.send_signal(signal.SIGINT)
+            try: stream.wait(timeout=8)
+            except subprocess.TimeoutExpired: stream.terminate(); stream.wait(timeout=5)
+        result['main_capture_exit']=stream.returncode
+        result['main_capture_total_frames']=(out/'main-capture.txt').read_text(errors='replace').count('cam0-stream0 seq:')
+        stream=None
+    if stream_log: stream_log.close(); stream_log=None
+regulators={}
+for label in ('vreg_l6p','vreg_l7p'):
+    choices=[p for p in Path('/sys/class/regulator').iterdir()
+             if (p/'name').read_text().strip()==label]
+    assert len(choices)==1 and (choices[0]/'num_users').exists()
+    regulators[label]=choices[0]
+def users(): return {name:int((path/'num_users').read_text()) for name,path in regulators.items()}
+result['regulator_users_before']=users()
+def bind():
+    if not (device/'driver').exists():
+        (driver/'bind').write_text(name)
+        deadline=time.monotonic()+2
+        while not (device/'driver').exists():
+            assert time.monotonic()<deadline,'Driver did not bind'
+            time.sleep(.02)
+def unbind():
+    if (device/'driver').exists(): (driver/'unbind').write_text(name)
+def subdev():
+    choices=[p for p in Path('/sys/class/video4linux').glob('v4l-subdev*')
+             if (p/'name').read_text().strip()=='ak7375 '+name]
+    assert len(choices)==1,[p.name for p in choices]
+    return '/dev/'+choices[0].name
+def get_control(fd):
+    data=bytearray(struct.pack('Ii',0x009a090a,0))
+    fcntl.ioctl(fd,0xc008561b,data,True)
+    return struct.unpack('Ii',data)[1]
+def suspend_wait(failed_open):
+    deadline=time.monotonic()+3
+    while True:
+        status=(device/'power/runtime_status').read_text().strip()
+        # runtime_status exposes "error" after a failed resume, even when
+        # the underlying runtime state returned to suspended. Rail counters
+        # below independently verify the enable references were released.
+        if status=='suspended' or (failed_open and status=='error') or (with_stream and stream is not None and status=='active'): return status
+        assert time.monotonic()<deadline,'Unexpected lens runtime status: '+status
+        time.sleep(.02)
+try:
+    assert not params.exists()
+    p=subprocess.run(['insmod',str(module),'target='+name],capture_output=True,text=True,timeout=10)
+    result['insmod_exit']=p.returncode
+    result['insmod_message']=p.stdout+p.stderr
+    loaded=params.exists()
+    assert p.returncode==0 and loaded,result['insmod_message']
+    result['voltage_uv']=int((params/'voltage_uv').read_text())
+    assert result['voltage_uv']==2800000
+    for index,powered in enumerate([False]+[True]*12+[False]):
+        if not (with_stream and powered and stream is not None):
+            if not powered: stop_stream()
+            unbind()
+            (params/'enabled').write_text('1' if powered else '0')
+            assert (params/'enabled').read_text().strip()==('Y' if powered else 'N')
+            bind()
+        if with_stream and powered and stream is None:
+            start_stream()
+            if (device/'power/runtime_status').read_text().strip()=='error':
+                (params/'clear_error').write_text('1')
+            result['runtime_error_clear_requests']=int((params/'error_clear_requests').read_text())
+        entry={'cycle':index+1,'additional_l6_enabled':powered,'control_values':[]}
+        entry['regulator_users_before_open']=users()
+        fd=None
+        try:
+            fd=os.open(subdev(),os.O_RDWR|os.O_NONBLOCK)
+            entry['open_succeeded']=True
+            entry['initial_control_value']=get_control(fd)
+            for position in (0,640,1280,2560,0):
+                data=bytearray(struct.pack('Ii',0x009a090a,position))
+                fcntl.ioctl(fd,0xc008561c,data,True)
+                assert get_control(fd)==position
+                entry['control_values'].append(position)
+                time.sleep(.03)
+        except OSError as error:
+            entry.update(open_succeeded=fd is not None,error_errno=error.errno,error=str(error))
+        finally:
+            if fd is not None: os.close(fd)
+        result['cycles'].append(entry)
+        entry['runtime_status_after_close']=suspend_wait(not entry.get('open_succeeded'))
+        entry['runtime_suspended_after_close']=entry['runtime_status_after_close']=='suspended'
+        entry['regulator_users_after_close']=users()
+        assert entry['regulator_users_before_open']==entry['regulator_users_after_close'],'Unbalanced regulator users after failed or successful resume'
+        entry['passed']=(entry.get('open_succeeded') and len(entry['control_values'])==5 and not entry.get('error')) if powered else (not entry.get('open_succeeded') and entry.get('error_errno')==errno.ENXIO)
+        print(json.dumps(entry),flush=True)
+        if not entry['passed']:
+            raise RuntimeError('Supply comparison did not match its hypothesis; retain observations without declaring a power fix')
+except Exception as error:
+    result['error']=type(error).__name__+': '+str(error)
+finally:
+    try:
+        stop_stream()
+        if loaded:
+            unbind()
+            (params/'enabled').write_text('0')
+            assert (params/'enabled').read_text().strip()=='N'
+            result['additional_supply_released']=True
+            p=subprocess.run(['rmmod','apollo_focus_supply_audit'],capture_output=True,text=True,timeout=10)
+            result['module_removed']=p.returncode==0 and not params.exists()
+            result['rmmod_message']=p.stdout+p.stderr
+        bind()
+        result['original_driver_rebound']=(device/'driver').resolve()==driver
+        result['regulator_users_restored']=users()==result['regulator_users_before']
+    except Exception as error: result['restore_error']=str(error)
+    after=subprocess.check_output(['dmesg'],text=True)
+    (out/'kernel-after.txt').write_text(after)
+    result['kernel_warning_count_before']=before.count('WARNING:')
+    result['kernel_warning_count_after']=after.count('WARNING:')
+    result['kernel_oops']='Internal error: Oops' in after or 'BUG:' in after
+    result['passed']=not result.get('error') and not result.get('restore_error') and len(result['cycles'])==14 and all(x['passed'] for x in result['cycles']) and result.get('module_removed') and result.get('additional_supply_released') and result.get('original_driver_rebound') and result.get('regulator_users_restored') and not result['kernel_oops'] and result['kernel_warning_count_before']==result['kernel_warning_count_after']
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print('Focus supply A/B passed' if result['passed'] else 'Focus supply diagnosis needs further work')
+raise SystemExit(0 if result['passed'] else 1)

@@ -1,0 +1,86 @@
+#!/usr/bin/python3
+"""Exercise each public GeoClue method; never log returned coordinates."""
+import json, math, os, sys
+from gi.repository import Gio, GLib
+from apollo_geoclue_reference import compare
+
+name='org.freedesktop.GeoClue2'
+client_iface=name+'.Client'
+properties='org.freedesktop.DBus.Properties'
+loop=GLib.MainLoop()
+state={'provider':'GeoClue2 D-Bus','desktop_user':os.geteuid()==1001,
+       'coordinates_saved':False,'stages':[], 'valid_updates':0,'accuracy_m':[],
+       'gtk_portal_env':os.getenv('GTK_USE_PORTAL',''),'receiver_comparisons':[],'passed':False}
+conn=None
+client=None
+expect_denied='--expect-denied' in sys.argv
+desktop_id='org.apollo.LocationDeniedAudit' if expect_denied else 'org.apollo.LocationAudit'
+state['expected_denied']=expect_denied
+
+def call(path, interface, method, parameters=None):
+    return conn.call_sync(name,path,interface,method,parameters,None,
+                          Gio.DBusCallFlags.NONE,7000,None)
+
+def read_location(path):
+    if not path or path=='/': return
+    values=call(path,properties,'GetAll',GLib.Variant('(s)',(name+'.Location',))).unpack()[0]
+    lat,lon,accuracy=(values.get(x,float('nan')) for x in ('Latitude','Longitude','Accuracy'))
+    valid=all(math.isfinite(x) for x in (lat,lon,accuracy)) and -90<=lat<=90 and -180<=lon<=180 and 0<=accuracy<1000
+    reference=compare(conn,lat,lon)
+    state['receiver_comparisons'].append(reference)
+    valid=valid and reference['matches_receiver']
+    if valid:
+        state['valid_updates']+=1
+        state['accuracy_m'].append(accuracy)
+    if state['valid_updates']>=3:
+        state['passed']=True
+        loop.quit()
+
+def updated(connection,sender,path,interface,signal,parameters,unused):
+    try: read_location(parameters.unpack()[1])
+    except GLib.Error as error:
+        state['update_error']=str(error)
+        loop.quit()
+
+def expired():
+    state['timed_out']=True
+    loop.quit()
+    return GLib.SOURCE_REMOVE
+
+try:
+    conn=Gio.bus_get_sync(Gio.BusType.SYSTEM,None)
+    state['stages'].append('system-bus-connected')
+    manager='/org/freedesktop/GeoClue2/Manager'
+    client=call(manager,name+'.Manager','GetClient').unpack()[0]
+    state['stages'].append('GetClient')
+    for prop,value in (('DesktopId',GLib.Variant('s',desktop_id)),
+                       ('RequestedAccuracyLevel',GLib.Variant('u',8)),
+                       ('TimeThreshold',GLib.Variant('u',1))):
+        call(client,properties,'Set',GLib.Variant('(ssv)',(client_iface,prop,value)))
+        state['stages'].append('Set '+prop)
+    conn.signal_subscribe(name,client_iface,'LocationUpdated',client,None,
+                          Gio.DBusSignalFlags.NONE,updated,None)
+    call(client,client_iface,'Start')
+    state['stages'].append('Start')
+    if expect_denied:
+        raise RuntimeError('Explicitly denied application was allowed to start')
+    values=call(client,properties,'GetAll',GLib.Variant('(s)',(client_iface,))).unpack()[0]
+    state['client_active']=bool(values.get('Active'))
+    read_location(values.get('Location'))
+    GLib.timeout_add_seconds(150,expired)
+    if not state['passed']: loop.run()
+except Exception as error:
+    state['error']=str(error)
+    if expect_denied and isinstance(error, GLib.Error):
+        remote=Gio.DBusError.get_remote_error(error) or ''
+        state['remote_error']=remote
+        state['passed']=('Set TimeThreshold' in state['stages'] and
+                         any(x in remote for x in ('AccessDenied','NotAuthorized','PermissionDenied')))
+finally:
+    if client:
+        try:
+            call(client,client_iface,'Stop')
+            state['stop_acknowledged']=True
+        except GLib.Error: state['stop_acknowledged']=False
+print(json.dumps(state))
+raise SystemExit(0 if state['passed'] else 1)

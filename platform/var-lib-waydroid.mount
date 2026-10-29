@@ -1,0 +1,13 @@
+[Unit]
+Description=Waydroid data on Apollo's native ext4 storage
+RequiresMountsFor=/run/apollo-storage/waydroid
+Before=waydroid-container.service
+
+[Mount]
+What=/run/apollo-storage/waydroid
+Where=/var/lib/waydroid
+Type=none
+Options=bind
+
+[Install]
+WantedBy=multi-user.target

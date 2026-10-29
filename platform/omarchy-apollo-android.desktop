@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Android Apps
+Comment=Open Google-free Android applications
+Exec=omarchy-apollo-android start
+Icon=waydroid
+Type=Application
+Categories=Utility;
+StartupNotify=true

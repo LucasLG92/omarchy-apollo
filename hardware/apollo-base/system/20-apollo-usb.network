@@ -1,0 +1,15 @@
+[Match]
+MACAddress=02:42:61:70:6f:01
+
+[Network]
+Address=172.16.42.1/24
+ConfigureWithoutCarrier=yes
+DHCPServer=yes
+IPv6AcceptRA=no
+LinkLocalAddressing=no
+
+[DHCPServer]
+PoolOffset=2
+PoolSize=1
+EmitRouter=no
+EmitDNS=no

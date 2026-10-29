@@ -1,0 +1,47 @@
+Subject: [PATCH] media: i2c: ak7375: wait for AK7377 active mode before DAC restore
+
+Apollo's immutable AK7377 module definition requests a 1000us delay after
+register2=0. The driver waits before the mode write but immediately restores
+the DAC afterwards. A filtered native trace on kernel18 captured mode02-00
+ACK followed by position00-00-00 NACK only104us after the mode request, with
+no controller suspend between them. Earlier power-delay tests did not cover
+this distinct active-mode settling interval.
+
+Add a per-chip interval, set only for AK7377, before the first restore write.
+Keep other chips, rail routing, pre-power delay and error propagation intact.
+No retries, PM-error clears, calibration or firmware writes are introduced.
+The native baseline motivates testing; optical focus is not thereby proven.
+
+---
+
+--- a/drivers/media/i2c/ak7375.c
++++ b/drivers/media/i2c/ak7375.c
+@@ -36,6 +36,8 @@
+ 	 * I2C messages.
+ 	 */
+ 	u16 power_delay_us;
++	/* Active-mode settling before the first position command. */
++	u16 mode_active_delay_us;
+ };
+ 
+ static const struct ak73xx_chipdef ak7345_cdef = {
+@@ -78,6 +80,7 @@
+ 	.ctrl_steps = 64,
+ 	.ctrl_delay_us = 1000,
+ 	.power_delay_us = 10000,
++	.mode_active_delay_us = 1000,
+ };
+ 
+ static const char * const ak7375_supply_names[] = {
+@@ -327,6 +330,11 @@
+ 		goto disable_supplies;
+ 	}
+ 
++	/* The AK7377 needs a settling interval after leaving standby. */
++	if (cdef->mode_active_delay_us)
++		usleep_range(cdef->mode_active_delay_us,
++			     cdef->mode_active_delay_us + 100);
++
+ 	for (val = ak7375_dev->focus->val % cdef->ctrl_steps;
+ 	     val <= ak7375_dev->focus->val;
+ 	     val += cdef->ctrl_steps) {

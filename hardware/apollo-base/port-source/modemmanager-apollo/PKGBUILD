@@ -1,0 +1,42 @@
+pkgname=modemmanager-apollo
+pkgver=1.24.2.r1
+pkgrel=2
+pkgdesc='ModemManager with Apollo QRTR/MHI data endpoint fixes'
+arch=(aarch64)
+url='https://gitlab.freedesktop.org/mobile-broadband/ModemManager'
+license=(GPL-2.0-or-later LGPL-2.1-or-later)
+depends=(glib2 glibc libqmi libmbim libgudev polkit systemd-libs)
+makedepends=(gcc meson ninja pkgconf python glib2-devel)
+provides=('modemmanager=1.24.2' 'libmm-glib=1.24.2' 'libmm-glib.so=0-64')
+conflicts=(modemmanager libmm-glib)
+_commit=f2b9ab1ad78d322f32134a444b5b54c6e8160e19
+source=("https://gitlab.freedesktop.org/mobile-broadband/ModemManager/-/archive/$_commit/ModemManager-$_commit.tar.gz"
+        0001-qcom-soc-mhi-net.patch 0002-bearer-bind-pcie.patch)
+sha512sums=(
+  4153261e6cc63217c4ab8761cba55ef3c84d5558eb3e19f78b9ca4cbcf0360b5273a483493f9a5b79b97bf397c998a589977bede3d35156190347c527cca4fd5
+  468b596945f869b52de7e972f8b884ec0e2687dc9818f501655e227d66a42be3bf96c65e08f76af94aca0ee154ed0b4d807137f48ce7d8c237b35ffb1a03eec3
+  8fab0e9a4b7097cfcddce83eb22774b79c0def0cdfb0ab98ca58e5d94d86fb4f5750baefe4c3d10a5a0b4e72759b54f650b684adebcac5e05a7f02dfa3a47350)
+source+=(0003-loc-nmea-listen-before-request.patch)
+sha512sums+=(3502ed8ad85457b8c3c51e1d897112ea01407dcc1a008673699952061e2243862cd68f1972f5eb201d1e46f2e3f08cb5744b2c0478eb3a94997884298d94a575)
+prepare() {
+  cd "ModemManager-$_commit"
+  patch -Np1 --fuzz=0 < "$srcdir/0001-qcom-soc-mhi-net.patch"
+  patch -Np1 --fuzz=0 < "$srcdir/0002-bearer-bind-pcie.patch"
+  patch -Np1 --fuzz=0 < "$srcdir/0003-loc-nmea-listen-before-request.patch"
+}
+build() {
+  meson setup "ModemManager-$_commit" build --prefix=/usr --libdir=lib \
+    --sbindir=bin --sysconfdir=/etc --libexecdir=lib --buildtype=release \
+    --auto-features=disabled -Dplugin_qcom_soc=enabled -Dplugin_generic=enabled \
+    -Dintrospection=false -Dvapi=false -Dgtk_doc=false -Dman=false \
+    -Dbash_completion=false -Dexamples=false -Dtests=true \
+    -Dsystemdsystemunitdir=/usr/lib/systemd/system -Dudevdir=/usr/lib/udev
+  meson compile -C build -j 6
+}
+check() {
+  meson test -C build --print-errorlogs
+}
+package() {
+  DESTDIR="$pkgdir" meson install -C build --no-rebuild
+  install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname" "ModemManager-$_commit"/COPYING*
+}

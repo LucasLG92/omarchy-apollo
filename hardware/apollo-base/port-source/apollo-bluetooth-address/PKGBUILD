@@ -1,0 +1,19 @@
+pkgname=apollo-bluetooth-address
+pkgver=0.7.1
+pkgrel=1
+pkgdesc='Configure the missing Apollo Bluetooth controller address at boot'
+arch=(any)
+url='https://gitlab.postmarketos.org/postmarketOS/bootmac'
+license=(GPL-3.0-or-later)
+depends=(bluez-utils bluez-deprecated-tools coreutils util-linux)
+provides=(bootmac)
+conflicts=(bootmac)
+source=("https://gitlab.postmarketos.org/postmarketOS/bootmac/-/archive/v$pkgver/bootmac-v$pkgver.tar.gz")
+sha512sums=(1831fa7c7f1e485ee272bcc1ed800de51f368dc5a024e572b1e5d8a9085f7ac73bb05ad13f41d0691859b634625c76c810cda815eeb558f24e67884924532ad5)
+package() {
+  cd "bootmac-v$pkgver"
+  install -Dm755 bootmac "$pkgdir/usr/bin/bootmac"
+  install -Dm644 bootmac-bluetooth.rules "$pkgdir/usr/lib/udev/rules.d/70-apollo-bluetooth-address.rules"
+  install -Dm644 'systemd/bootmac@.service' "$pkgdir/usr/lib/systemd/system/bootmac@.service"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

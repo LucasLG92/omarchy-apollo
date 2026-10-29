@@ -1,0 +1,379 @@
+#!/bin/bash
+# Native hardware observations. Reports stay in RAM until copied over USB.
+set -uo pipefail
+OUT=/run/apollo-audit
+mkdir -p "$OUT"
+chmod 0755 "$OUT"
+run() {
+  local name=$1; shift
+  printf 'START %s uptime=%s\n' "$name" "$(cut -d ' ' -f1 /proc/uptime)"
+  timeout -k 3 40 "$@" > "$OUT/$name.txt" 2>&1
+  local result=$?
+  printf '%s %s\n' "$name" "$result" >> "$OUT/exit-status.txt"
+  printf 'END %s exit=%s\n' "$name" "$result"
+}
+phase=${1:---basic}
+phase_exit=0
+case "$phase" in --basic|--cameras|--cameras-no-save|--camera-stress|--navigation|--desktop-gps|--geoclue|--location-startup|--fingerprint|--network|--audio|--video|--video-extended|--video-player|--suspend|--modem|--clock|--backlight|--backlight-resume|--apr-dma|--focus-supply|--focus-stream|--focus-matrix|--focus-normal|--focus-resume|--focus-trace) ;; *) exit 2;; esac
+touch "$OUT/exit-status.txt"
+if [ ! -f "$OUT/package-versions.txt" ]; then
+  run package-versions pacman -Q linux-apollo libcamera-apollo apollo-cameras apollo-modem modemmanager-apollo apollo-video apollo-board-data
+fi
+if [ -e /etc/apollo/quiet-testing ]; then
+  run quiet-state runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus systemctl --user show --property=ActiveState --value pipewire.service pipewire.socket pipewire-pulse.service pipewire-pulse.socket wireplumber.service
+  if grep -q '^active$' "$OUT/quiet-state.txt"; then exit 1; fi
+fi
+if [ "$phase" = --basic ]; then
+run system bash -c 'date -u; uname -a; cat /etc/os-release; free -h; findmnt; systemctl --failed --no-pager; systemctl list-jobs --no-pager; ps -eo pid,comm,wchan:30,args'
+run startup-journal journalctl -b -o short-monotonic --no-pager
+if [ -x /usr/share/apollo-test/apollo-gain-test ]; then
+  run gain-model /usr/share/apollo-test/apollo-gain-test
+fi
+run graphics bash -c 'ls -l /dev/dri; cat /sys/class/drm/card*-DSI-*/{status,modes}; vulkaninfo --summary'
+run kwin runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus /usr/lib/qt6/bin/qdbus org.kde.KWin /KWin supportInformation
+run power bash -c 'for p in /sys/class/power_supply/*; do echo "$p"; cat "$p/uevent"; done; for p in /sys/class/thermal/thermal_zone*; do printf "%s " "$p"; cat "$p/type" "$p/temp"; done; cat /sys/power/mem_sleep; cat /sys/power/state'
+run audio bash -c 'aplay -l; arecord -l; alsaucm listcards; cat /proc/asound/cards'
+run pipewire runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus wpctl status
+
+fi
+if [ "$phase" = --basic ] || [ "$phase" = --cameras ] || [ "$phase" = --cameras-no-save ]; then
+run camera-startup bash -c 'systemctl status apollo-camera-init.service --no-pager; journalctl -b -u apollo-camera-init.service --no-pager; cat /run/apollo-camera-unavailable'
+run cameras cam --list
+  run camera-supplies bash -c 'for p in /sys/class/regulator/regulator.*; do name=$(cat "$p/name" 2>/dev/null); case "$name" in vreg_l2c_*) echo "$p $name"; for f in microvolts min_microvolts max_microvolts state; do printf "%s=" "$f"; cat "$p/$f"; done;; esac; done'
+camera_ids=(
+  /base/soc@0/cci@ac4f000/i2c-bus@0/camera@3d
+  /base/soc@0/cci@ac4f000/i2c-bus@1/camera@2d
+  /base/soc@0/cci@ac50000/i2c-bus@0/camera@36
+  /base/soc@0/cci@ac50000/i2c-bus@1/camera@10
+)
+for camera in 1 2 3 4; do
+  output_args=()
+  if [ "$phase" != --cameras-no-save ]; then output_args+=(--file="$OUT/camera-$camera-frame-#.ppm"); fi
+  run "camera-$camera-capture" cam --camera="${camera_ids[$camera-1]}" --capture=90 --metadata \
+    --stream=role=viewfinder,width=640,height=480,pixelformat=RGB888 \
+    "${output_args[@]}"
+  python3 - "$OUT" "$camera" <<'PY'
+from pathlib import Path
+import sys
+directory, camera = Path(sys.argv[1]), sys.argv[2]
+for file in sorted(directory.glob(f'camera-{camera}-frame-*.ppm'))[:-3]:
+    file.unlink()
+PY
+done
+if [ "$phase" = --cameras-no-save ]; then
+  python3 - "$OUT" <<'PY'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1]); codes=dict(line.rsplit(' ',1) for line in (p/'exit-status.txt').read_text().splitlines())
+assert all(codes.get(f'camera-{n}-capture')=='0' and (p/f'camera-{n}-capture.txt').read_text().count('cam0-stream0 seq:')==90 for n in range(1,5))
+assert not list(p.glob('camera-*-frame-*'))
+PY
+  phase_exit=$?
+  echo "cameras-no-save $phase_exit" >> "$OUT/exit-status.txt"
+fi
+fi
+if [ "$phase" = --basic ]; then
+
+run media bash -c 'v4l2-ctl --list-devices; for dev in /dev/media*; do media-ctl -d "$dev" -p; done'
+run video-startup bash -c 'systemctl status apollo-video-init.service --no-pager; journalctl -b -u apollo-video-init.service --no-pager'
+fi
+if [ "$phase" = --video ] && [ -f /usr/share/apollo-test/h264-640x480.h264 ]; then
+  run video-enable bash -c 'set -e; mkdir -p /run/modprobe.d; printf "options venus_core dyndbg=+p\noptions qcom_iris dyndbg=+p\n" > /run/modprobe.d/apollo-video-audit.conf; systemctl unmask apollo-video-init.service; systemctl daemon-reload; systemctl start apollo-video-init.service; udevadm settle --timeout=20; if [ -w /sys/kernel/debug/venus/fw_level ]; then echo 0x1f > /sys/kernel/debug/venus/fw_level; fi; systemctl status apollo-video-init.service --no-pager'
+  run video-debug-enable bash -c 'test -w /sys/kernel/debug/dynamic_debug/control; echo "module qcom_iris +p" > /sys/kernel/debug/dynamic_debug/control'
+  run video-address-space bash -c 'cat /sys/bus/platform/devices/aa00000.video-codec/iommu_group/reserved_regions; v4l2-ctl --list-devices; cat /sys/module/firmware_class/parameters/path; dmesg | grep -i -e venus -e firmware'
+  run video-gst-elements gst-inspect-1.0 v4l2h264dec
+  run video-gst-decode gst-launch-1.0 -e -v \
+    filesrc location=/usr/share/apollo-test/h264-640x480.h264 ! h264parse ! \
+    v4l2h264dec capture-io-mode=mmap output-io-mode=mmap ! videoconvert ! \
+    video/x-raw,format=I420 ! filesink location="$OUT/video-gst.i420"
+  python3 - "$OUT" <<'PY' > "$OUT/video-gst-comparison.txt" 2>&1
+from pathlib import Path
+import hashlib, json, sys
+expected = [line.rsplit(',', 1)[-1].strip() for line in Path('/usr/share/apollo-test/h264-reference.framemd5').read_text().splitlines() if line and not line.startswith('#')]
+raw = (Path(sys.argv[1]) / 'video-gst.i420').read_bytes()
+frame_size = 640 * 480 * 3 // 2
+actual = [hashlib.md5(raw[start:start + frame_size]).hexdigest() for start in range(0, len(raw), frame_size)]
+print(json.dumps({'frames': len(actual), 'bytes': len(raw), 'exact_match': actual == expected}))
+assert len(expected) == 10 and len(raw) == 10 * frame_size and actual == expected
+PY
+  echo "video-gst-comparison $?" >> "$OUT/exit-status.txt"
+  if grep -q '"exact_match": true' "$OUT/video-gst-comparison.txt"; then
+    run video-gst-encoder-elements gst-inspect-1.0 v4l2h264enc
+    run video-gst-encode gst-launch-1.0 -e -v \
+      videotestsrc num-buffers=10 pattern=smpte ! \
+      video/x-raw,format=NV12,width=640,height=480,framerate=10/1 ! \
+      v4l2h264enc capture-io-mode=mmap output-io-mode=mmap ! h264parse ! \
+      video/x-h264,stream-format=byte-stream,alignment=au ! \
+      filesink location="$OUT/video-gst-encoded.h264"
+    run video-encoded-software-decode ffmpeg -hide_banner -nostdin -loglevel info -y \
+      -i "$OUT/video-gst-encoded.h264" -pix_fmt yuv420p -f framemd5 "$OUT/video-encoded.framemd5"
+    python3 - "$OUT" <<'PY' > "$OUT/video-encoded-comparison.txt" 2>&1
+from pathlib import Path
+import json, sys
+file = Path(sys.argv[1]) / 'video-encoded.framemd5'
+frames = [line for line in file.read_text().splitlines() if line and not line.startswith('#')] if file.exists() else []
+print(json.dumps({'software_decoded_encoded_frames': len(frames)}))
+assert len(frames) == 10
+PY
+    echo "video-encoded-comparison $?" >> "$OUT/exit-status.txt"
+  fi
+  run video-decode ffmpeg -hide_banner -nostdin -loglevel info -y \
+    -c:v h264_v4l2m2m -i /usr/share/apollo-test/h264-640x480.h264 \
+    -fps_mode passthrough -pix_fmt yuv420p -f framemd5 "$OUT/video-hardware.framemd5"
+  python3 - "$OUT" <<'PY' > "$OUT/video-comparison.txt" 2>&1
+from pathlib import Path
+import sys
+def hashes(file):
+    return [line.rsplit(',', 1)[-1].strip() for line in file.read_text().splitlines() if line and not line.startswith('#')] if file.exists() else []
+expected = hashes(Path('/usr/share/apollo-test/h264-reference.framemd5'))
+actual = hashes(Path(sys.argv[1]) / 'video-hardware.framemd5')
+assert len(expected) == 10 and actual == expected, (len(expected), len(actual), 'Decoded frames differ')
+print('PASS: all 10 hardware-decoded frames match the software reference')
+PY
+  echo "video-comparison $?" >> "$OUT/exit-status.txt"
+  # Separate startup/drain timing from firmware failure. Both tests still
+  # require real hardware output matching the same ten-frame CPU reference.
+  run video-decode-paced ffmpeg -hide_banner -nostdin -loglevel info -y \
+    -readrate 1 -c:v h264_v4l2m2m -i /usr/share/apollo-test/h264-640x480.h264 \
+    -fps_mode passthrough -pix_fmt yuv420p -f framemd5 "$OUT/video-paced.framemd5"
+  cat /usr/share/apollo-test/h264-640x480.h264 /usr/share/apollo-test/h264-640x480.h264 /usr/share/apollo-test/h264-640x480.h264 > "$OUT/video-repeated.h264"
+  run video-decode-loop ffmpeg -hide_banner -nostdin -loglevel info -y \
+    -c:v h264_v4l2m2m -i "$OUT/video-repeated.h264" \
+    -frames:v 10 -fps_mode passthrough -pix_fmt yuv420p -f framemd5 "$OUT/video-loop.framemd5"
+  python3 - "$OUT" <<'PY' > "$OUT/video-timing-comparison.txt" 2>&1
+from pathlib import Path
+import json, sys
+def hashes(file):
+    return [line.rsplit(',', 1)[-1].strip() for line in file.read_text().splitlines() if line and not line.startswith('#')]
+expected = hashes(Path('/usr/share/apollo-test/h264-reference.framemd5'))
+assert len(expected) == 10
+results = {}
+for mode in ('paced', 'loop'):
+    file = Path(sys.argv[1]) / f'video-{mode}.framemd5'
+    actual = hashes(file) if file.exists() else []
+    results[mode] = {'frames': len(actual), 'exact_match': actual == expected}
+print(json.dumps(results))
+assert any(result['exact_match'] for result in results.values()), results
+PY
+  echo "video-timing-comparison $?" >> "$OUT/exit-status.txt"
+  if grep -q 'PASS: all 10' "$OUT/video-comparison.txt"; then
+    run video-720p-input ffmpeg -hide_banner -nostdin -loglevel error -y \
+      -f lavfi -i testsrc2=size=1280x720:rate=30:duration=2 \
+      -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
+      -f h264 "$OUT/video-720p.h264"
+    run video-720p-reference ffmpeg -hide_banner -nostdin -loglevel error -y \
+      -i "$OUT/video-720p.h264" -fps_mode passthrough -pix_fmt yuv420p \
+      -f framemd5 "$OUT/video-720p-reference.framemd5"
+    run video-720p-decode gst-launch-1.0 -e -v \
+      filesrc location="$OUT/video-720p.h264" ! h264parse ! \
+      v4l2h264dec capture-io-mode=mmap output-io-mode=mmap ! videoconvert ! \
+      video/x-raw,format=I420 ! filesink location="$OUT/video-720p.i420"
+    python3 - "$OUT" <<'PY' > "$OUT/video-720p-comparison.txt" 2>&1
+from pathlib import Path
+import hashlib, json, sys
+directory = Path(sys.argv[1])
+expected = [line.rsplit(',', 1)[-1].strip() for line in (directory / 'video-720p-reference.framemd5').read_text().splitlines() if line and not line.startswith('#')]
+file = directory / 'video-720p.i420'
+raw = file.read_bytes() if file.exists() else b''
+size = 1280 * 720 * 3 // 2
+actual = [hashlib.md5(raw[start:start + size]).hexdigest() for start in range(0, len(raw), size)]
+print(json.dumps({'resolution': [1280, 720], 'frames': len(actual), 'exact_match': actual == expected}))
+assert len(expected) == 60 and len(raw) == 60 * size and actual == expected
+file.unlink()  # Synthetic frames have been checked; retain hashes and the input.
+PY
+    echo "video-720p-comparison $?" >> "$OUT/exit-status.txt"
+  fi
+fi
+if [ "$phase" = --basic ]; then
+run wifi bash -c 'nmcli device; iw dev; nmcli -f IN-USE,SSID,MODE,CHAN,RATE,SIGNAL,SECURITY device wifi list'
+run bluetooth bash -c 'rfkill list; systemctl status bluetooth --no-pager; journalctl -b -u bluetooth --no-pager; btmgmt info; btmgmt --index 0 info; btmgmt --index 0 config; bluetoothctl list; bluetoothctl show'
+run sensors bash -c 'ls -l /dev/fastrpc*; systemctl status pd-mapper.service hexagonrpcd-sdsp.service iio-sensor-proxy.service --no-pager; busctl introspect net.hadess.SensorProxy /net/hadess/SensorProxy; for d in /sys/bus/iio/devices/iio:device*; do echo "$d"; cat "$d/name"; done'
+run deferred bash -c 'cat /sys/kernel/debug/devices_deferred; lsmod; cat /sys/class/watchdog/watchdog*/{identity,state,timeout} 2>/dev/null'
+run accelerometer timeout 8 monitor-sensor --accel
+run ambient-light timeout 8 monitor-sensor --light
+run ssc-accelerometer ssccli --debug --sensor=accelerometer --timeout=12
+run ssc-proximity ssccli --debug --sensor=proximity --timeout=12
+run ssc-compass ssccli --debug --sensor=compass --timeout=12
+run input bash -c 'cat /proc/bus/input/devices; libinput list-devices'
+run modem-baseline bash -c 'lspci -nn; ls -l /dev/wwan* /dev/mhi*; systemctl is-active ModemManager.service'
+fi
+if [ "$phase" = --focus-trace ]; then
+  timeout -k 5 240 /usr/local/sbin/apollo-focus-trace-audit > "$OUT/focus-trace-console.txt" 2>&1
+  phase_exit=$?
+  echo "focus-trace $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --focus-normal ] || [ "$phase" = --focus-resume ]; then
+  name=${phase#--}
+  timeout -k 5 180 /usr/local/sbin/apollo-focus-normal-audit "$name" > "$OUT/$name-console.txt" 2>&1
+  phase_exit=$?
+  echo "$name $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --focus-matrix ]; then
+  timeout -k 5 300 /usr/local/sbin/apollo-focus-matrix-audit > "$OUT/focus-matrix-console.txt" 2>&1
+  phase_exit=$?
+  echo "focus-matrix $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --focus-supply ] || [ "$phase" = --focus-stream ]; then
+  options=()
+  if [ "$phase" = --focus-stream ]; then options+=(--with-stream); fi
+  name=${phase#--}
+  timeout -k 5 100 /usr/local/sbin/apollo-focus-supply-audit "${options[@]}" > "$OUT/$name-console.txt" 2>&1
+  phase_exit=$?
+  echo "$name $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --apr-dma ]; then
+  timeout -k 5 60 /usr/local/sbin/apollo-apr-dma-audit > "$OUT/apr-dma-console.txt" 2>&1
+  phase_exit=$?
+  echo "apr-dma $phase_exit" >> "$OUT/exit-status.txt"
+  run audio-enumeration bash -c 'aplay -l; arecord -l; cat /proc/asound/cards; cat /sys/bus/aprbus/devices/aprsvc:service:4:3/uevent'
+fi
+if [ "$phase" = --clock ]; then
+  timeout -k 5 60 /usr/local/sbin/apollo-clock-audit > "$OUT/clock-console.txt" 2>&1
+  phase_exit=$?
+  echo "clock $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --backlight ] || [ "$phase" = --backlight-resume ]; then
+  name=${phase#--}
+  timeout -k 5 60 /usr/local/sbin/apollo-backlight-audit "$name" > "$OUT/$name-console.txt" 2>&1
+  phase_exit=$?
+  echo "$name $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --video-extended ]; then
+  systemctl start apollo-video-init.service
+  timeout -k 5 750 /usr/local/sbin/apollo-video-extended-audit > "$OUT/video-extended-console.txt" 2>&1
+  phase_exit=$?
+  echo "video-extended $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --video-player ]; then
+  run video-player-packages pacman -Q clapper libclapper libclapper-gtk spectacle
+  install -d -m700 -o apollo -g apollo "$OUT/video-player"
+  display=''
+  for socket in /run/user/1001/wayland-*; do
+    if [ -S "$socket" ]; then display=${socket##*/}; break; fi
+  done
+  if [ -z "$display" ]; then echo 'No Wayland session socket available' >&2; exit 2; fi
+  timeout -k 5 180 runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus WAYLAND_DISPLAY="$display" XDG_SESSION_TYPE=wayland QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=KDE /usr/local/sbin/apollo-video-player-audit > "$OUT/video-player-console.txt" 2>&1
+  phase_exit=$?
+  echo "video-player $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --modem ]; then
+  echo 'START modem-startup'
+  timeout -k 5 400 bash -c '
+    mkdir -p /run/systemd/system/apollo-modem-rproc.service.d
+    printf "[Service]\nTimeoutStartSec=240\n" > /run/systemd/system/apollo-modem-rproc.service.d/20-audit.conf
+    systemctl unmask ModemManager.service
+    if [ -x /usr/local/sbin/apollo-desktop-gps-audit ]; then
+      mkdir -p /run/systemd/system/ModemManager.service.d
+      printf "[Service]\nExecStart=\nExecStart=/usr/bin/ModemManager --test-quick-suspend-resume --test-multiplex-requested --debug\nStandardOutput=journal\nStandardError=journal\n" > /run/systemd/system/ModemManager.service.d/zzz-apollo-init-observation.conf
+    fi
+    systemctl daemon-reload
+    if ! systemctl start apollo-modem-start.service; then
+      systemctl status apollo-modem-start.service tqftpserv-sdx55.service apollo-efs-extract.service --no-pager
+      journalctl -b -u apollo-modem-start -u tqftpserv-sdx55 -u apollo-efs-extract --no-pager -n 90
+      exit 1
+    fi
+    if ! systemctl start ModemManager.service; then
+      systemctl status apollo-modem-rproc.service ModemManager.service --no-pager
+      journalctl -b -u apollo-modem-rproc -u mdm-helper-native -u mhi-efs-sync --no-pager -n 120
+      exit 1
+    fi
+    modem_seen=0
+    for attempt in $(seq 1 60); do
+      result=$(mmcli -L 2>&1)
+      printf "%s\n" "$result"
+      if grep -q /Modem/ <<< "$result"; then
+        modem_seen=1
+        mmcli -m 0 --output-keyvalue
+        # The initialization debug log has no active GPS session. Stop verbose
+        # tracing before any location request so NMEA positions are not logged.
+        mmcli --set-logging=INFO
+        break
+      fi
+      sleep 5
+    done
+    systemctl status apollo-modem-start.service pm-service-native.service mdm-helper-native.service tqftpserv-sdx55.service mhi-efs-sync.service ModemManager.service --no-pager
+    journalctl -b -u apollo-modem-start -u pm-service-native -u mdm-helper-native -u tqftpserv-sdx55 -u mhi-efs-sync -u ModemManager --no-pager -n 200
+    test "$modem_seen" = 1
+  ' 2>&1 | tee "$OUT/modem-startup.txt"
+  echo "modem-startup $?" >> "$OUT/exit-status.txt"
+  echo 'END modem-startup'
+fi
+if [ "$phase" = --suspend ]; then
+  run suspend-cycle bash -c '
+    set -e
+    test -w /sys/class/rtc/rtc0/wakealarm
+    echo "Before suspend: $(date -u); uptime=$(cat /proc/uptime)"
+    rtcwake -m no -s 6
+    systemctl suspend
+    sleep 2
+    echo "After suspend: $(date -u); uptime=$(cat /proc/uptime)"
+    rtcwake -m disable
+    systemctl is-active sddm.service hexagonrpcd-sdsp.service
+    pgrep -x kwin_wayland
+  '
+fi
+if [ "$phase" = --camera-stress ]; then
+  timeout -k 5 240 /usr/local/sbin/apollo-camera-stress > "$OUT/camera-stress.txt" 2>&1
+  echo "camera-stress $?" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --navigation ]; then
+  timeout -k 5 440 /usr/local/sbin/apollo-location-audit > "$OUT/navigation.txt" 2>&1
+  echo "navigation $?" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --audio ]; then
+  if [ -e /etc/apollo/quiet-testing ]; then exit 2; fi
+  run audio-sweep /usr/local/sbin/apollo-audio-sweep
+fi
+if [ "$phase" = --network ]; then
+  timeout -k 5 300 /usr/local/sbin/apollo-network-audit > "$OUT/network-console.txt" 2>&1
+  phase_exit=$?
+  echo "network $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --desktop-gps ]; then
+  timeout -k 5 600 /usr/local/sbin/apollo-desktop-gps-audit > "$OUT/desktop-gps-console.txt" 2>&1
+  phase_exit=$?
+  echo "desktop-gps $phase_exit" >> "$OUT/exit-status.txt"
+fi
+if [ "$phase" = --geoclue ]; then
+  if python3 -c 'import json; d=json.load(open("/run/apollo-audit/desktop-gps/result.json")); assert any(s.get("enable_exit")==0 for s in d["stages"])'; then
+    timeout -k 5 350 /usr/local/sbin/apollo-geoclue-audit > "$OUT/geoclue-console.txt" 2>&1
+    phase_exit=$?
+    echo "geoclue $phase_exit" >> "$OUT/exit-status.txt"
+  else
+    echo 'GeoClue not tested: ModemManager could not start GPS' > "$OUT/geoclue-console.txt"
+    echo "geoclue 125" >> "$OUT/exit-status.txt"
+    phase_exit=125
+  fi
+fi
+if [ "$phase" = --location-startup ]; then
+  run location-package-versions pacman -Q apollo-location geoclue libnotify
+  # The desktop starts its own modem/GNSS dependency chain. This phase does
+  # not run the raw probe, MM setup or qmicli preparation on the host's behalf.
+  systemctl unmask ModemManager.service
+  systemctl daemon-reload
+  sync_ready=0
+  for attempt in $(seq 1 45); do
+    if [ "$(timedatectl show -p NTPSynchronized --value)" = yes ]; then sync_ready=1; break; fi
+    sleep 1
+  done
+  timedatectl show -p NTPSynchronized > "$OUT/location-clock.txt"
+  echo "phone_ntp_synchronized=$sync_ready" >> "$OUT/location-clock.txt"
+  if [ "$sync_ready" = 1 ]; then
+    timeout -k 5 600 /usr/local/sbin/apollo-geoclue-audit > "$OUT/geoclue-console.txt" 2>&1
+    phase_exit=$?
+  else
+    phase_exit=1
+  fi
+  echo "location-startup $phase_exit" >> "$OUT/exit-status.txt"
+  systemctl status apollo-gnss-prepare.service --no-pager > "$OUT/location-preparation-status.txt" 2>&1
+  journalctl -b -u apollo-gnss-prepare.service --no-pager > "$OUT/location-preparation-journal.txt" 2>&1
+fi
+if [ "$phase" = --fingerprint ]; then
+  timeout -k 5 140 /usr/local/sbin/apollo-fingerprint-audit > "$OUT/fingerprint.txt" 2>&1
+  echo "fingerprint $?" >> "$OUT/exit-status.txt"
+fi
+run kernel dmesg
+run power-desktop bash -c 'upower -d; systemctl status upower rtkit-daemon --no-pager'
+run journal journalctl -b --no-pager -p warning
+echo APOLLO_HARDWARE_AUDIT_FINISHED
+exit "$phase_exit"

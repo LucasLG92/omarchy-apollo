@@ -1,0 +1,22 @@
+pkgname=libssc-apollo
+pkgver=0.4.4.r1
+pkgrel=1
+pkgdesc='Qualcomm SSC library with upstream report lifecycle fixes'
+arch=(aarch64)
+url='https://codeberg.org/DylanVanAssche/libssc'
+license=(GPL-3.0-or-later)
+depends=(glib2 glibc libqmi libqrtr-glib protobuf-c)
+makedepends=(meson ninja gcc protobuf python-protobuf)
+provides=('libssc=0.4.4')
+conflicts=(libssc)
+_commit=4e4c6c8cc702a754bd700506c01961aaf971a23b
+source=("libssc-$_commit.tar.gz::https://codeberg.org/DylanVanAssche/libssc/archive/$_commit.tar.gz")
+sha512sums=(6c9e728b129f421ae1364f9a799687bd68b058f6609139d22bc79b54994b448cf83edc349e2d7940de38c17f5d1c8c9b67488deea743eba9a36a15ec0d14cc5e)
+build() {
+  meson setup libssc build --prefix=/usr --libdir=lib --libexecdir=lib --buildtype=release
+  meson compile -C build -j 4
+}
+package() {
+  DESTDIR="$pkgdir" meson install -C build --no-rebuild
+  install -Dm644 libssc/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

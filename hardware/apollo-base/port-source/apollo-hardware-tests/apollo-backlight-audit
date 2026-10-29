@@ -1,0 +1,82 @@
+#!/usr/bin/python3
+"""Exercise WLED brightness/register readback; restore user settings, no audio."""
+from pathlib import Path
+import json,os,re,subprocess,sys,time
+stage=sys.argv[1] if len(sys.argv)>1 else 'backlight'
+assert stage in ('backlight','backlight-resume')
+out=Path('/run/apollo-audit')/stage; out.mkdir(parents=True,exist_ok=True)
+user=['runuser','-u','apollo','--','env','XDG_RUNTIME_DIR=/run/user/1001',
+      'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus','systemctl','--user']
+unit='plasma-powerdevil.service'
+def ctl(*args): return subprocess.run([*user,*args],capture_output=True,text=True,timeout=10)
+def kernel(): return subprocess.check_output(['dmesg'],text=True,timeout=10)
+def wled_warning(text): return bool(re.search(r'Unbalanced enable for IRQ[\s\S]{0,3200}wled_ovp_work',text))
+result={'audio_used':False,'stage':stage,'cycles':[],
+    'scope':'Requested and hardware-readback brightness, rapid enable cancellation, desktop process continuity; not calibrated panel luminance or electrical fault injection'}
+before=kernel(); result['boot_wled_unbalanced_irq_warning']=wled_warning(before)
+was_active=ctl('is-active',unit).returncode==0
+already_masked=ctl('is-enabled',unit).stdout.strip().startswith('masked')
+masked=False; device=None; saved={}
+try:
+    if not already_masked:
+        p=ctl('mask','--runtime','--now',unit)
+        assert p.returncode==0,p.stderr
+        masked=True
+    nodes=list(Path('/sys/class/backlight').iterdir())
+    assert len(nodes)==1,[x.name for x in nodes]
+    device=nodes[0]
+    driver=Path(os.path.realpath(device/'device/driver'))
+    result['platform_driver']=driver.name
+    assert driver.name=='qcom,wled',str(driver)
+    saved={name:(device/name).read_text().strip() for name in ('brightness','bl_power')}
+    result['device']=device.name
+    result['original_settings']=saved
+    maximum=int((device/'max_brightness').read_text())
+    low=max(32,maximum//8); middle=max(low+1,maximum//4)
+    assert 0<low<middle<=maximum
+    result['max_brightness']=maximum
+    kwin=subprocess.check_output(['pgrep','-x','kwin_wayland'],text=True,timeout=5).strip()
+    result['kwin_pid_before']=kwin
+    def brightness(value,settle=.04):
+        (device/'brightness').write_text(str(value))
+        if settle: time.sleep(settle)
+        requested=int((device/'brightness').read_text())
+        actual=int((device/'actual_brightness').read_text())
+        assert requested==value and actual==value,(value,requested,actual)
+        return {'requested':requested,'hardware_readback':actual}
+    (device/'bl_power').write_text('0')
+    for pause in (0,.005,.03):
+        for repeat in range(4):
+            samples=[brightness(0),brightness(low,settle=pause),brightness(0),brightness(middle)]
+            result['cycles'].append({'pause_before_cancel_s':pause,'repeat':repeat+1,'samples':samples,'passed':True})
+    # Power blanking exercises the public backlight blank/unblank path too.
+    (device/'bl_power').write_text('4'); time.sleep(.04)
+    result['blank_readback']=int((device/'actual_brightness').read_text())
+    assert result['blank_readback']==0
+    (device/'bl_power').write_text('0'); time.sleep(.04)
+    result['unblank_readback']=int((device/'actual_brightness').read_text())
+    assert result['unblank_readback']==middle
+    result['kwin_pid_after']=subprocess.check_output(['pgrep','-x','kwin_wayland'],text=True,timeout=5).strip()
+    assert result['kwin_pid_after']==kwin
+except Exception as error:
+    result['error']=type(error).__name__+': '+str(error)
+finally:
+    if device and saved:
+        try:
+            (device/'brightness').write_text(saved['brightness'])
+            (device/'bl_power').write_text(saved['bl_power'])
+            result['settings_restored']=all((device/name).read_text().strip()==value for name,value in saved.items())
+        except Exception as error: result['restore_error']=str(error)
+    if masked:
+        p=ctl('unmask','--runtime',unit)
+        result['temporary_powerdevil_mask_removed']=p.returncode==0
+        if was_active:
+            p=ctl('start',unit); result['powerdevil_restarted']=p.returncode==0
+    after=kernel()
+    (out/'kernel-after.txt').write_text(after)
+    result['wled_unbalanced_irq_warning_after']=wled_warning(after)
+    result['passed']=not result.get('error') and len(result['cycles'])==12 and result.get('settings_restored') and not result['wled_unbalanced_irq_warning_after']
+    if masked: result['passed']=result['passed'] and result.get('temporary_powerdevil_mask_removed') and (not was_active or result.get('powerdevil_restarted'))
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print('WLED register/transition test passed' if result['passed'] else 'WLED needs further work')
+raise SystemExit(0 if result['passed'] else 1)

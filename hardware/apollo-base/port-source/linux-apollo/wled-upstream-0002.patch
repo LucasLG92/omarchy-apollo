@@ -1,0 +1,23 @@
+diff --git a/drivers/video/backlight/qcom-wled.c b/drivers/video/backlight/qcom-wled.c
+index 2281007bdd459..f452d328997ad 100644
+--- a/drivers/video/backlight/qcom-wled.c
++++ b/drivers/video/backlight/qcom-wled.c
+@@ -54,17 +54,17 @@
+ #define WLED3_SINK_REG_SYNC				0x47
+ #define  WLED3_SINK_REG_SYNC_CLEAR			0x00
+ 
+ #define WLED3_SINK_REG_CURR_SINK			0x4f
+ #define  WLED3_SINK_REG_CURR_SINK_MASK			GENMASK(7, 5)
+ #define  WLED3_SINK_REG_CURR_SINK_SHFT			5
+ 
+ /* WLED3 specific per-'string' registers below */
+-#define WLED3_SINK_REG_BRIGHT(n)			(0x40 + n)
++#define WLED3_SINK_REG_BRIGHT(n)			(0x40 + (n * 0x2))
+ 
+ #define WLED3_SINK_REG_STR_MOD_EN(n)			(0x60 + (n * 0x10))
+ #define  WLED3_SINK_REG_STR_MOD_MASK			BIT(7)
+ 
+ #define WLED3_SINK_REG_STR_FULL_SCALE_CURR(n)		(0x62 + (n * 0x10))
+ #define  WLED3_SINK_REG_STR_FULL_SCALE_CURR_MASK	GENMASK(4, 0)
+ 
+ #define WLED3_SINK_REG_STR_MOD_SRC(n)			(0x63 + (n * 0x10))

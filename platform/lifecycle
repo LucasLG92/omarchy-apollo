@@ -1,0 +1,21 @@
+#!/bin/bash -p
+# Fixed entrypoint for lifecycle operations registered by the Apollo patch.
+set -euo pipefail
+export PATH=/usr/bin
+operation=${0##*/}
+
+case $operation in
+  setup-boot | update-verify)
+    [[ -f /run/apollo-persistent ]] || { echo "Apollo persistent root is not active." >&2; exit 1; }
+    pacman -Q linux-apollo >/dev/null
+    [[ -d /run/apollo-storage && -d /run/apollo-lower ]]
+    ;;
+  setup-system | setup-user | post-install | pre-remove)
+    # These operations do not imply generic boot/image provisioning.
+    exit 0
+    ;;
+  *)
+    echo "Omarchy Apollo: '$operation' is not implemented for this Android boot / ext4 overlay layout. No storage or boot changes were made." >&2
+    exit 1
+    ;;
+esac

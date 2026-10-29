@@ -1,0 +1,90 @@
+Subject: [PATCH] media: iris: handle Apollo VIDEO.VPU.1.0-00094 decoder EOS
+
+On the tested Apollo the nonzero dummy decoder EOS address produces no
+EOS response. A zero address elicits an empty EOS response with no valid
+capture-buffer tag. Treating it as an unknown frame poisons the session,
+so GStreamer never completes EOS. FFmpeg can also lose the final frame.
+
+Gate the compatibility behavior on both the Apollo machine compatible
+and the exact firmware revision prefix. Send a zero decoder EOS address;
+ignore only its unmatched empty synthetic EOS and late empty flush
+responses after LAST while a drain flush is pending. The existing QBUF
+drain path supplies LAST/EOS. Preserve encoder behavior, normal matched
+responses, nonempty-frame validation and all other firmware behavior.
+
+Physical-device evidence before/after: hardware-20261028T220412Z,
+hardware-20261028T221321Z, hardware-20261028T221712Z and
+hardware-20261028T222153Z. The final packaged implementation is tested
+separately and recorded in video-validation.json. No firmware blob is
+modified, and no capture-buffer address is fabricated.
+
+--- a/drivers/media/platform/qcom/iris/iris_core.h
++++ b/drivers/media/platform/qcom/iris/iris_core.h
+@@ -68,6 +68,7 @@
+  * @hfi_ops: iris hfi command ops
+  * @hfi_response_ops: iris hfi response ops
+  * @core_init_done: structure of signal completion for system response
++ * @legacy_synthetic_eos: Apollo firmware 1.0-00094 decoder EOS compatibility
+  * @intr_status: interrupt status
+  * @sys_error_handler: a delayed work for handling system fatal error
+  * @instances: a list_head of all instances
+@@ -111,6 +112,7 @@
+ 	const struct iris_hfi_command_ops	*hfi_ops;
+ 	const struct iris_hfi_response_ops	*hfi_response_ops;
+ 	struct completion			core_init_done;
++	bool					legacy_synthetic_eos;
+ 	u32					intr_status;
+ 	struct delayed_work			sys_error_handler;
+ 	struct list_head			instances;
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen1_response.c
+@@ -5,6 +5,8 @@
+ 
+ #include <linux/bitfield.h>
+ #include <media/v4l2-mem2mem.h>
++
++#include <linux/of.h>
+ 
+ #include "iris_hfi_gen1.h"
+ #include "iris_hfi_gen1_defines.h"
+@@ -318,6 +320,10 @@
+ 			fw_version[i] = ' ';
+ 	}
+ 	fw_version[i] = '\0';
++	/* This Apollo firmware ignores the nonzero dummy decoder EOS address. */
++	core->legacy_synthetic_eos =
++		of_machine_is_compatible("xiaomi,apollo") &&
++		str_has_prefix(fw_version, "14:VIDEO.VPU.1.0-00094-");
+ 	dev_dbg(core->dev, "firmware version: %s\n", fw_version);
+ }
+ 
+@@ -469,6 +475,18 @@
+ 				break;
+ 		}
+ 	}
++	/*
++	 * Legacy Apollo reports EOS without a matching capture-buffer tag.
++	 * The drain state is already set above; the next capture QBUF supplies
++	 * LAST. A subsequent flush can also return that completed empty buffer.
++	 * Neither response is an unknown decoded frame or a reason to poison
++	 * the session. Keep errors for all unmatched responses carrying data.
++	 */
++	if (!found && core->legacy_synthetic_eos && inst->domain == DECODER &&
++	    !filled_len && ((hfi_flags & HFI_BUFFERFLAG_EOS) ||
++	    (iris_drain_pending(inst) && inst->last_buffer_dequeued &&
++	     inst->flush_responses_pending)))
++		return;
+ 	if (!found)
+ 		goto error;
+ 
+--- a/drivers/media/platform/qcom/iris/iris_hfi_gen1_command.c
++++ b/drivers/media/platform/qcom/iris/iris_hfi_gen1_command.c
+@@ -459,7 +459,7 @@
+ 		ip_pkt.shdr.hdr.pkt_type = HFI_CMD_SESSION_EMPTY_BUFFER;
+ 		ip_pkt.shdr.session_id = inst->session_id;
+ 		ip_pkt.flags = HFI_BUFFERFLAG_EOS;
+-		ip_pkt.packet_buffer = 0xdeadb000;
++		ip_pkt.packet_buffer = inst->core->legacy_synthetic_eos ? 0 : 0xdeadb000;
+ 
+ 		return iris_hfi_queue_cmd_write(inst->core, &ip_pkt, ip_pkt.shdr.hdr.size);
+ 	}

@@ -1,0 +1,68 @@
+#!/usr/bin/python3
+"""Exercise real sensor power cycles without saving camera images."""
+from pathlib import Path
+import json
+import re
+import subprocess
+import time
+
+out = Path('/run/apollo-audit/camera-stress')
+out.mkdir(parents=True, exist_ok=True)
+sensors = [p for p in Path('/sys/bus/i2c/devices').glob('*')
+           if (p / 'name').exists() and (p / 'name').read_text().strip() == 's5k3t2']
+assert len(sensors) == 1
+sensor = sensors[0]
+if not (sensor / 'driver').exists():
+    (out / 'summary.json').write_text(json.dumps({'error': 'front sensor did not bind at boot'}))
+    raise SystemExit(2)
+settings = {
+    Path('/sys/bus/platform/devices/ac50000.cci/power/control'): 'on',
+    sensor / 'power/autosuspend_delay_ms': '0',
+    sensor / 'power/control': 'auto',
+}
+original = {}
+cycles = []
+try:
+    for file, value in settings.items():
+        original[file] = file.read_text().strip()
+        file.write_text(value)
+    for name, file in [('clocks', Path('/sys/kernel/debug/clk/clk_summary')),
+                       ('cci-power', Path('/sys/bus/platform/devices/ac50000.cci/power/runtime_status'))]:
+        if file.exists():
+            (out / (name + '.txt')).write_text(file.read_text())
+    for pause in (0.05, 0.1, 0.5, 1.2):
+        for repeat in range(6):
+            # Confirm the sensor's own runtime driver powers it down.
+            deadline = time.monotonic() + 3
+            while (sensor / 'power/runtime_status').read_text().strip() != 'suspended':
+                if time.monotonic() > deadline:
+                    raise RuntimeError('Sensor did not runtime suspend between cycles')
+                time.sleep(0.01)
+            time.sleep(pause)
+            started = time.monotonic()
+            try:
+                proc = subprocess.run(['cam', '--camera=/base/soc@0/cci@ac50000/i2c-bus@1/camera@10',
+                                       '--capture=5', '--stream=role=viewfinder,width=640,height=480,pixelformat=RGB888'],
+                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=8)
+                output = proc.stdout.decode(errors='replace')
+                code = proc.returncode
+            except subprocess.TimeoutExpired as error:
+                output = (error.stdout or b'').decode(errors='replace')
+                code = 124
+            number = len(cycles) + 1
+            (out / f'cycle-{number:02d}.txt').write_text(output)
+            frames = len(re.findall(r'cam0-stream0 seq:', output))
+            item = {'cycle': number, 'pause_seconds': pause, 'exit': code, 'frames': frames,
+                    'elapsed_seconds': round(time.monotonic() - started, 3),
+                    'passed': code == 0 and frames == 5}
+            cycles.append(item)
+            print(json.dumps(item), flush=True)
+finally:
+    for file, value in reversed(list(original.items())):
+        file.write_text(value)
+    summary = {'controller_held_runtime_active': True, 'sensor_power_cycles_confirmed': True,
+               'cycles': len(cycles), 'passed': sum(c['passed'] for c in cycles),
+               'failed': sum(not c['passed'] for c in cycles), 'results': cycles,
+               'settings_restored': {str(p): p.read_text().strip() == v for p, v in original.items()}}
+    (out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+raise SystemExit(0 if cycles and all(c['passed'] for c in cycles) else 1)

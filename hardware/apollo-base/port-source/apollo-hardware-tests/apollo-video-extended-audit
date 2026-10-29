@@ -1,0 +1,108 @@
+#!/usr/bin/python3
+"""Explicit stateful V4L2 decode tests; synthetic video, never audio."""
+from pathlib import Path
+import hashlib,json,os,subprocess,threading,time
+
+out=Path('/run/apollo-audit/video-extended'); out.mkdir(parents=True,exist_ok=True)
+vectors=Path('/tmp/apollo-video-vectors-v1')
+manifest=json.loads((vectors/'manifest.json').read_text())
+result={'audio_used':False,'software_fallback_allowed':False,'tests':[]}
+
+def save(): (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+def command(label,args,timeout=30):
+    start=time.monotonic()
+    try:
+        with (out/(label+'.txt')).open('wb') as log:
+            p=subprocess.run(args,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,timeout=timeout)
+        return {'exit':p.returncode,'seconds':round(time.monotonic()-start,3)}
+    except subprocess.TimeoutExpired:
+        return {'exit':124,'seconds':round(time.monotonic()-start,3)}
+
+def hashes(path):
+    return [x.rsplit(',',1)[-1].strip() for x in path.read_text().splitlines()
+            if x and not x.startswith('#')] if path.exists() else []
+
+def ffmpeg(case,label=None,paced=False):
+    label=label or case['name']+'-ffmpeg'
+    output=out/(label+'.framemd5')
+    args=['ffmpeg','-hide_banner','-nostdin','-loglevel','info','-y']
+    if paced: args+=['-readrate','1']
+    args+=['-c:v',case['decoder'],'-i',str(vectors/case['file']),'-an',
+           '-fps_mode','passthrough','-pix_fmt','yuv420p','-f','framemd5',str(output)]
+    check=command(label,args,timeout=85 if paced else 50)
+    actual=hashes(output); expected=hashes(vectors/case['reference'])
+    check.update({'frames':len(actual),'expected_frames':case['frames'],
+                  'exact_match':actual==expected,'explicit_decoder':case['decoder']})
+    check['passed']=check['exit']==0 and len(actual)==case['frames'] and actual==expected
+    if paced:
+        check['paced_input']=True
+        check['sustained_seconds']=check['seconds']
+        check['passed']=check['passed'] and check['seconds']>=29
+    return check
+
+def gstreamer(case):
+    label=case['name']+'-gstreamer'
+    parser={'h264':['h264parse'],'hevc':['h265parse'],'ivf':['ivfparse','!','vp9parse']}[case['format']]
+    args=['gst-launch-1.0','-q','filesrc','location='+str(vectors/case['file']),'!',
+          *parser,'!',case['gst_decoder'],'capture-io-mode=mmap','output-io-mode=mmap',
+          '!','videoconvert','!','video/x-raw,format=I420','!','fdsink','fd=1','sync=false']
+    env=dict(os.environ,GST_DEBUG_NO_COLOR='1')
+    timed_out=threading.Event()
+    start=time.monotonic()
+    with (out/(label+'.txt')).open('wb') as log:
+        process=subprocess.Popen(args,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=log,env=env)
+        def kill():
+            if process.poll() is None:
+                timed_out.set()
+                try: process.kill()
+                except ProcessLookupError: pass
+        timer=threading.Timer(65,kill); timer.daemon=True; timer.start()
+        frame_size=case['width']*case['height']*3//2
+        buffer=bytearray(); actual=[]
+        while True:
+            block=process.stdout.read(frame_size-len(buffer))
+            if not block: break
+            buffer.extend(block)
+            if len(buffer)==frame_size:
+                actual.append(hashlib.md5(buffer).hexdigest()); buffer.clear()
+        process.stdout.close()
+        try: code=process.wait(timeout=5)
+        except subprocess.TimeoutExpired: kill(); code=124
+        timer.cancel()
+    expected=hashes(vectors/case['reference'])
+    check={'exit':124 if timed_out.is_set() else code,'seconds':round(time.monotonic()-start,3),
+           'frames':len(actual),'expected_frames':case['frames'],'trailing_bytes':len(buffer),
+           'exact_match':actual==expected,'explicit_decoder':case['gst_decoder']}
+    check['passed']=check['exit']==0 and not buffer and len(actual)==case['frames'] and actual==expected
+    (out/(label+'-md5.json')).write_text(json.dumps(actual))
+    return check
+
+try:
+    command('devices',['v4l2-ctl','--list-devices'])
+    for node in Path('/sys/class/video4linux').glob('video*'):
+        if 'Iris Decoder' in (node/'name').read_text():
+            result['decoder_device']='/dev/'+node.name
+            command('decoder-formats',['v4l2-ctl','-d',result['decoder_device'],
+                                      '--list-formats-out-ext','--list-formats-ext'])
+    for case in manifest['cases']:
+        for name,key in ((case['file'],'sha256'),(case['reference'],'reference_sha256')):
+            assert hashlib.sha256((vectors/name).read_bytes()).hexdigest()==case[key],name
+        test={'name':case['name'],'width':case['width'],'height':case['height'],
+              'input_sha256':case['sha256'],'reference_sha256':case['reference_sha256']}
+        command(case['name']+'-element',['gst-inspect-1.0',case['gst_decoder']])
+        test['ffmpeg']=ffmpeg(case,paced=case['name'].endswith('-long'))
+        test['gstreamer']=gstreamer(case)
+        test['passed']=test['ffmpeg']['passed'] and test['gstreamer']['passed']
+        result['tests'].append(test); save()
+        print(case['name'], 'PASS' if test['passed'] else 'FAIL',flush=True)
+        kernel=subprocess.check_output(['dmesg'],text=True)
+        if 'Exception: TID' in kernel:
+            result['firmware_exception']=True
+            break
+    result['passed']=len(result['tests'])==len(manifest['cases']) and all(t['passed'] for t in result['tests'])
+except Exception as error:
+    result['passed']=False; result['error']=str(error)
+finally:
+    command('kernel-after',['dmesg'])
+    save()
+raise SystemExit(0 if result['passed'] else 1)

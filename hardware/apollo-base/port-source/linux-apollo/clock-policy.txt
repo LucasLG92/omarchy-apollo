@@ -1,0 +1,16 @@
+Apollo clock policy (kernel package release 14)
+
+The firmware/Android RTC is a raw counter with no Linux epoch offset configured.
+In the native log, PID 1 restores the image's saved timestamp at uptime 68.27s,
+then the modular rtc-pm8xxx driver resets it to March 1970 at uptime 69.98s.
+This late RTC_HCTOSYS correction must not undo userspace's more recent time.
+
+Disable RTC_HCTOSYS and RTC_SYSTOHC in this board's kernel configuration. Keep
+the RTC device and alarm interface for rtcwake/suspend. No raw PMIC clock, UEFI
+offset, Android persist data or RTC calibration is written. Kernel automatic
+clock writes are disabled too. systemd uses its saved timestamp/build epoch
+as a lower bound, then systemd-timesyncd obtains actual UTC through Wi-Fi.
+
+The saved image timestamp is a fallback, not an accurate persistent clock.
+Offline cold boot timekeeping still needs a persistent Linux state or a
+verified shared epoch-offset implementation. This change does not prove that.

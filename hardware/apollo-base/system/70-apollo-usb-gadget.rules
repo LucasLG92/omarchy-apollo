@@ -1,0 +1,2 @@
+# Retry after a late controller registration or a USB role transition.
+ACTION=="add", SUBSYSTEM=="udc", TAG+="systemd", ENV{SYSTEMD_WANTS}+="apollo-usb-gadget.service"

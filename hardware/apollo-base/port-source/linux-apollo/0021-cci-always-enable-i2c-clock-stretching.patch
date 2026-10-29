@@ -1,0 +1,127 @@
+Subject: [PATCH] i2c: qcom-cci: backport unconditional SCL clock stretching
+
+Backport Hitesh Patel's reviewed v3 clock-stretching change to the Apollo
+fork's older per-SoC timing tables. Keep every timing constant and the port's
+existing reset/recovery changes; remove the old optional stretch field and
+always set the documented MISC_CTL bit when configuring each master.
+
+The old Apollo fast-mode table disables this I2C feature. Native kernel17
+focus diagnostics reproduced ENXIO even with stable power and up to 200 ms
+extra settling. This motivates testing the protocol fix; it is not yet proof
+that clock stretching caused every Apollo failure.
+
+Author of upstream change: Hitesh Patel
+Upstream reviewer: Loic Poulain
+Patch: https://lists.openwall.net/linux-kernel/2026/10/07/198
+Maintainer acceptance: https://lists.openwall.net/linux-kernel/2026/10/09/798
+The upstream hardware test used an RB3 Gen2 GMSL camera, not Apollo.
+
+---
+
+--- a/drivers/i2c/busses/i2c-qcom-cci.c
++++ b/drivers/i2c/busses/i2c-qcom-cci.c
+@@ -27,6 +27,7 @@
+ #define CCI_I2C_Mm_SDA_CTL_1(m)			(0x108 + 0x100 * (m))
+ #define CCI_I2C_Mm_SDA_CTL_2(m)			(0x10c + 0x100 * (m))
+ #define CCI_I2C_Mm_MISC_CTL(m)			(0x110 + 0x100 * (m))
++#define CCI_I2C_MISC_CTL_SCL_STRETCH_EN	BIT(8)
+ 
+ #define CCI_I2C_Mm_READ_DATA(m)			(0x118 + 0x100 * (m))
+ #define CCI_I2C_Mm_READ_BUF_LEVEL(m)		(0x11c + 0x100 * (m))
+@@ -97,7 +98,6 @@
+ 	u16 thd_dat; /* data hold time */
+ 	u16 thd_sta; /* hold time (repeated) START condition */
+ 	u16 tbuf; /* bus free time between a STOP and START condition */
+-	u8 scl_stretch_en;
+ 	u16 trdhld;
+ 	u16 tsp; /* pulse width of spikes suppressed by the input filter */
+ };
+@@ -287,7 +287,7 @@
+ 		val = hw->tbuf;
+ 		writel(val, cci->base + CCI_I2C_Mm_SDA_CTL_2(i));
+ 
+-		val = hw->scl_stretch_en << 8 | hw->trdhld << 4 | hw->tsp;
++		val = CCI_I2C_MISC_CTL_SCL_STRETCH_EN | hw->trdhld << 4 | hw->tsp;
+ 		writel(val, cci->base + CCI_I2C_Mm_MISC_CTL(i));
+ 	}
+ 
+@@ -696,7 +696,6 @@
+ 		.thd_dat = 10,
+ 		.thd_sta = 77,
+ 		.tbuf = 118,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 1
+ 	},
+@@ -708,7 +707,6 @@
+ 		.thd_dat = 13,
+ 		.thd_sta = 18,
+ 		.tbuf = 32,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 3
+ 	},
+@@ -729,7 +727,6 @@
+ 		.thd_dat = 10,
+ 		.thd_sta = 77,
+ 		.tbuf = 118,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 1
+ 	},
+@@ -741,7 +738,6 @@
+ 		.thd_dat = 13,
+ 		.thd_sta = 18,
+ 		.tbuf = 32,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 3
+ 	},
+@@ -762,7 +758,6 @@
+ 		.thd_dat = 22,
+ 		.thd_sta = 162,
+ 		.tbuf = 227,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 3
+ 	},
+@@ -774,7 +769,6 @@
+ 		.thd_dat = 22,
+ 		.thd_sta = 35,
+ 		.tbuf = 62,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 3
+ 	},
+@@ -786,7 +780,6 @@
+ 		.thd_dat = 16,
+ 		.thd_sta = 15,
+ 		.tbuf = 24,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 3,
+ 		.tsp = 3
+ 	},
+@@ -807,7 +800,6 @@
+ 		.thd_dat = 10,
+ 		.thd_sta = 77,
+ 		.tbuf = 118,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 1
+ 	},
+@@ -819,7 +811,6 @@
+ 		.thd_dat = 13,
+ 		.thd_sta = 18,
+ 		.tbuf = 32,
+-		.scl_stretch_en = 0,
+ 		.trdhld = 6,
+ 		.tsp = 3
+ 	},
+@@ -831,7 +822,6 @@
+ 		.thd_dat = 16,
+ 		.thd_sta = 15,
+ 		.tbuf = 19,
+-		.scl_stretch_en = 1,
+ 		.trdhld = 3,
+ 		.tsp = 3
+ 	},

@@ -1,0 +1,33 @@
+pkgname=apollo-cameras
+pkgver=1.0
+pkgrel=3
+pkgdesc='Ordered Apollo camera startup and bounded recovery of unbound sensors'
+arch=(any)
+license=(MIT)
+depends=(bash kmod systemd linux-apollo libcamera-apollo)
+makedepends=(dtc)
+source=(apollo-camera-init apollo-camera-init.service apollo-camera-order.conf disable-camera.dts.in)
+sha512sums=(
+  cd9334c54bf76b779e2c6370d2c0a74a0be0a710040adcfad524d8b181dd7e2138850fa1142c4567a88eb2f20be83e43ae8111a9ad8a6d7d152e2e8168490b3c
+  90e48e42c64c1b03c0aa0be3d33ff78695ea8ef2cac9c8299710bed398a27035c40b2a3930f4ff3d82725bd6b8bd6237185c2b7cff63e008c61c0516037bb19f
+  cf6527f3080e3970b231a997545bc235e4a06eaf3b80ef443ae12502d72d1ad3e80f2d4b17d85d2f5809a6714b61e7d93580ad54e98285f3694ec16829214aed
+  bda8cd4717afbdbeb49e18a7dd018dcc4580670b4128b5da65e0fd3f35a8c9947fe056bae71703ce84444e1885318cc28f2d7b26ac54b7d3ffa2b576caa49f3f)
+build() {
+  for entry in \
+    s5khmx:/soc@0/cci@ac4f000/i2c-bus@0/camera@3d \
+    s5k5e9:/soc@0/cci@ac4f000/i2c-bus@1/camera@2d \
+    ov13b10:/soc@0/cci@ac50000/i2c-bus@0/camera@36 \
+    s5k3t2:/soc@0/cci@ac50000/i2c-bus@1/camera@10; do
+    name=${entry%%:*}
+    target=${entry#*:}
+    sed "s|@TARGET@|$target|" disable-camera.dts.in > "disable-$name.dts"
+    dtc -@ -I dts -O dtb -o "disable-$name.dtbo" "disable-$name.dts"
+  done
+}
+
+package() {
+  install -Dm755 apollo-camera-init "$pkgdir/usr/bin/apollo-camera-init"
+  install -Dm644 apollo-camera-init.service "$pkgdir/usr/lib/systemd/system/apollo-camera-init.service"
+  install -Dm644 apollo-camera-order.conf "$pkgdir/usr/lib/modprobe.d/apollo-camera-order.conf"
+  install -Dm644 -t "$pkgdir/usr/lib/firmware/apollo" disable-*.dtbo
+}

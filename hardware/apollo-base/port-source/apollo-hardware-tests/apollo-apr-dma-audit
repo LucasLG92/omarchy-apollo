@@ -1,0 +1,68 @@
+#!/usr/bin/python3
+"""Run the silent test-only APR module, record counters and safe removal."""
+from pathlib import Path
+import hashlib,json,subprocess,time
+out=Path('/run/apollo-audit/apr-dma'); out.mkdir(parents=True,exist_ok=True)
+module=Path('/run/apollo-apr-dma-audit.ko')
+params=Path('/sys/module/apollo_apr_dma_audit/parameters')
+real=Path('/sys/bus/aprbus/devices/aprsvc:service:4:3')
+result={'audio_used':False,'firmware_packets_sent':False,'live_tree_modified':False,
+        'real_service_unbound':False,'physical_memory_addresses_recorded':False,
+        'scope':'Detached synthetic APR clients: IOMMU before bind, coherent mapping/free, failed probe, rebind, group removal; no DSP firmware traffic or acoustic validation',
+        'module_sha256':hashlib.sha256(module.read_bytes()).hexdigest()}
+before=subprocess.check_output(['dmesg'],text=True)
+(out/'kernel-before.txt').write_text(before)
+def unchanged():
+    return {'driver':(real/'driver').resolve().name,
+            'group':(real/'iommu_group').resolve().name}
+result['real_before']=unchanged()
+assert result['real_before']['driver']=='qcom-q6core'
+loaded=False
+try:
+    assert not params.exists(),'Audit module already loaded'
+    p=subprocess.run(['insmod',str(module)],capture_output=True,text=True,timeout=35)
+    result['insmod_exit']=p.returncode
+    result['insmod_message']=p.stdout+p.stderr
+    loaded=params.exists()
+    assert p.returncode==0 and loaded,result['insmod_message']
+    # Device-link cleanup may defer release; never force removal of callbacks.
+    deadline=time.monotonic()+10
+    while time.monotonic()<deadline:
+        values={p.name:p.read_text().strip() for p in params.iterdir()}
+        if values['created']==values['released']: break
+        time.sleep(.1)
+    result['counters']=values
+    assert values['passed']=='Y' and values['failures']=='0',values
+    for name,count in {'created':24,'released':24,'probes':32,'removes':24,
+        'allocations':72,'pages':1944,'failed_probes':8,'plain_probes':8,
+        'rebinds':8,'prebind_iommu_devices':16,'prebind_plain_devices':8}.items():
+        assert int(values[name])==count,(name,values[name])
+    result['real_after']=unchanged()
+    assert result['real_before']==result['real_after']
+    assert not list(Path('/sys/bus/aprbus/devices').glob('apollo-apr-dma-audit-*'))
+    assert not Path('/sys/bus/aprbus/drivers/apollo-apr-dma-audit').exists()
+except Exception as error:
+    result['error']=type(error).__name__+': '+str(error)
+finally:
+    if loaded:
+        try:
+            remaining={p.name:p.read_text().strip() for p in params.iterdir()}
+            if remaining['created']==remaining['released']:
+                p=subprocess.run(['rmmod','apollo_apr_dma_audit'],capture_output=True,text=True,timeout=10)
+                result['rmmod_exit']=p.returncode
+                result['rmmod_message']=p.stdout+p.stderr
+                result['module_removed']=p.returncode==0 and not params.exists()
+            else:
+                result['module_removed']=False
+                result['pending_releases']=True
+        except Exception as error: result['removal_error']=str(error)
+    after=subprocess.check_output(['dmesg'],text=True)
+    (out/'kernel-after.txt').write_text(after)
+    result['kernel_warning_count_before']=before.count('WARNING:')
+    result['kernel_warning_count_after']=after.count('WARNING:')
+    result['new_kernel_warning']=after.count('WARNING:')!=before.count('WARNING:')
+    result['kernel_oops']='Internal error: Oops' in after or 'BUG:' in after
+    result['passed']=not result.get('error') and result.get('module_removed',False) and not result['new_kernel_warning'] and not result['kernel_oops']
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print('APR DMA lifecycle passed' if result['passed'] else 'APR DMA lifecycle needs further work')
+raise SystemExit(0 if result['passed'] else 1)

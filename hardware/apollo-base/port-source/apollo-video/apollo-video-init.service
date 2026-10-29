@@ -1,0 +1,13 @@
+[Unit]
+Description=Load Apollo Iris video codec using the device firmware
+After=systemd-udev-trigger.service
+Before=sddm.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/apollo-video-init
+TimeoutStartSec=40
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,115 @@
+Subject: [PATCH] media: i2c: match Apollo AK7377 and unwind failed power-on
+
+The phone's immutable vendor module identifies its main actuator as AK7377.
+Add its compatible using the register layout confirmed by Jan-Michael Brummer
+on FP5, and describe the Apollo module accordingly. This does not itself claim
+to solve Apollo's I2C NACK; supply routing is tested separately before changing.
+
+Start runtime PM suspended while supplies are off and balance all successful
+regulator enables on failed resume, including failed position writes. Do not
+mark a failed restore active or return success after a failed position write.
+
+AK7377 layout and runtime-PM fixes are based on Jan-Michael Brummer's patches:
+https://lists.openwall.net/linux-kernel/2026/08/29/189
+https://lists.openwall.net/linux-kernel/2026/08/29/190
+The original changes were tested on FP5; this combined port change additionally
+handles position-write failure and must be validated on Apollo.
+
+---
+
+--- a/drivers/media/i2c/ak7375.c
++++ b/drivers/media/i2c/ak7375.c
+@@ -65,6 +65,21 @@
+ 	.power_delay_us	= 10000,
+ };
+ 
++/* AK7377 register layout confirmed by the upstream FP5 hardware test. */
++static const struct ak73xx_chipdef ak7377_cdef = {
++	.reg_position = 0x0,
++	.reg_cont = 0x2,
++	.shift_pos = 4,
++	.mode_active = 0x0,
++	.mode_standby = 0x40,
++	.has_standby = true,
++	.focus_pos_max = 4095,
++	.focus_steps = 1,
++	.ctrl_steps = 64,
++	.ctrl_delay_us = 1000,
++	.power_delay_us = 10000,
++};
++
+ static const char * const ak7375_supply_names[] = {
+ 	"vdd",
+ 	"vio",
+@@ -216,9 +231,9 @@
+ 	if (ret < 0)
+ 		goto err_cleanup;
+ 
+-	pm_runtime_set_active(&client->dev);
++	/* Supplies remain off until the first successful runtime resume. */
++	pm_runtime_set_suspended(&client->dev);
+ 	pm_runtime_enable(&client->dev);
+-	pm_runtime_idle(&client->dev);
+ 
+ 	return 0;
+ 
+@@ -309,7 +324,7 @@
+ 			       cdef->mode_active, 1);
+ 	if (ret) {
+ 		dev_err(dev, "%s I2C failure: %d\n", __func__, ret);
+-		return ret;
++		goto disable_supplies;
+ 	}
+ 
+ 	for (val = ak7375_dev->focus->val % cdef->ctrl_steps;
+@@ -317,20 +332,28 @@
+ 	     val += cdef->ctrl_steps) {
+ 		ret = ak7375_i2c_write(ak7375_dev, cdef->reg_position,
+ 				       val << cdef->shift_pos, 2);
+-		if (ret)
++		if (ret) {
+ 			dev_err_ratelimited(dev, "%s I2C failure: %d\n",
+ 						__func__, ret);
++			goto disable_supplies;
++		}
+ 		usleep_range(cdef->ctrl_delay_us, cdef->ctrl_delay_us + 10);
+ 	}
+ 
+ 	ak7375_dev->active = true;
+ 
+ 	return 0;
++
++disable_supplies:
++	regulator_bulk_disable(ARRAY_SIZE(ak7375_supply_names),
++			       ak7375_dev->supplies);
++	return ret;
+ }
+ 
+ static const struct of_device_id ak7375_of_table[] = {
+ 	{ .compatible = "asahi-kasei,ak7345", .data = &ak7345_cdef, },
+ 	{ .compatible = "asahi-kasei,ak7375", .data = &ak7375_cdef, },
++	{ .compatible = "asahi-kasei,ak7377", .data = &ak7377_cdef, },
+ 	{ /* sentinel */ }
+ };
+ MODULE_DEVICE_TABLE(of, ak7375_of_table);
+--- a/Documentation/devicetree/bindings/media/i2c/asahi-kasei,ak7375.yaml
++++ b/Documentation/devicetree/bindings/media/i2c/asahi-kasei,ak7375.yaml
+@@ -18,6 +18,7 @@
+     enum:
+       - asahi-kasei,ak7345
+       - asahi-kasei,ak7375
++      - asahi-kasei,ak7377
+ 
+   reg:
+     maxItems: 1
+--- a/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo.dts
++++ b/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo.dts
+@@ -1279,7 +1279,7 @@
+ 	};
+ 
+ 	camera_wide_vcm: focus@c {
+-		compatible = "asahi-kasei,ak7375";
++		compatible = "asahi-kasei,ak7377";
+ 		reg = <0x0c>;
+ 
+ 		vdd-supply = <&vreg_l7p>;

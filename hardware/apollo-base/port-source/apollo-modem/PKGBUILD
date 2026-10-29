@@ -1,0 +1,108 @@
+pkgname=apollo-modem
+pkgver=1.0
+pkgrel=4
+pkgdesc='Apollo SDX55 firmware and userspace services, with RAM-only EFS test mode'
+arch=(aarch64)
+url='https://github.com/royka1/Xiaomi-Apollo-pmOS-packages'
+license=(GPL-2.0-only BSD-3-Clause LicenseRef-proprietary)
+depends=(glibc glib2 libqrtr-glib apollo-qcom-core pd-mapper-apollo modemmanager-apollo libqmi util-linux systemd zstd)
+makedepends=(gcc linux-api-headers pkgconf)
+options=(!strip)
+source=(
+  pm_service_native.c
+  mdm_helper_native.c
+  mhi_efs_sync.c
+  diag_reader.c
+  adsp_diag.c
+  pm-service-native.service
+  mdm-helper-native.service
+  mhi-efs-sync.service
+  adsp-diag.service
+  tqftpserv.c
+  translate.c
+  zstd-decompress.c
+  list.h
+  translate.h
+  zstd-decompress.h
+  tqftpserv-sdx55.service
+  apollo-efs-extract
+  apollo-efs-extract.service
+  apollo-uim-provision
+  77-mm-ignore-sdx55-efs.rules
+  77-mm-sdx55-fusion.rules
+  rmnet.conf
+  apollo-modem-fw-1.0.tar.gz
+  apollo-modem-start.service
+  10-apollo-modem-ordering.conf
+  apollo-modem-rproc.service apollo-modem-power-on zz-apollo-multiplex.conf
+  20-apollo-manual-power.conf)
+sha512sums=(
+  461490e2f8df52950ead711e7e5d09440872ef9ebcb7c324ef1f025824a8b964bfb2b7fadcba633e327c75a294ae8eb381eea198937daab7de721d9d96395cce
+  1022b00fffcf326b987dd0f1825e18cda1be812af0a1d2d2db4ef02d4538a68a6e0ea52fecc717ebf776ff9d0f32b0f149a554b9536c8f01c9808de9f7676806
+  61b09274581f4bc03fbbda29c36209c0f90b1291be703a3fe5dad377b6d7efe043ccffcf6ecbc85e45736842b6109ecb8e559491e56381637af88527180f7250
+  68aab4162d32eb9566fc726bd0b39083700e64afda6363e894ca01b4134728b9bdc3a5a34be34fe255e925061ae7d1c352bf8b1ec10dabe60cc6aa5c178677ad
+  e8f10fd20c8a77902e502cc4f7502a38beb8c952045275d8973f0151c76472b0639b1669cd1adfc4e3eccdc00c1cc704cd90e7656512e4fd7bb7440d6872c587
+  d8ae75246832192544a14c0eb868dfa500b072887caace93d2e64e6e2f0fa82349eeb782bdeed185bfcabdb71cda394af92f732175bfd81fca502587699e68ec
+  049e86b76202eabc99b75d0c47bb296064b0e129a93c79b314a31056d182922301e07025ecebc84f5245739a6aeee8b5762e3352f0f6addce88e9e16f3e07f50
+  219c85c0a3c83ba4c2ba678ebb76428b2980226df4a2b8606ee19f340f453d2eabde59405c224a1fc4d26d3e1f9b02a9e5facf4d657bccdda5747e03bcb251b5
+  fe0af68f9bc55246a48dd1e6c74dd6a347da3e33e679568ae4b8a2d77fe166add0b698eac6b9242d6cb4665650952c3964319830c7a769ebf66d71de0e1d7b5d
+  1d04270a3983bda6f3e1444c515f3bbb800394e30114c8ab9827f0b33f32b1283d564f3d4b347cc23fcc2d96a782d174438acba22c9d34f7fa6b39273da42622
+  577bd118f3b3ccee0cdfd7879c4fb7d4b4b137cf4f2e75a206d1a4b2391bebf1b994ea5dc201f8dd480e8cfa1662981362da33f097999c0a3be192d7efc748f0
+  b95ea15fb1e9675e2d1619ba39694d764ec00e25670ff83c12f0ba4a323698063375ade84e22b3790af97c901bdd418130c0e9f61f546848bb469b0d79a839d3
+  defa4e8d50e8a0399ef4755930ceafaf3d452783d64d82fb31362b6082899303ac87e69cc194d9aa78af3a7136cd32632b1a1cec283d0af2961ed5df748b1351
+  9569d52a1f792da52b0e0bd396c62f4bc0303b7a760e8e687ff9c19f0f0eb4858ce79790db2cb0300ef6d4aae5872a6d4d66be7fded574d5db3f437dbf49678e
+  dc4e5063f76c64789380f4ac0ee88919a028d923427c59b36e4232c0a00eedd39cc7d259127677d1a89f213508ebffae3b507c7e1d32274608b73f59ae018d83
+  7f01885423ff28811bfcd9982da1e5164b9ff174f3e1b4b566512007b290a1fbcacec538e8552896123e7030fb53603ecc437450c5c39037763bcbba9d6aa722
+  55a6411d8b70c078e44a758c5baaf03cd3aea40d6303f4424d2e0ba613c6c2bab9c7ee515d2c9ce53d2a1043b2aca9346a9921300da15d454de430747581d3f6
+  30d9f3b1901eeb0af33cd74e2828baff4353a610e6467fc4334d178b2d915097d0093911ff77aa0a48a26c104fd122e18e867721ff226fc664eb4d5bfb488f1b
+  a22d31eacccf8241a61429a70c44fb42bd864cb7c8bbfa420948b472e6ad2a098478c9ad108e566c0d627c3d5018a68f0402635e4645b3344b9645b2a6d2deed
+  ba8b492299eb0fd166a883f74f3935642d487e8b3778c4c0fe3dd4bc8b423d506cb4efbd702786808d94bc209122fdbee304f59d68fc7665216c0cb52995586e
+  c02b119bf56635398483c980e89358d20f9bfeec9f87354a95a88ac1615e2267fc5e437e9d87ea300d3e974638cb464e16955dea5fda29d5b177e5948e32f439
+  d77770f39d6fb8d5b413bce1b9dcbaed46c2969789714fb557dbbe7be3de2328ef75cf595d3965b5b49cb97c37ded7fecc7b2e0df8b37cdda99aa5b2fcbee441
+  a753d42a5181cfa2ea583b9e7ae7d00e2dc163c815ef43e7ac6566c6bfef9f58fb1055b91fa12c444a96de3e31440c86197604254b0c521b2e5abe04a0a6b4a7
+  2f1ee2a7a9fb032e10b029dfb40d6411d8a996ae848c0a7f63ba071755a8aae7fb3a7e43062c2d38e590ae77842e9e1fd714e5e377167165903b383091eaf228
+  03d00321caf167f7de5b646c674fa9a92e09a85c685fb595d878b25e75472cc57d2e83f908bb58939f32324e0a5ace2634044a30917662fed4d7d370b2946a6e
+  d808e47243dcca1eb9316087afebc8f58854d4081d763bfc35126bb7e5c86e1a626d81ee9cbd6dd6110130296a508b4a4fa90e144d1d586d3385ff504b689125
+  1e2eec0f50a1c8f06e1d288eed918b5e8466c7da0d7a2338298781deb505e45a6541b2abfa87e21223c981bc5e4042eec7258ed853a1c832a5dbdda34d4b63f9
+  9edf44a1e2104541df34ee8d0b91382e36b8f4a5e2f062532fef5f32caecb71cb38028321c50cfa3268f8010922f8ecc893c78692752d3b438ba07058c378fa6
+  9461a015620cf7a303812a3a45929344cccf77b9d831367fa5686fcefac198f58ee319041d849317bfcaec6a0a4a42714790123cf272ccb349545fe84b50973b)
+source+=(apollo-wait-loc.c 20-apollo-loc-ready.conf)
+sha512sums+=('107a91ee3c3a2d2e123e30ba6ff9c57f0115ef45f96a66678ee3cff70c372ff049de7abd525439cc614b79df8285b1b26ef6861a709c7aa87bdf0c46573483ce' 'c55d738a4ccaac4bb3b65dcd31e172f997dfc6206b23d941a6344a855da105665490f991302de05e97819508c39a69ca111c4245d0a7ffc891d0b3620170a60a')
+build() {
+  gcc $CFLAGS $LDFLAGS -Wall -Wextra -Werror -o apollo-wait-loc apollo-wait-loc.c $(pkg-config --cflags --libs qrtr-glib)
+  for tool in pm_service_native mdm_helper_native mhi_efs_sync diag_reader adsp_diag; do
+    gcc $CFLAGS $LDFLAGS -o "$tool" "$tool.c"
+  done
+  gcc $CFLAGS $LDFLAGS -DHAVE_ZSTD -o tqftpserv-sdx55 \
+    tqftpserv.c translate.c zstd-decompress.c -lqrtr -lzstd
+}
+package() {
+  install -Dm755 apollo-wait-loc "$pkgdir/usr/bin/apollo-wait-loc"
+  install -Dm644 20-apollo-loc-ready.conf "$pkgdir/usr/lib/systemd/system/ModemManager.service.d/20-apollo-loc-ready.conf"
+  for tool in pm_service_native mdm_helper_native mhi_efs_sync diag_reader adsp_diag tqftpserv-sdx55; do
+    install -Dm755 "$tool" "$pkgdir/usr/bin/$tool"
+  done
+  for script in apollo-efs-extract apollo-uim-provision apollo-modem-power-on; do
+    install -Dm755 "$script" "$pkgdir/usr/bin/$script"
+  done
+  for unit in pm-service-native mdm-helper-native mhi-efs-sync adsp-diag tqftpserv-sdx55 apollo-efs-extract apollo-modem-start apollo-modem-rproc; do
+    install -Dm644 "$unit.service" "$pkgdir/usr/lib/systemd/system/$unit.service"
+  done
+  for rule in 77-mm-ignore-sdx55-efs.rules 77-mm-sdx55-fusion.rules; do
+    install -Dm644 "$rule" "$pkgdir/usr/lib/udev/rules.d/$rule"
+  done
+  install -Dm644 rmnet.conf "$pkgdir/usr/lib/modules-load.d/apollo-rmnet.conf"
+  install -Dm644 10-apollo-modem-ordering.conf "$pkgdir/usr/lib/systemd/system/ModemManager.service.d/10-apollo-modem-ordering.conf"
+  install -Dm644 zz-apollo-multiplex.conf "$pkgdir/usr/lib/systemd/system/ModemManager.service.d/zz-apollo-multiplex.conf"
+  install -Dm644 20-apollo-manual-power.conf "$pkgdir/usr/lib/systemd/system/rmtfs.service.d/20-apollo-manual-power.conf"
+  install -d "$pkgdir/usr/lib/systemd/system/mhi-efs-sync.service.d"
+  printf '[Service]\nTimeoutStartSec=150\n' > "$pkgdir/usr/lib/systemd/system/mhi-efs-sync.service.d/10-apollo.conf"
+  install -d "$pkgdir/usr/lib/firmware"
+  cp -a --no-preserve=ownership sdx55m "$pkgdir/usr/lib/firmware/"
+  # Per-device EFS files are extracted from the phone into RAM at runtime.
+  test ! -e "$pkgdir/usr/lib/firmware/sdx55m/efs1.bin"
+  test ! -e "$pkgdir/usr/lib/firmware/sdx55m/efs2.bin"
+  test ! -e "$pkgdir/usr/lib/firmware/sdx55m/efs3.bin"
+  install -d "$pkgdir/etc/systemd/system"
+  ln -s /dev/null "$pkgdir/etc/systemd/system/tqftpserv.service"
+}

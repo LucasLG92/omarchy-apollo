@@ -1,0 +1,62 @@
+Subject: [PATCH] media: s5k3t2: retry initial bank select after CCI queue recovery
+
+A CCI timeout resets the controller. The existing probe retry powers the
+sensor down again, which can recreate the very stall just cleared. Keep
+the sensor powered and retry the initial bank-select assignment once.
+
+Limit replay to the idempotent 0x6028=0x4000 assignment, at identify and
+stream start. Do not blindly replay arbitrary I2C transfers, soft resets,
+mode writes, reads, NACKs or other errors. Keep bounded failure handling.
+The related CCI behavior is documented in this hardware investigation:
+https://lists.openwall.net/linux-kernel/2026/10/21/2473
+
+--- a/drivers/media/i2c/s5k3t2.c
++++ b/drivers/media/i2c/s5k3t2.c
+@@ -820,6 +820,26 @@
+ 	return ret;
+ }
+ 
++/*
++ * CCI resets a stalled command queue before returning -ETIMEDOUT. Retry
++ * only the idempotent initial bank selection while the sensor stays on;
++ * power-cycling it here can recreate the controller's stuck-bus state.
++ */
++static int s5k3t2_select_page(struct s5k3t2 *s5k3t2)
++{
++	int ret;
++
++	ret = cci_write(s5k3t2->regmap, CCI_REG16(0x6028), 0x4000, NULL);
++	if (ret == -ETIMEDOUT) {
++		ret = cci_write(s5k3t2->regmap, CCI_REG16(0x6028), 0x4000, NULL);
++		if (!ret)
++			dev_info_ratelimited(s5k3t2->dev,
++				"recovered initial bank selection after CCI reset\n");
++	}
++
++	return ret;
++}
++
+ static int s5k3t2_enable_streams(struct v4l2_subdev *sd,
+ 				 struct v4l2_subdev_state *state, u32 pad,
+ 				 u64 streams_mask)
+@@ -832,8 +852,9 @@
+ 	if (ret)
+ 		return ret;
+ 
+-	cci_multi_reg_write(s5k3t2->regmap, s5k3t2_unlock_regs,
+-			    ARRAY_SIZE(s5k3t2_unlock_regs), &ret);
++	ret = s5k3t2_select_page(s5k3t2);
++	cci_multi_reg_write(s5k3t2->regmap, s5k3t2_unlock_regs + 1,
++			    ARRAY_SIZE(s5k3t2_unlock_regs) - 1, &ret);
+ 	if (ret)
+ 		goto error;
+ 
+@@ -1049,7 +1070,7 @@
+ 	int ret;
+ 
+ 	/* The chip id lives on page 0x4000. */
+-	ret = cci_write(s5k3t2->regmap, CCI_REG16(0x6028), 0x4000, NULL);
++	ret = s5k3t2_select_page(s5k3t2);
+ 	if (ret)
+ 		return ret;
+ 

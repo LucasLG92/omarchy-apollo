@@ -1,0 +1,44 @@
+From: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
+Subject: [PATCH] arm64: dts: qcom: sm8250: Reserve low IOVA range for Venus
+
+Source: https://lists.openwall.net/linux-kernel/2026/08/07/632
+Message-ID: 20260807-iris_iova_600mb_fix-v1-21-3996f67e33f9@oss.qualcomm.com
+Date: Fri, 7 Aug 2026 13:55:05 +0530
+
+Venus reserves low IOVA for non-pixel buffers. Prevent ordinary DMA
+allocations from using the same range. This reserves virtual I/O addresses,
+not an additional 600 MiB of physical RAM.
+
+Signed-off-by: Vikash Garodia <vikash.garodia@oss.qualcomm.com>
+Backport note: insertion context adapted to the reserved-memory layout in
+apollo-7.1.0-r12; reservation and consumer values are unchanged.
+
+--- a/arch/arm64/boot/dts/qcom/sm8250.dtsi
++++ b/arch/arm64/boot/dts/qcom/sm8250.dtsi
+@@ -866,6 +866,17 @@
+ 			reg = <0x0 0x8bf00000 0x0 0x4600000>;
+ 			no-map;
+ 		};
++
++		/*
++		 * The Venus VPU reserves IOVA below 0x25800000 (600MB),
++		 * primarily for non-pixel buffers using different Stream IDs.
++		 * DMA into that range triggers unhandled SMMU faults and
++		 * spontaneous reboots, so reserve it to keep IOMMU
++		 * allocations above this boundary.
++		 */
++		venus_iova: venus-iova {
++			iommu-addresses = <&venus 0x0 0x0 0x0 0x25800000>;
++		};
+ 	};
+ 
+ 	smem {
+@@ -4386,7 +4397,7 @@
+ 			interconnect-names = "cpu-cfg", "video-mem";
+ 
+ 			iommus = <&apps_smmu 0x2100 0x0400>;
+-			memory-region = <&video_mem>;
++			memory-region = <&video_mem>, <&venus_iova>;
+ 
+ 			resets = <&gcc GCC_VIDEO_AXI0_CLK_ARES>,
+ 				 <&videocc VIDEO_CC_MVS0C_CLK_ARES>;

@@ -1,0 +1,154 @@
+#!/usr/bin/python3
+"""Test the installed Clapper application on the real Wayland desktop."""
+from pathlib import Path
+import json,os,re,subprocess,time
+from gi.repository import Gio,GLib
+
+out=Path('/run/apollo-audit/video-player')
+out.mkdir(exist_ok=True)
+video=Path('/tmp/apollo-video-vectors-v1/h264-720p-long.mp4')
+result={'application':'Clapper','audio_used':False,'test_video':video.name,
+        'renderer':'OpenGL','software_decoder_forced':False}
+connection=Gio.bus_get_sync(Gio.BusType.SESSION,None)
+player_name=None
+process=None
+app_log=None
+env=dict(os.environ,GDK_BACKEND='wayland',GSK_RENDERER='gl',CANBERRA_DRIVER='null',
+         GST_TRACERS='stats',GST_DEBUG='GST_TRACER:7,clapper*:5,v4l2*:4',
+         GST_DEBUG_NO_COLOR='1',GST_DEBUG_FILE=str(out/'clapper-gst.log'))
+
+def save(): (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+def names():
+    return connection.call_sync('org.freedesktop.DBus','/org/freedesktop/DBus',
+        'org.freedesktop.DBus','ListNames',None,None,Gio.DBusCallFlags.NONE,3000,None).unpack()[0]
+def call(interface,method,parameters=None):
+    return connection.call_sync(player_name,'/org/mpris/MediaPlayer2',interface,method,
+        parameters,None,Gio.DBusCallFlags.NONE,5000,None)
+def props(interface='org.mpris.MediaPlayer2.Player'):
+    return call('org.freedesktop.DBus.Properties','GetAll',GLib.Variant('(s)',(interface,))).unpack()[0]
+def setprop(interface,name,value):
+    call('org.freedesktop.DBus.Properties','Set',GLib.Variant('(ssv)',(interface,name,value)))
+def wait_for(predicate,seconds):
+    deadline=time.monotonic()+seconds
+    while time.monotonic()<deadline:
+        value=predicate()
+        if value: return value
+        if process and process.poll() is not None: raise RuntimeError('Video player exited')
+        time.sleep(.25)
+    raise RuntimeError('Player did not reach expected state')
+def screenshot(name):
+    target=out/(name+'.png')
+    shot_env={k:v for k,v in env.items() if not k.startswith('GST_')}
+    with (out/(name+'-capture.txt')).open('wb') as log:
+        p=subprocess.run(['spectacle','--background','--nonotify','--fullscreen',
+                          '--output',str(target)],env=shot_env,stdin=subprocess.DEVNULL,
+                         stdout=log,stderr=subprocess.STDOUT,timeout=15)
+    good=p.returncode==0 and target.exists() and target.read_bytes()[:8]==b'\x89PNG\r\n\x1a\n'
+    result[name+'_screenshot_saved']=good
+    return good
+
+def close_player_window():
+    # Clapper 0.10's library MPRIS feature does not implement Quit. Ask the
+    # compositor to close only the window owned by the process we launched.
+    root_props=props('org.mpris.MediaPlayer2')
+    result['mpris_can_quit']=bool(root_props.get('CanQuit'))
+    if result['mpris_can_quit']:
+        call('org.mpris.MediaPlayer2','Quit')
+        result['close_method']='MPRIS Quit'
+        return
+    script=out/'close-player.js'
+    script.write_text('const windows = workspace.windowList().filter(w => '
+        f'w.pid === {process.pid} && String(w.resourceClass).toLowerCase().includes("clapper"));\n'
+        'assertEquals(1, windows.length);\nwindows[0].closeWindow();\n')
+    plugin='apollo-video-audit-close'
+    loaded=connection.call_sync('org.kde.KWin','/Scripting','org.kde.kwin.Scripting',
+        'loadScript',GLib.Variant('(ss)',(str(script),plugin)),None,
+        Gio.DBusCallFlags.NONE,5000,None).unpack()[0]
+    assert loaded>=0
+    try:
+        connection.call_sync('org.kde.KWin',f'/Scripting/Script{loaded}',
+            'org.kde.kwin.Script','run',None,None,Gio.DBusCallFlags.NONE,5000,None)
+        result['close_method']='KWin closeWindow on exact child PID'
+    finally:
+        connection.call_sync('org.kde.KWin','/Scripting','org.kde.kwin.Scripting',
+            'unloadScript',GLib.Variant('(s)',(plugin,)),None,
+            Gio.DBusCallFlags.NONE,5000,None)
+
+try:
+    assert video.exists()
+    for key,value in (('mute','true'),('volume','0.0'),('fullscreened','true')):
+        subprocess.run(['gsettings','set','com.github.rafostar.Clapper',key,value],
+                       env=env,capture_output=True,timeout=5,check=True)
+    app_log=(out/'application.txt').open('wb')
+    process=subprocess.Popen(['clapper',video.as_uri()],env=env,
+        stdin=subprocess.DEVNULL,stdout=app_log,stderr=subprocess.STDOUT)
+    def discover():
+        return next((x for x in names() if x.startswith('org.mpris.MediaPlayer2.') and 'clapper' in x.lower()),None)
+    player_name=wait_for(discover,35)
+    result['mpris_registered']=True
+    wait_for(lambda:props().get('PlaybackStatus')=='Playing',25)
+    setprop('org.mpris.MediaPlayer2.Player','Volume',GLib.Variant('d',0.0))
+    p=props(); result['volume_zero']=p.get('Volume')==0.0
+    result['track_duration_us']=p.get('Metadata',{}).get('mpris:length')
+    result['can_seek']=bool(p.get('CanSeek'))
+    first=int(p.get('Position',0)); time.sleep(1.2); second=int(props().get('Position',0))
+    result['position_advanced']=second-first>600000
+    result['initial_positions_us']=[first,second]
+    screenshot('playing')
+    call('org.mpris.MediaPlayer2.Player','Pause')
+    wait_for(lambda:props().get('PlaybackStatus')=='Paused',5)
+    first=int(props().get('Position',0)); time.sleep(.8); second=int(props().get('Position',0))
+    result['pause_verified']=abs(second-first)<250000
+    track=props().get('Metadata',{}).get('mpris:trackid')
+    assert result['can_seek'] and track
+    call('org.mpris.MediaPlayer2.Player','SetPosition',GLib.Variant('(ox)',(track,12000000)))
+    def seek_target():
+        p=props()
+        return p if abs(int(p.get('Position',0))-12000000)<1500000 else None
+    reached=wait_for(seek_target,8)
+    result['seek_position_us']=int(reached['Position'])
+    result['seek_verified']=True
+    screenshot('after-seek')
+    call('org.mpris.MediaPlayer2.Player','Play')
+    wait_for(lambda:props().get('PlaybackStatus')=='Playing',5)
+    first=int(props().get('Position',0)); time.sleep(1.2); second=int(props().get('Position',0))
+    result['resume_verified']=second-first>600000
+    time.sleep(2)
+except Exception as error:
+    result['error']=str(error)
+finally:
+    if player_name and process and process.poll() is None:
+        try: close_player_window()
+        except Exception as error: result['close_error']=str(error)
+    if process:
+        try: process.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            process.terminate()
+            try: process.wait(timeout=3)
+            except subprocess.TimeoutExpired: process.kill(); process.wait()
+        result['player_exit']=process.returncode
+        result['clean_window_close']=process.returncode==0
+    if app_log: app_log.close()
+
+elements={}; buffers=[]
+trace=out/'clapper-gst.log'
+if trace.exists():
+    for line in trace.read_text(errors='replace').splitlines():
+        if 'TRACE' not in line: continue
+        match=re.search(r'\b(new-element|buffer), (.*)',line)
+        if not match: continue
+        fields=dict(re.findall(r'([a-z-]+)=\([^)]+\)([^,;]+)',match[2]))
+        if match[1]=='new-element': elements[fields['ix']]=fields
+        elif match[1]=='buffer': buffers.append(fields)
+decoder_ids={i for i,e in elements.items() if e.get('name','').startswith('v4l2h264dec')}
+sink_ids={i for i,e in elements.items() if e.get('type')=='GstClapperSink'}
+result['hardware_decoder_elements']=[elements[i]['name'] for i in decoder_ids]
+result['hardware_output_buffers']=sum(b.get('element-ix') in decoder_ids for b in buffers)
+result['display_sink_buffers']=sum(b.get('peer-element-ix') in sink_ids for b in buffers)
+result['sink_types']=[e['type'] for e in elements.values() if 'Sink' in e.get('type','')]
+required=('mpris_registered','volume_zero','position_advanced','pause_verified','seek_verified','resume_verified',
+          'playing_screenshot_saved','after-seek_screenshot_saved','clean_window_close')
+result['passed']=all(result.get(x) for x in required) and result['hardware_output_buffers']>=30 and result['display_sink_buffers']>=20
+save()
+print('Clapper playback/seek/hardware test passed' if result['passed'] else 'Clapper application needs further work')
+raise SystemExit(0 if result['passed'] else 1)

@@ -1,0 +1,13 @@
+[Unit]
+Description=Initialize Apollo cameras in a deterministic order
+After=systemd-udev-trigger.service systemd-modules-load.service
+Before=sddm.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/apollo-camera-init
+TimeoutStartSec=45
+
+[Install]
+WantedBy=multi-user.target

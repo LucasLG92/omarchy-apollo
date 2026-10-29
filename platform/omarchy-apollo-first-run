@@ -1,0 +1,8 @@
+#!/bin/bash
+# omarchy:summary=Finish the phone-specific Omarchy session setup
+# omarchy:hidden=true
+set -euo pipefail
+[[ $(omarchy-hw-platform) == "aarch64-apollo" ]]
+systemctl --user daemon-reload
+systemctl --user enable --now omarchy-sleep-lock.service
+omarchy-done mark first-run-user

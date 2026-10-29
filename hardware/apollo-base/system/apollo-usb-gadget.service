@@ -1,0 +1,22 @@
+[Unit]
+Description=Apollo USB maintenance connection
+Wants=sys-kernel-config.mount
+After=sys-kernel-config.mount systemd-udevd.service
+ConditionPathExists=/run/apollo-persistent
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/apollo-usb-gadget ensure
+Restart=on-failure
+RestartSec=15s
+RestartPreventExitStatus=2
+TimeoutStartSec=10s
+UMask=0077
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/sys/kernel/config/usb_gadget /run
+
+[Install]
+WantedBy=multi-user.target

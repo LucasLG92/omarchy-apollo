@@ -1,0 +1,102 @@
+Subject: [PATCH] soc: qcom: apr: prepare builtin DMA clients before binding
+
+Apollo q6core reaches of_iommu_configure() for the first time during driver
+binding. APR has DMA callbacks but its bus is absent from iommu_buses, so
+the normal device-add probe and device-remove release notifiers never run.
+
+For built-in APR, register the bus at postcore time and include it in the
+IOMMU bus list. Keep the rpmsg driver at subsys time. The early bus then
+exists before IOMMU installs its notifiers; actual services are created
+later by remoteproc/rpmsg. Existing DMA callbacks keep default-domain
+ownership paired with driver bind/unbind, independently of device lifetime.
+
+A modular APR build keeps its original registration strategy and is not
+added as a built-in core dependency. Correct its error unwind and remove
+the rpmsg driver before unregistering the bus. This port uses APR built in;
+modular APR IOMMU notifier integration is outside this particular change.
+
+References for the same notifier architecture on other Qualcomm buses:
+https://lists.openwall.net/linux-kernel/2026/06/10/444
+https://lists.openwall.net/linux-kernel/2026/08/17/238
+
+---
+
+diff --git a/drivers/iommu/iommu.c b/drivers/iommu/iommu.c
+--- a/drivers/iommu/iommu.c
++++ b/drivers/iommu/iommu.c
+@@ -36,6 +36,10 @@
+ #include <uapi/linux/iommufd.h>
+ #include <linux/generic_pt/iommu.h>
+ 
++#if IS_BUILTIN(CONFIG_QCOM_APR)
++#include <linux/soc/qcom/apr.h>
++#endif
++
+ #include "dma-iommu.h"
+ #include "iommu-priv.h"
+ 
+@@ -199,6 +203,9 @@
+ #endif
+ #ifdef CONFIG_CDX_BUS
+ 	&cdx_bus_type,
++#endif
++#if IS_BUILTIN(CONFIG_QCOM_APR)
++	&aprbus,
+ #endif
+ };
+ 
+diff --git a/drivers/soc/qcom/apr.c b/drivers/soc/qcom/apr.c
+--- a/drivers/soc/qcom/apr.c
++++ b/drivers/soc/qcom/apr.c
+@@ -745,23 +745,47 @@
+ 	},
+ };
+ 
++#ifndef MODULE
++static int __initdata apr_bus_init_ret;
++
++static int __init apr_bus_init(void)
++{
++	/* IOMMU bus notifiers are installed at subsys_initcall time. */
++	apr_bus_init_ret = bus_register(&aprbus);
++	return apr_bus_init_ret;
++}
++postcore_initcall(apr_bus_init);
++#endif
++
+ static int __init apr_init(void)
+ {
++#ifdef MODULE
+ 	int ret;
+ 
+ 	ret = bus_register(&aprbus);
+-	if (!ret)
+-		ret = register_rpmsg_driver(&packet_router_driver);
+-	else
++	if (ret)
++		return ret;
++
++	ret = register_rpmsg_driver(&packet_router_driver);
++	if (ret)
+ 		bus_unregister(&aprbus);
+ 
+ 	return ret;
++#else
++	if (apr_bus_init_ret)
++		return apr_bus_init_ret;
++
++	/* The built-in bus remains registered for the IOMMU notifiers. */
++	return register_rpmsg_driver(&packet_router_driver);
++#endif
+ }
+ 
+ static void __exit apr_exit(void)
+ {
++	unregister_rpmsg_driver(&packet_router_driver);
++#ifdef MODULE
+ 	bus_unregister(&aprbus);
+-	unregister_rpmsg_driver(&packet_router_driver);
++#endif
+ }
+ 
+ subsys_initcall(apr_init);

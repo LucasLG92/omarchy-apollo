@@ -1,0 +1,17 @@
+pkgname=apollo-video
+pkgver=1.0
+pkgrel=2
+pkgdesc='Initialize Apollo Iris codec from the device read-only firmware partition'
+arch=(any)
+license=(MIT)
+depends=(bash systemd util-linux kmod linux-apollo)
+source=(apollo-video-init apollo-video-init.service apollo-video-order.conf)
+sha512sums=(
+  9536f8421e9163a50637883e09e06979856a28e7fd49cbdec62ba6471df8ea97745ff687c24ae9efcc9a9899c1a468fd742843bfcf50be9212cc17a145536751
+  82fbfb55254624d8f84dffc0ea3b45a9f35362fbe7b1e11f58bf4cecbb48eb546b6b14bed3326510b6c8b29328d949394f4528899862035ad140712ce0a42a63
+  b29ac9091c1bde853ffd2fd05bd5f0d88cd46f8cd2bfe0b1c69d6464c41b09e6aca27acdf0c1db51d1110f250ff4cba96687634276f6521a04312183a127f068)
+package() {
+  install -Dm755 apollo-video-init "$pkgdir/usr/bin/apollo-video-init"
+  install -Dm644 apollo-video-init.service "$pkgdir/usr/lib/systemd/system/apollo-video-init.service"
+  install -Dm644 apollo-video-order.conf "$pkgdir/usr/lib/modprobe.d/apollo-video-order.conf"
+}

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Estado de Apollo Linux
+Comment=Consulta la versión y la banda WiFi sin mostrar datos privados
+Exec=konsole --hold -e /usr/local/bin/apollo-port-status
+Icon=dialog-information
+Terminal=false
+Categories=System;Utility;

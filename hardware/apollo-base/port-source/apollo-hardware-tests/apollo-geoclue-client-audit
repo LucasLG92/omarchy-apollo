@@ -1,0 +1,61 @@
+#!/usr/bin/python3
+"""Read GeoClue as the desktop user; emit only non-location statistics."""
+import json, math
+import gi
+gi.require_version('Geoclue', '2.0')
+from gi.repository import Geoclue, GLib, Gio
+from apollo_geoclue_reference import compare
+
+loop=GLib.MainLoop()
+state={'provider':'GeoClue2', 'desktop_user':True, 'coordinates_saved':False,
+       'valid_updates':0, 'accuracy_m':[], 'receiver_comparisons':[], 'passed':False}
+simple=None
+
+def read_update(source):
+    location=source.get_location()
+    if location is None: return
+    # These generated accessors are not introspectable. Read the cached public
+    # properties from the proxy returned by libgeoclue's Simple API.
+    lat=location.get_cached_property('Latitude').unpack()
+    lon=location.get_cached_property('Longitude').unpack()
+    accuracy=location.get_cached_property('Accuracy').unpack()
+    valid=all(math.isfinite(x) for x in (lat,lon,accuracy)) and -90<=lat<=90 and -180<=lon<=180 and 0<=accuracy<1000
+    reference=compare(Gio.bus_get_sync(Gio.BusType.SYSTEM,None),lat,lon)
+    state['receiver_comparisons'].append(reference)
+    valid=valid and reference['matches_receiver']
+    if valid:
+        state['valid_updates']+=1
+        state['accuracy_m'].append(accuracy)
+    if state['valid_updates']>=3:
+        state['passed']=True
+        loop.quit()
+
+def updated(source, unused=None):
+    try: read_update(source)
+    except Exception as error:
+        state['error']=str(error)
+        loop.quit()
+
+def ready(source, result, unused):
+    global simple
+    try:
+        simple=Geoclue.Simple.new_finish(result)
+        simple.connect('notify::location',updated)
+        updated(simple)
+    except Exception as error:
+        state['error']=str(error)
+        loop.quit()
+
+def expired():
+    state['timed_out']=True
+    loop.quit()
+    return GLib.SOURCE_REMOVE
+
+Geoclue.Simple.new('org.apollo.LocationAudit', Geoclue.AccuracyLevel.EXACT, None, ready, None)
+GLib.timeout_add_seconds(180,expired)
+loop.run()
+if simple:
+    try: Geoclue.Client.call_stop_sync(simple.get_client(),None)
+    except GLib.Error: state['stop_error']=True
+print(json.dumps(state))
+raise SystemExit(0 if state['passed'] else 1)

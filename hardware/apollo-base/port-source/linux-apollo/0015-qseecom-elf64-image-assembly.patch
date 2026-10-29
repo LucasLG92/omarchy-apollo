@@ -1,0 +1,164 @@
+Subject: [PATCH] qcom: support ELF64 QSEE images and signed lookup failure
+
+The Apollo FPC application is ELF64/AArch64 with eight signed segments.
+The experimental transport's image helpers handled ELF32 only. Add a
+separate bounded ELF64 assembly path for QSEE; retain the remoteproc loading
+path. Preserve both single-file and split image layouts, all segment types,
+metadata duplication and program-header ordering used by downstream QSEECom.
+Validate table bounds, segment count, lengths and aggregate overflow.
+
+Downstream reference (GPL-2.0-only):
+https://github.com/LineageOS/android_kernel_xiaomi_sm8250/blob/3a0fc935fe41b56669466a1ef17420d099c2eeb2/drivers/misc/qseecom.c
+
+Decode lookup FAILURE as the u32 result in that ABI, including firmware
+which sign-extends it into the 64-bit SCM register. Add debug metadata only;
+do not log command payloads, images, templates or keys.
+
+--- a/drivers/soc/qcom/mdt_loader.c
++++ b/drivers/soc/qcom/mdt_loader.c
+@@ -181,6 +181,110 @@
+ 	return false;
+ }
+ 
++/* QSEE applications may use ELF64 even when remoteproc MDTs use ELF32.
++ * Keep this path separate from remoteproc's address-based loading helpers.
++ */
++static const struct elf64_hdr *mdt64_header(const struct firmware *fw)
++{
++	const struct elf64_hdr *ehdr = (const void *)fw->data;
++
++	if (fw->size < sizeof(*ehdr) ||
++	    memcmp(ehdr->e_ident, ELFMAG, SELFMAG) ||
++	    ehdr->e_ident[EI_CLASS] != ELFCLASS64 ||
++	    ehdr->e_ident[EI_DATA] != ELFDATA2LSB ||
++	    ehdr->e_phentsize != sizeof(struct elf64_phdr) ||
++	    !ehdr->e_phnum || ehdr->e_phnum > 100 ||
++	    ehdr->e_phoff > fw->size ||
++	    ehdr->e_phnum > (fw->size - ehdr->e_phoff) / sizeof(struct elf64_phdr))
++		return ERR_PTR(-EINVAL);
++
++	return ehdr;
++}
++
++static bool mdt64_is_split(const struct firmware *fw,
++			   const struct elf64_hdr *ehdr)
++{
++	const struct elf64_phdr *phdr = (const void *)(fw->data + ehdr->e_phoff);
++	unsigned int i;
++
++	for (i = 0; i < ehdr->e_phnum; i++) {
++		if (!phdr[i].p_filesz)
++			continue;
++		if (phdr[i].p_offset > fw->size ||
++		    phdr[i].p_filesz > fw->size - phdr[i].p_offset)
++			return true;
++	}
++	return false;
++}
++
++static ssize_t mdt64_image_size(const struct firmware *fw)
++{
++	const struct elf64_hdr *ehdr = mdt64_header(fw);
++	const struct elf64_phdr *phdr;
++	size_t size = fw->size;
++	unsigned int i;
++
++	if (IS_ERR(ehdr))
++		return PTR_ERR(ehdr);
++	if (!mdt64_is_split(fw, ehdr))
++		return fw->size;
++	phdr = (const void *)(fw->data + ehdr->e_phoff);
++	for (i = 0; i < ehdr->e_phnum; i++) {
++		if (phdr[i].p_filesz > SSIZE_MAX - size)
++			return -EOVERFLOW;
++		size += phdr[i].p_filesz;
++	}
++	return size;
++}
++
++static ssize_t mdt64_read_image(struct device *dev, const struct firmware *fw,
++			       const char *fw_name, void *mem, size_t mem_size)
++{
++	const struct elf64_hdr *ehdr;
++	const struct elf64_phdr *phdr;
++	size_t off = fw->size, name_len = strlen(fw_name);
++	const struct firmware *segment;
++	char *name;
++	ssize_t total, ret;
++	unsigned int i;
++
++	total = mdt64_image_size(fw);
++	if (total < 0)
++		return total;
++	if (mem_size < total || name_len < 4)
++		return -EINVAL;
++	ehdr = mdt64_header(fw);
++	memcpy(mem, fw->data, fw->size);
++	if (!mdt64_is_split(fw, ehdr))
++		return total;
++	name = kstrdup(fw_name, GFP_KERNEL);
++	if (!name)
++		return -ENOMEM;
++	phdr = (const void *)(fw->data + ehdr->e_phoff);
++	for (i = 0; i < ehdr->e_phnum; i++) {
++		if (!phdr[i].p_filesz)
++			continue;
++		if (phdr[i].p_filesz > mem_size - off) {
++			ret = -ENOSPC;
++			goto out;
++		}
++		sprintf(name + name_len - 3, "b%02u", i);
++		ret = request_firmware_into_buf(&segment, name, dev, mem + off,
++					       phdr[i].p_filesz);
++		if (ret)
++			goto out;
++		ret = segment->size == phdr[i].p_filesz ? 0 : -EINVAL;
++		release_firmware(segment);
++		if (ret)
++			goto out;
++		off += phdr[i].p_filesz;
++	}
++	ret = off;
++out:
++	kfree(name);
++	return ret;
++}
++
+ /**
+  * qcom_mdt_get_image_size() - size of the image as one contiguous blob
+  * @fw:		firmware object for the mdt file
+@@ -202,6 +306,9 @@
+ 	const struct elf32_hdr *ehdr;
+ 	size_t size;
+ 	int i;
++
++	if (fw->size > EI_CLASS && fw->data[EI_CLASS] == ELFCLASS64)
++		return mdt64_image_size(fw);
+ 
+ 	if (!mdt_header_valid(fw))
+ 		return -EINVAL;
+@@ -261,6 +368,9 @@
+ 	size_t off;
+ 	ssize_t ret;
+ 	int i;
++
++	if (fw->size > EI_CLASS && fw->data[EI_CLASS] == ELFCLASS64)
++		return mdt64_read_image(dev, fw, fw_name, mem, mem_size);
+ 
+ 	ret = qcom_mdt_get_image_size(fw);
+ 	if (ret < 0)
+--- a/drivers/firmware/qcom/qcom_scm.c
++++ b/drivers/firmware/qcom/qcom_scm.c
+@@ -2485,7 +2485,11 @@
+ 	if (status)
+ 		return status;
+ 
+-	if (res.result == QSEECOM_RESULT_FAILURE)
++	dev_dbg(__scm->dev,
++		"qseecom: lookup %s result=%llx type=%llx data=%llx\n",
++		app_name, res.result, res.resp_type, res.data);
++	/* Downstream's result is u32; some firmware sign-extends FAILURE. */
++	if ((u32)res.result == QSEECOM_RESULT_FAILURE)
+ 		return -ENOENT;
+ 
+ 	if (res.result != QSEECOM_RESULT_SUCCESS)

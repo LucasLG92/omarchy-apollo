@@ -1,0 +1,115 @@
+Subject: [PATCH] input: nt36523: detach panel follower before workqueue teardown
+
+Native Apollo reaches the SPI touch shutdown callback before DRM unprepares
+the display. It destroys event_wq; the registered panel follower then
+flushes that freed workqueue, causing an Oops and preventing restart. It ran
+after real Wayland video playback.
+
+Manage the follower explicitly so shutdown, remove and probe failures detach
+it while callback resources still exist. Detach synchronizes with the panel's
+follower lock. Clear the pointer to make shared error cleanup safe. Release
+the event queue on remove/probe failure too. Skip touch suspend for incomplete
+probes which have not created their event queue.
+
+References:
+https://www.kernel.org/doc/html/latest/gpu/drm-kms-helpers.html
+https://www.kernel.org/doc/html/latest/core-api/workqueue.html
+
+---
+
+diff --git a/drivers/input/touchscreen/nt36523/nt36xxx.c b/drivers/input/touchscreen/nt36523/nt36xxx.c
+--- a/drivers/input/touchscreen/nt36523/nt36xxx.c
++++ b/drivers/input/touchscreen/nt36523/nt36xxx.c
+@@ -1290,6 +1290,19 @@
+ return:
+ 	Executive outcomes. 0---succeed. negative---failed
+ *******************************************************/
++/* Detach while the callbacks' workqueue and input devices are still valid.
++ * devres cleanup runs after remove(), which is too late for this driver's
++ * manually allocated state. Shutdown must detach before DRM shuts down too.
++ */
++static void nvt_release_panel_follower(struct nvt_ts_data *data)
++{
++	if (!data->panel_follower.panel)
++		return;
++
++	drm_panel_remove_follower(&data->panel_follower);
++	data->panel_follower.panel = NULL;
++}
++
+ static int32_t nvt_ts_probe(struct spi_device *client)
+ {
+ 	int32_t ret = 0;
+@@ -1371,7 +1384,9 @@
+ 	/* If the device follows a DRM panel, configure panel follower */
+ 	if (drm_is_panel_follower(&client->dev)) {
+ 		ts->panel_follower.funcs = &nt36xxx_panel_follower_funcs;
+-		devm_drm_panel_add_follower(&client->dev, &ts->panel_follower);
++		ret = drm_panel_add_follower(&client->dev, &ts->panel_follower);
++		if (ret)
++			goto err_chipvertrim_failed;
+ 	}
+ 
+ 	//---eng reset before TP_RESX high
+@@ -1626,6 +1641,11 @@
+ #endif
+ 
+ err_alloc_work_thread_failed:
++	nvt_release_panel_follower(ts);
++	if (ts->event_wq) {
++		destroy_workqueue(ts->event_wq);
++		ts->event_wq = NULL;
++	}
+ 
+ #if NVT_TOUCH_ESD_PROTECT
+ 	if (nvt_esd_check_wq) {
+@@ -1668,6 +1688,7 @@
+ err_input_dev_alloc_failed:
+ err_panelwait_failed:
+ err_chipvertrim_failed:
++	nvt_release_panel_follower(ts);
+ 	mutex_destroy(&ts->xbuf_lock);
+ 	mutex_destroy(&ts->lock);
+ 	nvt_gpio_deconfig(ts);
+@@ -1703,6 +1724,12 @@
+ {
+ 	NVT_LOG("Removing driver...\n");
+ 
++	nvt_release_panel_follower(ts);
++	if (ts->event_wq) {
++		destroy_workqueue(ts->event_wq);
++		ts->event_wq = NULL;
++	}
++
+ #if NVT_TOUCH_MP
+ #ifndef NVT_SAVE_TESTDATA_IN_FILE
+ 	nvt_test_data_proc_deinit();
+@@ -1759,9 +1786,13 @@
+ {
+ 	NVT_LOG("Shutdown driver...\n");
+ 
++	nvt_release_panel_follower(ts);
+ 	nvt_irq_enable(false);
+ 
+-	destroy_workqueue(ts->event_wq);
++	if (ts->event_wq) {
++		destroy_workqueue(ts->event_wq);
++		ts->event_wq = NULL;
++	}
+ 
+ #if NVT_TOUCH_ESD_PROTECT
+ 	if (nvt_esd_check_wq) {
+@@ -2002,8 +2033,11 @@
+ 
+ 	NVT_LOG("panel unpreparing\n");
+ 
+-	if (ts->event_wq)
+-		flush_workqueue(ts->event_wq);
++	/* A follower can be detached during an incomplete probe. */
++	if (!ts->event_wq)
++		return 0;
++
++	flush_workqueue(ts->event_wq);
+ 	return nvt_ts_suspend(&ts->client->dev);
+ }
+ 

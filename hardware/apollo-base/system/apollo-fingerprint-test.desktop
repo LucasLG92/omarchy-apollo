@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Prueba del lector de huellas
+Comment=Comprueba el contacto del dedo; todavía no registra ni desbloquea
+Exec=konsole --hold -e sudo /usr/local/sbin/apollo-fingerprint-selftest
+Icon=fingerprint
+Terminal=false
+Categories=System;Utility;

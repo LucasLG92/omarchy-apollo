@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+mkdir -p /mnt/modemfw /run/apollo-firmware/postmarketos
+mountpoint -q /mnt/modemfw || mount -o ro /dev/disk/by-partlabel/modem /mnt/modemfw
+test -f /mnt/modemfw/image/venus.mdt
+install -m644 /mnt/modemfw/image/venus.mdt /run/apollo-firmware/postmarketos/venus.mbn
+for blob in /mnt/modemfw/image/venus.b*; do
+    [ -f "$blob" ] && install -m644 "$blob" /run/apollo-firmware/postmarketos/
+done
+echo /run/apollo-firmware > /sys/module/firmware_class/parameters/path
+modprobe qcom_iris
+udevadm settle --timeout=20
+echo 'Iris initialized using this phone firmware from the read-only modem partition'

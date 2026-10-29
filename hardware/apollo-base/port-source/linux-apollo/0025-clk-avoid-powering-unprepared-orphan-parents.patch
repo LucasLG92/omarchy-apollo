@@ -1,0 +1,216 @@
+Subject: [PATCH] clk: avoid powering unprepared parents during orphan adoption
+
+Adopting an unprepared orphan changes the CCF topology, not a hardware mux.
+There are no prepare/enable references to migrate in that case. Calling the
+parent-enable helper can start an otherwise idle PLL before it has a valid
+rate; if preparation fails, the balancing helper then disables an
+unprepared clock. Keep the migration path for prepared clocks and update
+only topology for unprepared orphans, under the existing enable lock.
+
+Add real CCF KUnit cases for a failing parent, an idle parent and reference
+migration for an already prepared orphan. Before the change the first two
+fail and reproduce the unbalanced clock warnings; the prepared case passes.
+Native Apollo display/reboot/suspend validation is still required.
+
+diff --git a/drivers/clk/clk.c b/drivers/clk/clk.c
+--- a/drivers/clk/clk.c
++++ b/drivers/clk/clk.c
+@@ -3846,8 +3846,21 @@
+ 		 */
+ 		if (parent) {
+ 			/* update the clk tree topology */
+-			__clk_set_parent_before(orphan, parent);
+-			__clk_set_parent_after(orphan, parent, NULL);
++			if (orphan->prepare_count) {
++				__clk_set_parent_before(orphan, parent);
++				__clk_set_parent_after(orphan, parent, NULL);
++			} else {
++				unsigned long flags;
++
++				/*
++				 * No hardware parent switch is needed. An idle
++				 * orphan has no references to migrate, so do not
++				 * power cycle its newly registered parent.
++				 */
++				flags = clk_enable_lock();
++				clk_reparent(orphan, parent);
++				clk_enable_unlock(flags);
++			}
+ 			__clk_recalc_accuracies(orphan);
+ 			__clk_recalc_rates(orphan, true, 0);
+ 
+diff --git a/drivers/clk/Makefile b/drivers/clk/Makefile
+--- a/drivers/clk/Makefile
++++ b/drivers/clk/Makefile
+@@ -168,3 +168,5 @@
+ obj-y					+= xilinx/
+ obj-$(CONFIG_ARCH_ZYNQ)			+= zynq/
+ obj-$(CONFIG_COMMON_CLK_ZYNQMP)         += zynqmp/
++
++obj-$(CONFIG_CLK_KUNIT_TEST) += clk-orphan-power-test.o
+diff --git a/drivers/clk/clk-orphan-power-test.c b/drivers/clk/clk-orphan-power-test.c
+--- /dev/null
++++ b/drivers/clk/clk-orphan-power-test.c
+@@ -0,0 +1,162 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/* Exercise real CCF orphan adoption without any phone register access. */
++#include <linux/clk.h>
++#include <linux/clk-provider.h>
++#include <linux/errno.h>
++#include <kunit/test.h>
++
++struct orphan_power_context {
++	struct clk_hw child;
++	struct clk_hw parent;
++	struct clk *clk;
++	unsigned int prepares;
++	unsigned int unprepares;
++	bool fail_prepare;
++	bool parent_registered;
++	bool child_enabled;
++};
++
++static int orphan_power_prepare(struct clk_hw *hw)
++{
++	struct orphan_power_context *ctx =
++		container_of(hw, struct orphan_power_context, parent);
++
++	ctx->prepares++;
++	return ctx->fail_prepare ? -EIO : 0;
++}
++
++static void orphan_power_unprepare(struct clk_hw *hw)
++{
++	struct orphan_power_context *ctx =
++		container_of(hw, struct orphan_power_context, parent);
++
++	ctx->unprepares++;
++}
++
++static unsigned long orphan_power_parent_rate(struct clk_hw *hw,
++					      unsigned long parent_rate)
++{
++	return 42000000;
++}
++
++static unsigned long orphan_power_child_rate(struct clk_hw *hw,
++					     unsigned long parent_rate)
++{
++	return parent_rate;
++}
++
++static const struct clk_ops orphan_power_parent_ops = {
++	.prepare = orphan_power_prepare,
++	.unprepare = orphan_power_unprepare,
++	.recalc_rate = orphan_power_parent_rate,
++};
++
++static const struct clk_ops orphan_power_child_ops = {
++	.recalc_rate = orphan_power_child_rate,
++};
++
++static int orphan_power_init(struct kunit *test)
++{
++	struct orphan_power_context *ctx;
++	int ret;
++
++	ctx = kunit_kzalloc(test, sizeof(*ctx), GFP_KERNEL);
++	if (!ctx)
++		return -ENOMEM;
++	test->priv = ctx;
++	ctx->child.init = CLK_HW_INIT("orphan-power-child", "orphan-power-parent",
++				      &orphan_power_child_ops,
++				      CLK_OPS_PARENT_ENABLE);
++	ret = clk_hw_register(NULL, &ctx->child);
++	if (ret)
++		return ret;
++	ctx->clk = clk_hw_get_clk(&ctx->child, NULL);
++	if (IS_ERR(ctx->clk)) {
++		ret = PTR_ERR(ctx->clk);
++		clk_hw_unregister(&ctx->child);
++		return ret;
++	}
++	return 0;
++}
++
++static void orphan_power_exit(struct kunit *test)
++{
++	struct orphan_power_context *ctx = test->priv;
++
++	if (ctx->child_enabled)
++		clk_disable_unprepare(ctx->clk);
++	clk_put(ctx->clk);
++	clk_hw_unregister(&ctx->child);
++	if (ctx->parent_registered)
++		clk_hw_unregister(&ctx->parent);
++}
++
++static int orphan_power_register_parent(struct orphan_power_context *ctx)
++{
++	int ret;
++
++	ctx->parent.init = CLK_HW_INIT_NO_PARENT("orphan-power-parent",
++					       &orphan_power_parent_ops, 0);
++	ret = clk_hw_register(NULL, &ctx->parent);
++	if (!ret)
++		ctx->parent_registered = true;
++	return ret;
++}
++
++static void orphan_power_unprepared_parent_failure(struct kunit *test)
++{
++	struct orphan_power_context *ctx = test->priv;
++
++	ctx->fail_prepare = true;
++	KUNIT_ASSERT_EQ(test, orphan_power_register_parent(ctx), 0);
++	KUNIT_EXPECT_PTR_EQ(test, clk_hw_get_parent(&ctx->child), &ctx->parent);
++	KUNIT_EXPECT_EQ(test, ctx->prepares, 0U);
++	KUNIT_EXPECT_EQ(test, ctx->unprepares, 0U);
++	KUNIT_EXPECT_EQ(test, clk_get_rate(ctx->clk), 42000000UL);
++	KUNIT_EXPECT_FALSE(test, clk_hw_is_prepared(&ctx->parent));
++}
++
++static void orphan_power_unprepared_no_power_cycle(struct kunit *test)
++{
++	struct orphan_power_context *ctx = test->priv;
++
++	KUNIT_ASSERT_EQ(test, orphan_power_register_parent(ctx), 0);
++	KUNIT_EXPECT_PTR_EQ(test, clk_hw_get_parent(&ctx->child), &ctx->parent);
++	KUNIT_EXPECT_EQ(test, ctx->prepares, 0U);
++	KUNIT_EXPECT_EQ(test, ctx->unprepares, 0U);
++	KUNIT_EXPECT_FALSE(test, clk_hw_is_enabled(&ctx->parent));
++}
++
++static void orphan_power_prepared_migrates_references(struct kunit *test)
++{
++	struct orphan_power_context *ctx = test->priv;
++
++	KUNIT_ASSERT_EQ(test, clk_prepare_enable(ctx->clk), 0);
++	ctx->child_enabled = true;
++	KUNIT_ASSERT_EQ(test, orphan_power_register_parent(ctx), 0);
++	KUNIT_EXPECT_EQ(test, ctx->prepares, 1U);
++	KUNIT_EXPECT_EQ(test, ctx->unprepares, 0U);
++	KUNIT_EXPECT_TRUE(test, clk_hw_is_prepared(&ctx->parent));
++	KUNIT_EXPECT_TRUE(test, clk_hw_is_enabled(&ctx->parent));
++	clk_disable_unprepare(ctx->clk);
++	ctx->child_enabled = false;
++	KUNIT_EXPECT_EQ(test, ctx->unprepares, 1U);
++	KUNIT_EXPECT_FALSE(test, clk_hw_is_prepared(&ctx->parent));
++}
++
++static struct kunit_case orphan_power_cases[] = {
++	KUNIT_CASE(orphan_power_unprepared_parent_failure),
++	KUNIT_CASE(orphan_power_unprepared_no_power_cycle),
++	KUNIT_CASE(orphan_power_prepared_migrates_references),
++	{}
++};
++
++static struct kunit_suite orphan_power_suite = {
++	.name = "clk-orphan-power",
++	.init = orphan_power_init,
++	.exit = orphan_power_exit,
++	.test_cases = orphan_power_cases,
++};
++
++kunit_test_suite(orphan_power_suite);
++MODULE_LICENSE("GPL");

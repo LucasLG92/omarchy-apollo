@@ -1,0 +1,17 @@
+*.pkg.tar.*
+*.img
+*.squashfs
+*.zip
+*.tar
+*.tar.gz
+*.db
+src/
+pkg/
+build/
+private/
+logs/
+*.key
+*.pem
+*.pub
+.env*
+__pycache__/

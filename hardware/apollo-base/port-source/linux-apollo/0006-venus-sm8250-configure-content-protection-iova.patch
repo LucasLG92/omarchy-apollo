@@ -1,0 +1,25 @@
+Subject: [PATCH] media: venus: configure SM8250 virtual address protection ranges
+
+Match the Apollo downstream venus_ns start (0x25800000) and
+venus_sec_non_pixel start/size (0x01000000/0x24800000), using the
+documented mapping in venus/firmware.c. These are also the values used
+by the upstream Iris SM8250 platform data. Without cp_size Venus skips
+qcom_scm_mem_protect_video_var entirely.
+
+Use the existing SCM interface and preserve the firmware, physical RAM
+carveouts and IOMMU stream IDs. Native decode still requires validation.
+
+--- a/drivers/media/platform/qcom/venus/core.c
++++ b/drivers/media/platform/qcom/venus/core.c
+@@ -1001,6 +1001,11 @@
+ 	.vmem_size = 0,
+ 	.vmem_addr = 0,
+ 	.dma_mask = 0xe0000000 - 1,
++	/* SM8250 downstream venus_ns and venus_sec_non_pixel IOVA pools. */
++	.cp_start = 0,
++	.cp_size = 0x25800000,
++	.cp_nonpixel_start = 0x01000000,
++	.cp_nonpixel_size = 0x24800000,
+ 	.fwname = "qcom/vpu-1.0/venus.mbn",
+ 	.dec_nodename = "video-decoder",
+ 	.enc_nodename = "video-encoder",

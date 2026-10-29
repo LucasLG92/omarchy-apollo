@@ -1,0 +1,2 @@
+KERNEL=="fastrpc-*", GROUP="fastrpc", MODE="0660"
+SUBSYSTEM=="dma_heap", GROUP="fastrpc", MODE="0660"

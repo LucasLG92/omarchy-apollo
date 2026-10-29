@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Adaptar escritorio al móvil
+Comment=Aplica escala y controles adecuados a la pantalla del móvil
+Exec=konsole --hold -e /usr/local/bin/apollo-mobile-display
+Icon=preferences-desktop-display
+Terminal=false
+Categories=Settings;DesktopSettings;

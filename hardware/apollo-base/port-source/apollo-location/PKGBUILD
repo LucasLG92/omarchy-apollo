@@ -1,0 +1,23 @@
+pkgname=apollo-location
+pkgver=1.0
+pkgrel=1
+pkgdesc='Apollo GNSS integration for desktop location applications'
+arch=(any)
+license=(GPL-2.0-only)
+depends=('apollo-modem>=1.0-4' 'modemmanager-apollo>=1.24.2.r1-2' geoclue libnotify libqmi bash coreutils systemd)
+source=(apollo-gnss-prepare apollo-gnss-prepare.service 30-apollo-gnss.conf 50-apollo.conf README.txt)
+sha512sums=(bf26e8fe3e56299cc841cfe946f4cbd9a344e247daf8e4d0723c493770e4dca2b2c835c3c4797d5a2718527a76a77793b8ac4b59b9779290cea566f313c885f6
+24d577a54910df9de40f5a747ad4db16b5b1d6e40c39ec6379c3c0757f537589dab3b5bd788ebfd2186063bf1ab717001a70c955f4651ee5d787233514613378
+54ed284bfe6c604cc80653223a339fd19f56555231abe2330aadb84d0cc99d51086f189580be08ff2e2f160246e8e3f7a05ec54ef19921d5a8cd1d60bcb88854
+ea7e8063f8817afbbd71ddd49c490c06a21176d104c3ee34f214bcbefcd4b0b2e303473f73600ae7928c6efdef6cc16a0766a26de65b215d069685609f0ff4fa
+5681876fb9906aa024607547dd14553e3ded392b6c0baa53c990ba0af279be218b4a65f377a08f1179f780babbe39fdb49cc31c234a48c04ea26a042e3f26945)
+check() {
+  bash -n apollo-gnss-prepare
+}
+package() {
+  install -Dm755 apollo-gnss-prepare "$pkgdir/usr/bin/apollo-gnss-prepare"
+  install -Dm644 apollo-gnss-prepare.service "$pkgdir/usr/lib/systemd/system/apollo-gnss-prepare.service"
+  install -Dm644 30-apollo-gnss.conf "$pkgdir/usr/lib/systemd/system/geoclue.service.d/30-apollo-gnss.conf"
+  install -Dm644 50-apollo.conf "$pkgdir/etc/geoclue/conf.d/50-apollo.conf"
+  install -Dm644 README.txt "$pkgdir/usr/share/doc/apollo-location/README.txt"
+}

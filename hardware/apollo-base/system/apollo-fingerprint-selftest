@@ -1,0 +1,73 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+# Contact detection only. No enrollment, matching, image or template commands.
+set -euo pipefail
+[[ $EUID == 0 ]] || { echo 'Ejecuta esta prueba con sudo.' >&2; exit 1; }
+[[ $# == 0 || ( $# == 1 && $1 == --check ) ]] || exit 2
+test -f /run/apollo-persistent
+test -d /proc/device-tree/apollo-fpc-test
+for tool in qsee-supplicant qsee-app-loader apollo-fpc-info apollo-fingerprint-audit; do
+  test -x "/usr/local/sbin/$tool"
+done
+test -f /usr/share/apollo/fpc-test.dtbo
+for part in mdt b00 b01 b02 b03 b04 b05 b06 b07; do
+  test -f "/usr/lib/firmware/fpcapo.$part"
+done
+if [[ ${1:-} == --check ]]; then
+  echo 'Herramientas y firmware local preparados. El sensor no se ha activado.'
+  exit 0
+fi
+exec 9>/run/apollo-fingerprint-selftest.lock
+flock -n 9 || { echo 'Ya hay otra prueba del lector abierta.' >&2; exit 1; }
+! systemctl is-active --quiet apollo-qsee-test.service
+! systemctl is-active --quiet apollo-fpc-loader-test.service
+install -d -m700 /tmp/apollo-fpc-firmware /run/apollo-audit
+for part in mdt b00 b01 b02 b03 b04 b05 b06 b07; do
+  install -m600 "/usr/lib/firmware/fpcapo.$part" "/tmp/apollo-fpc-firmware/fpcapo.$part"
+done
+install -m600 /usr/share/apollo/fpc-test.dtbo /tmp/apollo-fpc-test.dtbo
+mountpoint -q /sys/kernel/debug || mount -t debugfs debugfs /sys/kernel/debug
+out=$(mktemp -d /run/apollo-audit/contacto-XXXXXXXX)
+chmod 700 "$out"
+unit=
+cleanup() {
+  if [[ -n $unit ]]; then systemctl stop "$unit" 2>/dev/null || true; fi
+  if [[ -w /sys/devices/platform/apollo-fpc-test/enable ]]; then
+    echo 0 > /sys/devices/platform/apollo-fpc-test/enable
+  fi
+  printf '%s\n' 'file drivers/firmware/qcom/qcom_scm.c -p' \
+    'file drivers/tee/qseecom/core.c -p' > /sys/kernel/debug/dynamic_debug/control
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM HUP
+echo 'Preparando el lector. Mantén el dedo apartado.'
+unit="apollo-fpc-local-${out##*/}"
+systemd-run --unit="$unit" --collect --no-block --property=RuntimeMaxSec=355 \
+  /usr/bin/env APOLLO_FPC_AUDIT_OUT="$out" APOLLO_FPC_PRESENCE=1 APOLLO_FPC_PRESENCE_SECONDS=300 \
+  /usr/local/sbin/apollo-fingerprint-audit > "$out/inicio.log" 2>&1
+running() {
+  local state
+  state=$(systemctl show "$unit" -p ActiveState --value 2>/dev/null || true)
+  [[ $state == active || $state == activating ]]
+}
+ready=0
+for ((attempt=0; attempt<70; attempt++)); do
+  if grep -q 'finger_presence waiting=1' "$out/finger-presence.txt" 2>/dev/null; then
+    ready=1; break
+  fi
+  running || break
+  sleep 0.5
+done
+if [[ $ready == 1 ]]; then
+  echo 'Ahora apoya el dedo sobre el lector lateral, sin pulsar el botón.'
+  echo 'Puedes retirarlo después de unos segundos. La espera máxima es de cinco minutos.'
+fi
+while running; do sleep 0.5; done
+if grep -q 'finger_presence detected=1' "$out/finger-presence.txt" 2>/dev/null; then
+  echo 'Contacto detectado. La prueba ha terminado y el sensor se ha apagado.'
+  echo 'Esta herramienta aún no registra huellas ni desbloquea el móvil.'
+else
+  echo 'No se ha detectado contacto. La prueba ha terminado.'
+  echo "El informe de diagnóstico se conserva solo en este móvil: $out"
+  exit 1
+fi

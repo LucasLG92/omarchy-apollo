@@ -1,0 +1,12 @@
+[Unit]
+Description=Apollo on-screen keyboard
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/wvkbd-mobintl --hidden -H 300 --fn "JetBrainsMono Nerd Font 18" -l simple,special,emoji
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

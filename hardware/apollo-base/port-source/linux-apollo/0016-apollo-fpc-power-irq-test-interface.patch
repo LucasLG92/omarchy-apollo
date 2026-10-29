@@ -1,0 +1,211 @@
+Subject: [PATCH] misc: add opt-in Apollo FPC power/reset/IRQ test interface
+
+Board wiring and reset timings verified against the phone's running Android
+DT and Xiaomi's GPL fpc1020_tee driver. Keep the FPC node disabled by default:
+other Apollo units may use a different vendor. No SPI, image, template or
+authentication handling is added here. Power is root-controlled, defaults
+off, validates the known 1.8 V supply and releases its regulator reference.
+
+Describe the supply reference in the compiled base DT. Adding a phandle
+property to an already live regulator through an overlay does not initialize
+that node's kernel phandle field and caused a safe voltage-check rejection.
+Only the disabled node's status needs to be changed in the RAM test.
+
+Reference: https://github.com/LineageOS/android_kernel_xiaomi_sm8250/blob/3a0fc935fe41b56669466a1ef17420d099c2eeb2/drivers/input/fingerprint/fpc/fpc1020_tee.c
+
+--- a/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo.dts
++++ b/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo.dts
+@@ -52,6 +52,17 @@
+ 		energy-full-design-microwatt-hours = <19250000>;
+ 		charge-full-design-microamp-hours = <5000000>;
+ 		constant-charge-current-max-microamp = <3000000>;
++	};
++
++	/* FPC variant only; explicitly enabled by the bring-up test. */
++	apollo-fpc-test {
++		compatible = "xiaomi,apollo-fpc-test";
++		vdd-supply = <&vreg_l8c_1p8>;
++		reset-gpios = <&tlmm 24 GPIO_ACTIVE_LOW>;
++		irq-gpios = <&tlmm 23 GPIO_ACTIVE_HIGH>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&apollo_fpc_pins>;
++		status = "disabled";
+ 	};
+ 
+ 	wcd938x: audio-codec {
+@@ -1795,6 +1806,23 @@
+ &tlmm {
+ 	gpio-reserved-ranges = <28 4>, <40 4>;
+ 
++	apollo_fpc_pins: apollo-fpc-pins {
++		reset {
++			pins = "gpio24";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++
++		irq {
++			pins = "gpio23";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-pull-down;
++			input-enable;
++		};
++	};
++
+ 	/*
+ 	 * MCLK2 feeds the ultra-wide sensor. The SoC dtsi carries groups for
+ 	 * MCLK0, 1 and 3 only, so this one is described here.
+--- a/drivers/misc/apollo-fpc-gpio.c
++++ b/drivers/misc/apollo-fpc-gpio.c
+@@ -0,0 +1,125 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/* Apollo FPC side sensor: power, reset and IRQ only. Secure SPI stays in TZ.
++ * Board wiring and timings verified against the phone DT and Xiaomi's
++ * fpc1020_tee.c; no image, template or secure command transport here.
++ */
++#include <linux/atomic.h>
++#include <linux/delay.h>
++#include <linux/gpio/consumer.h>
++#include <linux/interrupt.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/regulator/consumer.h>
++#include <linux/slab.h>
++
++struct apollo_fpc {
++    struct gpio_desc *reset, *irq;
++    struct regulator *vdd;
++    struct mutex lock;
++    atomic_t interrupts;
++    bool enabled;
++};
++static void reset_sensor(struct apollo_fpc *fpc)
++{
++    gpiod_set_value_cansleep(fpc->reset, 0);
++    usleep_range(100, 200);
++    gpiod_set_value_cansleep(fpc->reset, 1);
++    usleep_range(5000, 5100);
++    gpiod_set_value_cansleep(fpc->reset, 0);
++    usleep_range(5000, 5100);
++}
++static int set_power(struct apollo_fpc *fpc, bool enable)
++{
++    int ret;
++    if (enable == fpc->enabled) return 0;
++    if (enable) {
++        ret = regulator_enable(fpc->vdd);
++        if (ret) return ret;
++        usleep_range(100, 1000);
++        reset_sensor(fpc);
++        fpc->enabled = true;
++    } else {
++        gpiod_set_value_cansleep(fpc->reset, 1);
++        ret = regulator_disable(fpc->vdd);
++        if (ret) return ret;
++        fpc->enabled = false;
++    }
++    return 0;
++}
++static irqreturn_t irq_handler(int irq, void *data)
++{
++    struct apollo_fpc *fpc = data;
++    atomic_inc(&fpc->interrupts);
++    return IRQ_HANDLED;
++}
++static ssize_t enable_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++    struct apollo_fpc *fpc = dev_get_drvdata(dev);
++    return sysfs_emit(buf, "%u\n", READ_ONCE(fpc->enabled));
++}
++static ssize_t enable_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++    struct apollo_fpc *fpc = dev_get_drvdata(dev);
++    bool enable; int ret = kstrtobool(buf, &enable);
++    if (ret) return ret;
++    mutex_lock(&fpc->lock);
++    ret = set_power(fpc, enable);
++    mutex_unlock(&fpc->lock);
++    return ret ? ret : count;
++}
++static DEVICE_ATTR(enable, 0600, enable_show, enable_store);
++static ssize_t irq_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++    struct apollo_fpc *fpc = dev_get_drvdata(dev);
++    return sysfs_emit(buf, "level=%d count=%d\n", gpiod_get_value_cansleep(fpc->irq), atomic_read(&fpc->interrupts));
++}
++static DEVICE_ATTR_RO(irq);
++static struct attribute *apollo_fpc_attrs[] = { &dev_attr_enable.attr, &dev_attr_irq.attr, NULL };
++ATTRIBUTE_GROUPS(apollo_fpc);
++static void power_off(void *data)
++{
++    struct apollo_fpc *fpc = data;
++    mutex_lock(&fpc->lock);
++    set_power(fpc, false);
++    mutex_unlock(&fpc->lock);
++}
++static int apollo_fpc_probe(struct platform_device *pdev)
++{
++    struct device *dev = &pdev->dev;
++    struct apollo_fpc *fpc;
++    int irq, ret;
++    fpc = devm_kzalloc(dev, sizeof(*fpc), GFP_KERNEL);
++    if (!fpc) return -ENOMEM;
++    mutex_init(&fpc->lock);
++    atomic_set(&fpc->interrupts, 0);
++    fpc->vdd = devm_regulator_get(dev, "vdd");
++    if (IS_ERR(fpc->vdd)) return dev_err_probe(dev, PTR_ERR(fpc->vdd), "vdd\n");
++    ret = regulator_get_voltage(fpc->vdd);
++    if (ret != 1800000) return dev_err_probe(dev, ret < 0 ? ret : -EINVAL, "expected verified 1.8 V supply\n");
++    fpc->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
++    if (IS_ERR(fpc->reset)) return dev_err_probe(dev, PTR_ERR(fpc->reset), "reset GPIO\n");
++    fpc->irq = devm_gpiod_get(dev, "irq", GPIOD_IN);
++    if (IS_ERR(fpc->irq)) return dev_err_probe(dev, PTR_ERR(fpc->irq), "IRQ GPIO\n");
++    irq = gpiod_to_irq(fpc->irq);
++    if (irq < 0) return irq;
++    ret = devm_request_threaded_irq(dev, irq, NULL, irq_handler, IRQF_TRIGGER_RISING | IRQF_ONESHOT, dev_name(dev), fpc);
++    if (ret) return ret;
++    platform_set_drvdata(pdev, fpc);
++    ret = devm_add_action_or_reset(dev, power_off, fpc);
++    if (ret) return ret;
++    dev_info(dev, "Apollo FPC power/reset/IRQ ready; secure SPI untouched\n");
++    return 0;
++}
++static const struct of_device_id apollo_fpc_match[] = {
++    { .compatible = "xiaomi,apollo-fpc-test" }, { }
++};
++MODULE_DEVICE_TABLE(of, apollo_fpc_match);
++static struct platform_driver apollo_fpc_driver = {
++    .probe = apollo_fpc_probe,
++    .driver = { .name = "apollo-fpc-gpio", .of_match_table = apollo_fpc_match, .dev_groups = apollo_fpc_groups },
++};
++module_platform_driver(apollo_fpc_driver);
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("Experimental Apollo FPC power/reset/IRQ interface");
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -75,3 +75,5 @@
+ obj-y				+= keba/
+ obj-y				+= amd-sbi/
+ obj-$(CONFIG_MISC_RP1)		+= rp1/
++
++obj-$(CONFIG_APOLLO_FPC_GPIO) += apollo-fpc-gpio.o
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -661,4 +661,13 @@
+ source "drivers/misc/keba/Kconfig"
+ source "drivers/misc/amd-sbi/Kconfig"
+ source "drivers/misc/rp1/Kconfig"
++config APOLLO_FPC_GPIO
++	tristate "Experimental Apollo FPC power/reset/IRQ interface"
++	depends on OF && GPIOLIB && REGULATOR
++	help
++	  Controls the verified FPC side-sensor power, reset and interrupt
++	  pins on Xiaomi Apollo. Secure SPI and biometric processing remain
++	  in QSEE. The board node is disabled until explicitly enabled by
++	  a hardware bring-up test. This is not a complete fingerprint stack.
++
+ endmenu

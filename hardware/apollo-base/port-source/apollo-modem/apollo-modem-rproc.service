@@ -1,0 +1,11 @@
+[Unit]
+Description=Start the SDX55 processor after MHI and modem services are ready
+Requires=apollo-modem-start.service mdm-helper-native.service
+After=apollo-modem-start.service mdm-helper-native.service
+Before=ModemManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/apollo-modem-power-on
+TimeoutStartSec=240

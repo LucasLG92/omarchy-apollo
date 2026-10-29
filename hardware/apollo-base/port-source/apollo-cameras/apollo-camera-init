@@ -1,0 +1,44 @@
+#!/bin/bash
+set -euo pipefail
+# Probe sensors serially after the board regulators have appeared. CAMSS
+# waits for every endpoint, so a failed front sensor otherwise hides all four.
+if [ -d /sys/bus/platform/drivers/qcom-camss ]; then
+    for path in /sys/bus/platform/drivers/qcom-camss/*/driver; do
+        [ -L "$path" ] && { echo 'CAMSS already bound; refusing to change its live graph' >&2; exit 1; }
+    done
+fi
+udevadm settle --timeout=20
+modprobe camcc_sm8250
+modprobe i2c_qcom_cci
+udevadm settle --timeout=20
+for driver in s5khmx s5k5e9 ov13b10 s5k3t2 ak7375 dw9714; do
+    modprobe "$driver"
+done
+available=0
+: > /run/apollo-camera-unavailable
+for sensor in s5khmx s5k5e9 ov13b10 s5k3t2; do
+    found=0
+    for path in /sys/bus/i2c/devices/*; do
+        [ -f "$path/name" ] || continue
+        [ "$(cat "$path/name")" = "$sensor" ] || continue
+        found=1
+        if [ ! -L "$path/driver" ]; then
+            echo "Retrying unbound sensor $sensor on ${path##*/} after serial probe"
+            if ! echo "${path##*/}" > "/sys/bus/i2c/drivers/$sensor/bind"; then
+                echo "WARNING: $sensor did not respond; excluding its endpoint for this boot" >&2
+                echo "$sensor" >> /run/apollo-camera-unavailable
+                # No camera stream or CAMSS notifier exists yet. This RAM-only
+                # overlay keeps one failed sensor from hiding the working ones.
+                modprobe overlay_loader
+                echo "apollo/disable-$sensor.dtbo" > /sys/kernel/debug/of_overlay_loader/apply
+                continue
+            fi
+        fi
+        test -L "$path/driver"
+        available=$((available + 1))
+    done
+    [ "$found" = 1 ] || { echo "Expected $sensor was not described by this device tree" >&2; exit 1; }
+done
+[ "$available" -gt 0 ] || { echo 'No camera sensor responded' >&2; exit 1; }
+modprobe qcom_camss
+echo "$available Apollo camera sensors bound; CAMSS loaded"

@@ -1,0 +1,36 @@
+--- a/drivers/media/i2c/s5k3t2.c
++++ b/drivers/media/i2c/s5k3t2.c
+@@ -1205,6 +1205,7 @@
+ 	struct s5k3t2 *s5k3t2;
+ 	unsigned long freq;
+ 	int ret;
++	unsigned int attempt;
+ 
+ 	s5k3t2 = devm_kzalloc(&client->dev, sizeof(*s5k3t2), GFP_KERNEL);
+ 	if (!s5k3t2)
+@@ -1247,7 +1248,24 @@
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = s5k3t2_identify_sensor(s5k3t2);
++	/*
++	 * A transient CCI timeout must not strand the whole CAMSS notifier.
++	 * Retry transport errors with the existing reset/power sequence;
++	 * an absent or unexpected sensor still fails immediately.
++	 */
++	for (attempt = 0; attempt < 3; attempt++) {
++		ret = s5k3t2_identify_sensor(s5k3t2);
++		if (!ret || (ret != -ETIMEDOUT && ret != -EIO &&
++			     ret != -EREMOTEIO) || attempt == 2)
++			break;
++
++		dev_warn(s5k3t2->dev, "transient identify error %d, retrying\n", ret);
++		s5k3t2_power_off(s5k3t2->dev);
++		usleep_range(20000, 25000);
++		ret = s5k3t2_power_on(s5k3t2->dev);
++		if (ret)
++			return ret;
++	}
+ 	if (ret)
+ 		goto error_power_off;
+ 

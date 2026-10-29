@@ -1,0 +1,38 @@
+Apollo: prueba del formato PCM, 2026-10-28
+
+Referencia privada local: experimental/hardware-20261028T150611Z/hardware-audio.tar.gz
+Se reprodujo un tono de 440 Hz y se capturó la entrada física del códec con ALSA.
+
+S16_LE, mono, 48 kHz:
+- 96 000 muestras; ningún valor fuera del rango de 16 bits.
+- Ruido previo: RMS 71; componente de 440 Hz 0.6.
+- Durante el tono: RMS 12 759; amplitud de 440 Hz 18 012.
+- Amplitud/RMS = 1.412, coherente con un seno prácticamente puro.
+
+S24_LE, mono, 48 kHz, contenedor de 32 bits:
+- El 55.31 % de los valores excede el rango declarado de 24 bits.
+- El byte menos significativo es cero en el 100 % de las muestras.
+- La señal conserva el tono, pero la alineación no coincide con S24_LE de ALSA.
+
+Antes del ajuste, la salida de captura de PipeWire a S16 tenía ocho bits bajos
+siempre a cero y ruido elevado. Se fuerza S16LE a 48 kHz exclusivamente en los
+nodos de audio integrados platform-sound; los dispositivos USB/Bluetooth no se
+ven afectados. El DSP conserva los formatos de sus enlaces internos al códec.
+
+La regla está en 51-apollo-pcm-format.conf y se distribuye con apollo-board-data.
+Los niveles de ganancia y la calidad de voz requieren una validación separada;
+esta prueba verifica el transporte PCM y un tono conocido.
+
+Validación posterior de la corrección en la imagen con apollo-board-data 1.0-4:
+experimental/hardware-20261028T151859Z/hardware-audio.tar.gz
+- PipeWire abrió la captura como S16_LE, mono, 48 kHz.
+- Tres grabaciones completas de 192 000 muestras.
+- Ajuste por defecto: tono/RMS 1.4136; tono sobre ruido 35.92 dB; 0 % saturado.
+- Ajuste de referencia de Android: 39.24 dB; 0 % saturado.
+- El fallo de ocho bits bajos siempre a cero desapareció.
+Resumen de métricas sin audio ni identificadores: ../../audio-validation.json
+
+Documentación primaria del formato y de la configuración:
+https://docs.pipewire.org/page_pulse_modules.html
+https://pipewire.pages.freedesktop.org/wireplumber/daemon/configuration/alsa.html
+https://github.com/PipeWire/wireplumber/blob/master/src/config/wireplumber.conf.d.examples/alsa.conf

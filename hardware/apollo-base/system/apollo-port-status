@@ -1,0 +1,26 @@
+#!/usr/bin/python3
+"""A local status view that never displays network identifiers or credentials."""
+from pathlib import Path
+import subprocess,re,platform
+def query(*args):
+ p=subprocess.run(args,capture_output=True,text=True,timeout=12)
+ return p.stdout.strip() if p.returncode==0 else ''
+print('APOLLO LINUX\n')
+print('Sistema instalado en el móvil: '+('sí' if Path('/run/apollo-persistent').exists() else 'no'))
+print('Arquitectura: '+platform.machine())
+print('Kernel: '+query('pacman','-Q','linux-apollo'))
+version=Path('/var/lib/apollo-install/installed-version')
+if version.is_file(): print('Base de pruebas: '+version.read_text().strip())
+devices=query('nmcli','-t','-f','DEVICE,TYPE','device').splitlines()
+wireless=[line.rsplit(':',1)[0] for line in devices if line.endswith(':wifi')]
+frequency=None
+if len(wireless)==1:
+ match=re.search(r'freq:\s*(\d+)',query('iw','dev',wireless[0],'link'))
+ if match: frequency=int(match[1])
+if frequency:
+ band='5 GHz' if 5000<=frequency<5925 else '2,4 GHz' if 2400<=frequency<2500 else str(frequency)+' MHz'
+ print('WiFi: conectado a '+band)
+else: print('WiFi: consulta el icono del panel')
+print('\nLa base sigue siendo experimental.')
+print('Huellas: prueba de contacto disponible; sin desbloqueo.')
+print('Pantalla externa por USB-C: sin vídeo en la prueba.')

@@ -1,0 +1,62 @@
+#!/bin/bash
+set -uo pipefail
+OUT=/run/apollo-audit/geoclue
+mkdir -p "$OUT"
+chmod 700 "$OUT"
+test -x /usr/lib/geoclue || exit 2
+install -dm755 /etc/geoclue/conf.d
+cat > /etc/geoclue/conf.d/90-apollo-audit.conf <<'EOF'
+[ip]
+enable=false
+[wifi]
+enable=false
+submit-data=false
+[3g]
+enable=false
+[cdma]
+enable=false
+[network-nmea]
+enable=false
+[static-source]
+enable=false
+[modem-gps]
+enable=true
+[org.apollo.LocationAudit]
+allowed=true
+system=false
+users=1001
+[org.apollo.LocationDeniedAudit]
+allowed=false
+system=false
+users=1001
+EOF
+trap 'rm -f /etc/geoclue/conf.d/90-apollo-audit.conf; systemctl stop geoclue.service' EXIT
+cat > /usr/share/applications/org.apollo.LocationAudit.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Apollo location validation
+Exec=/usr/local/sbin/apollo-geoclue-client-audit
+NoDisplay=true
+EOF
+cp /usr/share/applications/org.apollo.LocationAudit.desktop /usr/share/applications/org.apollo.LocationDeniedAudit.desktop
+systemctl restart geoclue.service
+timeout -k 3 195 runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus GTK_USE_PORTAL=0 /usr/local/sbin/apollo-geoclue-dbus-audit > "$OUT/result.json" 2> "$OUT/client-errors.txt"
+code=$?
+echo "geoclue-client $code" > "$OUT/exit-status.txt"
+timeout -k 3 35 runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus GTK_USE_PORTAL=0 /usr/local/sbin/apollo-geoclue-dbus-audit --expect-denied > "$OUT/denied-result.json" 2> "$OUT/denied-errors.txt"
+denied_code=$?
+echo "geoclue-denied $denied_code" >> "$OUT/exit-status.txt"
+if [ "$code" = 0 ]; then
+  timeout -k 3 45 runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus GTK_USE_PORTAL=0 /usr/local/sbin/apollo-geoclue-client-audit > "$OUT/library-result.json" 2> "$OUT/library-errors.txt"
+  library_code=$?
+  echo "geoclue-library $library_code" >> "$OUT/exit-status.txt"
+  if [ "$library_code" != 0 ]; then code=$library_code; fi
+fi
+if [ "$denied_code" != 0 ]; then code=$denied_code; fi
+timeout -k 1 5 busctl --system --timeout=3 get-property org.freedesktop.GeoClue2 /org/freedesktop/GeoClue2/Manager org.freedesktop.GeoClue2.Manager AvailableAccuracyLevel > "$OUT/manager-accuracy.txt" 2>&1
+timeout -k 1 5 busctl --system --timeout=3 tree org.freedesktop.GeoClue2 > "$OUT/object-paths.txt" 2>&1
+systemctl status geoclue.service --no-pager > "$OUT/service-status.txt" 2>&1
+pgrep -fa '/usr/lib/geoclue-2.0/demos/[a]gent' > "$OUT/agent-process.txt"
+pacman -Q geoclue libnotify apollo-location > "$OUT/package-versions.txt" 2>&1
+journalctl -b -u geoclue --no-pager -n 80 > "$OUT/service-journal.txt" 2>&1
+exit "$code"

@@ -1,0 +1,11 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    fragment@0 {
+        target-path = "@TARGET@";
+        __overlay__ {
+            status = "disabled";
+        };
+    };
+};

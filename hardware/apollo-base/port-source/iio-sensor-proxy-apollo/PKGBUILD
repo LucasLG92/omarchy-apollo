@@ -1,0 +1,29 @@
+pkgname=iio-sensor-proxy-apollo
+pkgver=3.9
+pkgrel=1
+pkgdesc='IIO and Qualcomm SSC sensor proxy with discovery race fixes'
+arch=(aarch64)
+url='https://gitlab.freedesktop.org/hadess/iio-sensor-proxy'
+license=(GPL-3.0-only)
+depends=(glib2 glibc libgudev libssc-apollo polkit)
+makedepends=(meson ninja gcc systemd)
+provides=('iio-sensor-proxy=3.9')
+conflicts=(iio-sensor-proxy)
+_commit=0085ddf8ecb173a1c5fcf2344aa40e561125354f
+source=("iio-sensor-proxy-$_commit.tar.gz::https://gitlab.freedesktop.org/hadess/iio-sensor-proxy/-/archive/$_commit/iio-sensor-proxy-$_commit.tar.gz"
+        0001-fix-ssc-race-condition.patch)
+sha512sums=(366a6bdde9062b1684524d608a15af62f4fc202012f05419a021d73ac02aaca7b09b75535feb75ce2e515a395d086f7c2850b0fadc4de621124973238241a9b2 e08afbc838f41853e7aa24ab343c9c190a14ee0c1ade10f1d415386a8eb012a37bd47b44f1fc9360c7c75c9f0d49a0e9641bcefb5c274236b7508e4d8b2d8082)
+prepare() {
+  cd "iio-sensor-proxy-$_commit"
+  patch -Np1 --fuzz=0 < "$srcdir/0001-fix-ssc-race-condition.patch"
+}
+build() {
+  meson setup "iio-sensor-proxy-$_commit" build --prefix=/usr --libdir=lib \
+    --libexecdir=lib --buildtype=release -Dssc-support=enabled -Dtests=false \
+    -Dgtk_doc=false -Dsystemdsystemunitdir=/usr/lib/systemd/system \
+    -Dudevrulesdir=/usr/lib/udev/rules.d
+  meson compile -C build -j 4
+}
+package() {
+  DESTDIR="$pkgdir" meson install -C build --no-rebuild
+}

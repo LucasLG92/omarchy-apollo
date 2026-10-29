@@ -1,0 +1,29 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+# Restore the sound services disabled for quiet development. No playback test.
+set -euo pipefail
+[[ $EUID == 0 ]]
+test -e /run/apollo-persistent
+owner_uid=$(id -u apollo)
+as_owner() {
+  runuser -u apollo -- env XDG_RUNTIME_DIR="/run/user/$owner_uid" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$owner_uid/bus" "$@"
+}
+units=(pipewire.service pipewire.socket pipewire-pulse.service pipewire-pulse.socket wireplumber.service)
+for unit in "${units[@]}"; do
+  path=/etc/systemd/user/$unit
+  if [[ -L $path && $(readlink "$path") == /dev/null ]]; then rm -- "$path"; fi
+done
+rm -f /etc/apollo/quiet-testing
+as_owner systemctl --user daemon-reload
+as_owner systemctl --user unmask --runtime "${units[@]}"
+as_owner /usr/local/bin/apollo-quiet-session > /run/apollo-audio-mute-guard.log 2>&1 &
+guard_pid=$!
+as_owner systemctl --user enable pipewire.socket pipewire-pulse.socket
+as_owner systemctl --user start "${units[@]}"
+wait "$guard_pid"
+as_owner wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.25
+as_owner wpctl set-mute @DEFAULT_AUDIO_SINK@ 1
+as_owner systemctl --user is-active pipewire.service pipewire-pulse.service wireplumber.service
+as_owner wpctl get-volume @DEFAULT_AUDIO_SINK@
+echo 'Sound services restored; playback remains muted for the owner to enable.'

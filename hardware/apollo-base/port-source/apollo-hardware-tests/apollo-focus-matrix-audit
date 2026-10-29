@@ -1,0 +1,191 @@
+#!/usr/bin/python3
+"""Counterbalanced focus diagnostic: record outcomes, never assume a fix."""
+from pathlib import Path
+import fcntl,hashlib,json,os,signal,struct,subprocess,time
+out=Path('/run/apollo-audit/focus-matrix'); out.mkdir(parents=True,exist_ok=True)
+module=Path('/run/apollo-focus-supply-audit.ko')
+params=Path('/sys/module/apollo_focus_supply_audit/parameters')
+result={'audio_used':False,'camera_frames_saved':False,'eeprom_accessed':False,
+    'firmware_uploaded':False,'voltage_changed':False,'optical_focus_verified':False,
+    'hardware_position_readback':False,'focus_fully_functional':False,
+    'real_driver_unbound':False,'media_graph_modified':False,
+    'scope':'Six rotated rounds of L6 off/on by main sensor idle/capturing. Diagnostic rebind/retry is not production recovery, cached controls are not optical focus.',
+    'trials':[],'module_sha256':hashlib.sha256(module.read_bytes()).hexdigest()}
+before=subprocess.check_output(['dmesg'],text=True)
+(out/'kernel-before.txt').write_text(before)
+lenses=[p for p in Path('/sys/bus/i2c/devices').glob('*-000c') if
+    (p/'of_node/compatible').exists() and b'asahi-kasei,ak7377\0' in (p/'of_node/compatible').read_bytes()]
+assert len(lenses)==1
+lens=lenses[0]; name=lens.name; driver=Path('/sys/bus/i2c/drivers/ak7375')
+assert (lens/'driver').resolve()==driver
+main=lens.parent/(name.split('-')[0]+'-003d')
+assert (main/'name').read_text().strip()=='s5khmx'
+regulators={}
+for label in ('vreg_l6p','vreg_l7p'):
+    found=[p for p in Path('/sys/class/regulator').iterdir() if (p/'name').read_text().strip()==label]
+    assert len(found)==1 and (found[0]/'num_users').exists()
+    regulators[label]=found[0]
+def users(): return {key:int((path/'num_users').read_text()) for key,path in regulators.items()}
+baseline=users(); result['regulator_users_before']=baseline
+loaded=False; capture=None; capture_log=None; capture_file=None
+def status(dev): return (dev/'power/runtime_status').read_text().strip()
+def bind():
+    if not (lens/'driver').exists(): (driver/'bind').write_text(name)
+    assert (lens/'driver').resolve()==driver
+def subdev():
+    found=[p for p in Path('/sys/class/video4linux').glob('v4l-subdev*')
+           if (p/'name').read_text().strip()=='ak7375 '+name]
+    assert len(found)==1
+    return '/dev/'+found[0].name
+def frame_count(): return capture_file.read_text(errors='replace').count('cam0-stream0 seq:')
+def wait_frames(wanted,timeout):
+    deadline=time.monotonic()+timeout
+    while True:
+        count=frame_count()
+        if count>=wanted:
+            assert capture.poll() is None,'Capture already ended'
+            return count
+        assert capture.poll() is None,'Main camera exited before delivering frames'
+        assert time.monotonic()<deadline,'Main camera frame wait timed out'
+        time.sleep(.05)
+def start_capture(entry):
+    global capture,capture_log,capture_file
+    capture_file=out/('capture-%02d.txt'%entry['trial'])
+    capture_log=capture_file.open('wb',buffering=0)
+    capture=subprocess.Popen(['stdbuf','-oL','-eL','cam',
+        '--camera=/base/soc@0/cci@ac4f000/i2c-bus@0/camera@3d',
+        '--capture=2000','--stream=role=viewfinder,width=640,height=480,pixelformat=RGB888'],
+        stdout=capture_log,stderr=subprocess.STDOUT)
+    entry['capture_initial_frames']=wait_frames(3,15)
+    entry['capture_process_alive']=True
+    # Default libcamera AF can also update this shared control. Record the
+    # immediate cached value, but do not confuse it with physical readback.
+    entry['capture_autofocus_may_update_controls']=True
+def stop_capture(entry=None):
+    global capture,capture_log
+    if capture is not None:
+        methods=[]
+        if capture.poll() is None:
+            capture.send_signal(signal.SIGINT); methods.append('SIGINT')
+            try: capture.wait(timeout=8)
+            except subprocess.TimeoutExpired:
+                capture.terminate(); methods.append('SIGTERM')
+                try: capture.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    capture.kill(); methods.append('SIGKILL'); capture.wait(timeout=3)
+        if entry is not None:
+            entry['capture_stop_signals']=methods
+            entry['capture_exit']=capture.returncode
+            entry['capture_total_frames']=frame_count()
+        capture=None
+    if capture_log is not None: capture_log.close(); capture_log=None
+def settle(expected):
+    deadline=time.monotonic()+4
+    while users()!=expected or status(main) not in ('suspended','error'):
+        assert time.monotonic()<deadline,'Camera/supply references did not settle: '+str(users())+' '+status(main)
+        time.sleep(.02)
+    return {'regulator_users':users(),'main_runtime':status(main),'lens_runtime':status(lens)}
+def cached(fd):
+    buf=bytearray(struct.pack('Ii',0x009a090a,0))
+    fcntl.ioctl(fd,0xc008561b,buf,True)
+    return struct.unpack('Ii',buf)[1]
+try:
+    assert not params.exists()
+    # Establish that the ordinary application sees the original graph before
+    # any diagnostic supply or runtime-PM operation.
+    p=subprocess.run(['cam','--list'],capture_output=True,text=True,timeout=15)
+    (out/'cameras-before.txt').write_text(p.stdout+p.stderr)
+    assert p.returncode==0 and '/base/soc@0/cci@ac4f000/i2c-bus@0/camera@3d' in p.stdout,'Main camera missing before diagnostic operations'
+    result['main_camera_enumerated_before']=True
+    p=subprocess.run(['insmod',str(module),'target='+name],capture_output=True,text=True,timeout=10)
+    result['insmod_exit']=p.returncode; result['insmod_message']=p.stdout+p.stderr
+    loaded=params.exists()
+    assert loaded and p.returncode==0,result['insmod_message']
+    result['voltage_uv']=int((params/'voltage_uv').read_text()); assert result['voltage_uv']==2800000
+    states=[(False,False),(True,False),(True,True),(False,True)]
+    for round_index in range(6):
+        shift=round_index%4
+        for powered,streaming in states[shift:]+states[:shift]:
+            entry={'trial':len(result['trials'])+1,'round':round_index+1,
+                   'additional_l6_enabled':powered,'main_capture_requested':streaming,
+                   'accepted_controls':[],'cached_control_values':[]}
+            result['trials'].append(entry)
+            assert capture is None
+            (params/'enabled').write_text('1' if powered else '0')
+            assert (params/'enabled').read_text().strip()==('Y' if powered else 'N')
+            assert (lens/'driver').resolve()==driver
+            expected={**baseline,'vreg_l6p':baseline['vreg_l6p']+int(powered)}
+            settle(expected)
+            try:
+                if streaming: start_capture(entry)
+                entry['main_runtime_during_controls']=status(main)
+                entry['controller_runtime_during_controls']=Path('/sys/bus/platform/devices/ac4f000.cci/power/runtime_status').read_text().strip()
+                if streaming: assert entry['main_runtime_during_controls']=='active'
+                else: assert entry['main_runtime_during_controls']=='suspended'
+                entry['lens_runtime_before_retry']=status(lens)
+                entry['diagnostic_runtime_error_clear_requested']=False
+                if entry['lens_runtime_before_retry']=='error':
+                    (params/'clear_error').write_text('1')
+                    entry['diagnostic_runtime_error_clear_requested']=True
+                fd=None; stage='open'
+                try:
+                    fd=os.open(subdev(),os.O_RDWR|os.O_NONBLOCK)
+                    entry['open_succeeded']=True; stage='control'
+                    entry['initial_cached_value']=cached(fd)
+                    for position in (0,640,1280,2560,0):
+                        buf=bytearray(struct.pack('Ii',0x009a090a,position))
+                        fcntl.ioctl(fd,0xc008561c,buf,True)
+                        entry['accepted_controls'].append(position)
+                        entry['cached_control_values'].append(cached(fd))
+                        time.sleep(.04)
+                except OSError as error:
+                    entry.update(failure_stage=stage,error_errno=error.errno,error=str(error))
+                    entry.setdefault('open_succeeded',False)
+                finally:
+                    if fd is not None: os.close(fd)
+                entry['control_session_succeeded']=bool(entry.get('open_succeeded') and len(entry['accepted_controls'])==5 and not entry.get('error'))
+                if streaming:
+                    entry['capture_frames_after_controls']=wait_frames(entry['capture_initial_frames']+1,4)
+            finally:
+                stop_capture(entry)
+            entry['settled']=settle(expected)
+            entry['completed']=True
+            print(json.dumps(entry),flush=True)
+    result['runtime_error_clear_requests']=int((params/'error_clear_requests').read_text())
+except Exception as error:
+    result['diagnostic_error']=type(error).__name__+': '+str(error)
+finally:
+    try:
+        stop_capture(result['trials'][-1] if result['trials'] else None)
+        if loaded:
+            (params/'enabled').write_text('0')
+            assert (params/'enabled').read_text().strip()=='N'
+            result['additional_supply_released']=True
+            p=subprocess.run(['rmmod','apollo_focus_supply_audit'],capture_output=True,text=True,timeout=10)
+            result['module_removed']=p.returncode==0 and not params.exists()
+            result['rmmod_message']=p.stdout+p.stderr
+        result['original_driver_still_bound']=(lens/'driver').resolve()==driver
+        result['final_settled']=settle(baseline)
+        result['regulator_users_restored']=users()==baseline
+        p=subprocess.run(['cam','--list'],capture_output=True,text=True,timeout=15)
+        (out/'cameras-after.txt').write_text(p.stdout+p.stderr)
+        result['main_camera_enumerated_after']=p.returncode==0 and '/base/soc@0/cci@ac4f000/i2c-bus@0/camera@3d' in p.stdout
+    except Exception as error: result['restore_error']=str(error)
+    after=subprocess.check_output(['dmesg'],text=True)
+    (out/'kernel-after.txt').write_text(after)
+    result['kernel_warning_count_before']=before.count('WARNING:')
+    result['kernel_warning_count_after']=after.count('WARNING:')
+    result['kernel_oops']='Internal error: Oops' in after or 'BUG:' in after
+    matrix=[]
+    for powered,streaming in ((False,False),(True,False),(True,True),(False,True)):
+        entries=[x for x in result['trials'] if x['additional_l6_enabled']==powered and x['main_capture_requested']==streaming]
+        matrix.append({'additional_l6_enabled':powered,'main_capture_requested':streaming,
+            'attempts':len(entries),'completed':sum(x.get('completed',False) for x in entries),
+            'successful_control_sessions':sum(x.get('control_session_succeeded',False) for x in entries),
+            'error_numbers':[x['error_errno'] for x in entries if 'error_errno' in x]})
+    result['matrix']=matrix
+    result['all_control_sessions_succeeded']=len(result['trials'])==24 and all(x.get('control_session_succeeded') for x in result['trials'])
+    result['diagnostic_completed']=not result.get('diagnostic_error') and not result.get('restore_error') and len(result['trials'])==24 and all(x.get('completed') for x in result['trials']) and result.get('module_removed') and result.get('regulator_users_restored') and result.get('main_camera_enumerated_after') and not result['kernel_oops'] and result['kernel_warning_count_before']==result['kernel_warning_count_after']
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print('Focus matrix diagnostic completed' if result['diagnostic_completed'] else 'Focus matrix diagnostic incomplete')
+raise SystemExit(0 if result['diagnostic_completed'] else 1)

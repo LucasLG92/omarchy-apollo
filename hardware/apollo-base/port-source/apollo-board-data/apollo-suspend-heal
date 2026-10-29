@@ -1,0 +1,21 @@
+#!/bin/sh
+# Resume glue for what does not come back by itself.
+#
+# The FastRPC daemon stop that used to live in "pre" is retired: since
+# kernel r12 fastrpc invocations wait freezably, so a live sensor
+# session survives suspend without faulting the SLPI.
+SDSP_UNIT=""
+for u in hexagonrpcd-sdsp.service hexagonrpcd-apollo-sdsp.service; do
+	systemctl cat "$u" >/dev/null 2>&1 && { SDSP_UNIT=$u; break; }
+done
+case "$1" in
+post)
+	(
+		sleep 1
+		[ -n "$SDSP_UNIT" ] && systemctl start "$SDSP_UNIT" 2>/dev/null
+		sleep 2
+		systemctl start iio-sensor-proxy.service 2>/dev/null
+	) >/dev/null 2>&1 &
+	;;
+esac
+exit 0

@@ -1,0 +1,83 @@
+#!/bin/bash
+set -uo pipefail
+OUT=/run/apollo-audit
+as_apollo() {
+  runuser -u apollo -- env XDG_RUNTIME_DIR=/run/user/1001 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus "$@"
+}
+amixer -c X10T cget name='ADC4 Volume' > "$OUT/mic-adc-before.txt"
+amixer -c X10T cget name='TX_DEC0 Volume' > "$OUT/mic-digital-before.txt"
+original_adc=$(sed -n 's/.*: values=//p' "$OUT/mic-adc-before.txt")
+original_digital=$(sed -n 's/.*: values=//p' "$OUT/mic-digital-before.txt")
+[[ "$original_adc" =~ ^[0-9]+$ && "$original_digital" =~ ^[0-9]+$ ]] || exit 1
+restore() {
+  amixer -q -c X10T cset name='ADC4 Volume' "$original_adc"
+  amixer -q -c X10T cset name='TX_DEC0 Volume' "$original_digital"
+}
+trap restore EXIT
+pacman -Q linux-apollo apollo-board-data wireplumber pipewire
+if [ -f /usr/share/wireplumber/wireplumber.conf.d/51-apollo-pcm-format.conf ]; then
+  cat /usr/share/wireplumber/wireplumber.conf.d/51-apollo-pcm-format.conf
+fi
+as_apollo wpctl status
+as_apollo pw-dump > "$OUT/pipewire-audio-format.json"
+python3 - "$OUT/speaker-test.wav" <<'PY'
+import math, struct, sys, wave
+with wave.open(sys.argv[1], 'wb') as output:
+    output.setparams((1, 2, 48000, 0, 'NONE', 'not compressed'))
+    output.writeframes(b''.join(struct.pack('<h', int(6000 * math.sin(i * 2 * math.pi * 440 / 48000))) for i in range(48000)))
+PY
+for profile in default stock low; do
+  restore
+  file="$OUT/microphone-$profile.wav"
+  install -m600 -o apollo -g apollo /dev/null "$file"
+  as_apollo pw-record --rate=48000 --channels=1 --format=s16 --sample-count=192000 "$file" &
+  recorder=$!
+  sleep 0.6
+  case "$profile" in
+    stock) amixer -q -c X10T cset name='ADC4 Volume' 6; amixer -q -c X10T cset name='TX_DEC0 Volume' 87;;
+    low) amixer -q -c X10T cset name='ADC4 Volume' 0; amixer -q -c X10T cset name='TX_DEC0 Volume' 72;;
+  esac
+  echo "PROFILE=$profile"
+  cat /proc/asound/card0/pcm1c/sub0/hw_params
+  amixer -c X10T cget name='ADC4 Volume'
+  amixer -c X10T cget name='TX_DEC0 Volume'
+  sleep 0.6
+  as_apollo pw-play --volume=0.5 "$OUT/speaker-test.wav"
+  wait "$recorder"
+  echo "pw-record exit=$?"
+done
+echo 'DIRECT ALSA FORMAT CHECK'
+as_apollo systemctl --user stop wireplumber.service pipewire-pulse.socket pipewire-pulse.service pipewire.socket pipewire.service
+alsaucm -c hw:X10T set _verb HiFi set _enadev Speaker set _enadev 'Internal Mic'
+amixer -q -c X10T cset name='ADC4 Volume' 6
+amixer -q -c X10T cset name='TX_DEC0 Volume' 87
+for format in S16_LE:1 S24_LE:1 S32_LE:1 S16_LE:2; do
+  sample_format=${format%:*}
+  channels=${format#*:}
+  arecord -D hw:X10T,1 -f "$sample_format" -c "$channels" -r 48000 -d 2 -t raw \
+    "$OUT/direct-$sample_format-$channels.raw" > "$OUT/direct-$sample_format-$channels.txt" 2>&1 &
+  recorder=$!
+  sleep 0.6
+  cat /proc/asound/card0/pcm1c/sub0/hw_params >> "$OUT/direct-$sample_format-$channels.txt"
+  aplay -q -D plughw:X10T,0 "$OUT/speaker-test.wav"
+  wait "$recorder"
+  echo "ALSA $format exit=$?"
+done
+restore
+as_apollo systemctl --user start pipewire.socket pipewire-pulse.socket pipewire.service wireplumber.service
+python3 - "$OUT" <<'PY' | tee "$OUT/audio-sweep-metrics.txt"
+import array, math, sys, wave
+from pathlib import Path
+for file in sorted(Path(sys.argv[1]).glob('microphone-*.wav')):
+    with wave.open(str(file)) as stream:
+        samples = array.array('h', stream.readframes(stream.getnframes()))
+        rate = stream.getframerate()
+    print(file.name, 'samples=', len(samples), 'rate=', rate)
+    for start in (0.5, 1.5, 2.5):
+        window = samples[int(start*rate):int((start+0.5)*rate)]
+        if not window: continue
+        rms = math.sqrt(sum(v*v for v in window)/len(window))
+        tone = 2*abs(sum(v*complex(math.cos(i*2*math.pi*440/rate),math.sin(i*2*math.pi*440/rate)) for i,v in enumerate(window)))/len(window)
+        clips = sum(abs(v)>32000 for v in window)*100/len(window)
+        print(f'  t={start}s RMS={rms:.2f} tone440={tone:.2f} clipped={clips:.3f}%')
+PY

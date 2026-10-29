@@ -1,0 +1,17 @@
+--- a/drivers/pci/pcie/bwctrl.c
++++ b/drivers/pci/pcie/bwctrl.c
+@@ -25,5 +25,6 @@
+ #include <linux/cleanup.h>
+ #include <linux/errno.h>
++#include <linux/export.h>
+ #include <linux/interrupt.h>
+ #include <linux/mutex.h>
+ #include <linux/pci.h>
+@@ -182,6 +182,7 @@
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(pcie_set_target_speed);
+ 
+ static void pcie_bwnotif_enable(struct pcie_device *srv)
+ {

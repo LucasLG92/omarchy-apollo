@@ -1,0 +1,44 @@
+Subject: [PATCH] i2c: qcom-cci: reset retained controller state on runtime resume
+
+Based on Birk Skyum's reset-on-resume proposal and the maintainer discussion:
+https://lists.openwall.net/linux-kernel/2026/10/21/2473
+https://lore.kernel.org/r/20261020193946.51478-2-birk.skyum@pm.me
+
+Backport adaptation for this older CCI driver: make reset completion IRQ
+unmasking self-contained, reset unconditionally on resume, then restore
+timing and the full interrupt mask. Propagate errors and disable clocks on
+failure. Preserve the existing 1-second autosuspend policy; the proposed
+50-ms timing workaround was explicitly withdrawn in the upstream thread.
+
+--- a/drivers/i2c/busses/i2c-qcom-cci.c
++++ b/drivers/i2c/busses/i2c-qcom-cci.c
+@@ -227,6 +227,12 @@
+ 
+ static int cci_reset(struct cci *cci)
+ {
++	u32 mask;
++
++	/* Reset completion must also arrive after the power domain collapsed. */
++	mask = readl(cci->base + CCI_IRQ_MASK_0);
++	writel(mask | CCI_IRQ_MASK_0_RST_DONE_ACK, cci->base + CCI_IRQ_MASK_0);
++
+ 	/*
+ 	 * we reset the whole controller, here and for implicity use
+ 	 * master[0].xxx for waiting on it.
+@@ -489,8 +495,14 @@
+ 	if (ret)
+ 		return ret;
+ 
+-	cci_init(cci);
+-	return 0;
++	/* A sensor power cycle can leave the clocked master unable to start. */
++	ret = cci_reset(cci);
++	if (!ret)
++		ret = cci_init(cci);
++	if (ret)
++		cci_disable_clocks(cci);
++
++	return ret;
+ }
+ 
+ static int __maybe_unused cci_suspend(struct device *dev)

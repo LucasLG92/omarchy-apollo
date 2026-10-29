@@ -1,0 +1,9 @@
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -30,4 +30,5 @@
+ )
+ 
+ test('iobuffer', test_iobuffer)
+-test('hexagonfs', test_hexagonfs, args : [sample_file])
++test('hexagonfs', test_hexagonfs,
++     args : [sample_file, meson.project_source_root() / '../sm8250/Xiaomi/apollo'])

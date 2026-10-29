@@ -1,0 +1,85 @@
+#!/usr/bin/python3
+"""Observe early focus traffic and ordinary opens; never clear a PM failure."""
+from pathlib import Path
+import json,re,shutil,subprocess
+out=Path('/run/apollo-audit/focus-trace'); out.mkdir(parents=True,exist_ok=True)
+trace=Path('/sys/kernel/tracing/instances/apollo-focus')
+result={'audio_used':False,'driver_rebound':False,'extra_supply_used':False,
+    'pm_error_cleared':False,'diagnostic_module_used':False,'optical_focus_verified':False,
+    'normal_focus_controls_passed':False,'diagnostic_completed':False}
+try:
+    marker=Path('/run/apollo-focus-trace-setup').read_text().strip()
+    assert marker=='APOLLO_FOCUS_TRACE_SETUP_OK'
+    assert (trace/'tracing_on').read_text().strip()=='1'
+    assert (trace/'current_tracer').read_text().strip()=='nop'
+    shutil.copytree('/run/apollo-focus-trace-meta',out/'metadata',dirs_exist_ok=True)
+    (trace/'trace_marker').write_text('APOLLO_FOCUS_NORMAL_START\n')
+    with (out/'normal-console.txt').open('wb') as console:
+        normal=subprocess.run(['/usr/local/sbin/apollo-focus-normal-audit','focus-normal'],
+            stdout=console,stderr=subprocess.STDOUT,timeout=180)
+    result['normal_focus_exit']=normal.returncode
+    test=json.loads(Path('/run/apollo-audit/focus-normal/result.json').read_text())
+    result['normal_focus_results']=test
+    result['normal_focus_controls_passed']=test['passed']
+    (trace/'trace_marker').write_text('APOLLO_FOCUS_NORMAL_END\n')
+    result['diagnostic_completed']=True
+except Exception as error:
+    result['test_error']=type(error).__name__+': '+str(error)
+finally:
+    if trace.exists():
+        (trace/'tracing_on').write_text('0\n')
+        raw=(trace/'trace').read_text(); (out/'trace.txt').write_text(raw)
+        stats={p.parent.name:p.read_text() for p in (trace/'per_cpu').glob('cpu*/stats')}
+        result['per_cpu_trace_stats']=stats
+        result['trace_overruns']=sum(int(re.search(r'^overrun:\s*(\d+)',s,re.M)[1]) for s in stats.values())
+        result['trace_lost_events']=sum(int(re.search('^'+re.escape(label)+r':\s*(\d+)',s,re.M)[1])
+            for s in stats.values() for label in ('overrun','commit overrun','dropped events'))
+        writes=[]; returns=[]; pending={}
+        for line in raw.splitlines():
+            if ' i2c_write:' in line:
+                m=re.search(r'(\d+\.\d+): i2c_write: i2c-(\d+) #\d+ a=([0-9a-f]+) f=([0-9a-f]+) l=(\d+) \[([^\]]*)\]',line)
+                if m:
+                    pid=int(re.search(r'-(\d+)\s+\[\d+\]',line)[1])
+                    entry={'time_s':float(m[1]),'adapter':int(m[2]),'address':int(m[3],16),
+                        'flags':int(m[4],16),'length':int(m[5]),'data_hex':m[6],'trace_pid':pid}
+                    writes.append(entry); pending[pid]=entry
+            elif ' i2c_result:' in line:
+                m=re.search(r'(\d+\.\d+): i2c_result: i2c-(\d+) n=(\d+) ret=(-?\d+)',line)
+                if m:
+                    pid=int(re.search(r'-(\d+)\s+\[\d+\]',line)[1])
+                    item={'time_s':float(m[1]),'adapter':int(m[2]),'messages':int(m[3]),'return':int(m[4]),'trace_pid':pid}
+                    returns.append(item)
+                    if pid in pending:
+                        entry=pending.pop(pid)
+                        entry['transfer_return']=item['return']; entry['completion_time_s']=item['time_s']
+        result['actuator_write_requests']=writes
+        result['adapter20_results']=returns
+        result['actuator_write_count']=len(writes)
+        timings=[]
+        for index,entry in enumerate(writes):
+            if entry['data_hex']!='02-00' or entry.get('transfer_return')!=1: continue
+            next_write=next((x for x in writes[index+1:] if x['trace_pid']==entry['trace_pid']),None)
+            if next_write and next_write['length']==3 and next_write['data_hex'].startswith('00-'):
+                timings.append({'mode_request_s':entry['time_s'],'mode_complete_s':entry['completion_time_s'],
+                    'position_request_s':next_write['time_s'],
+                    'settling_interval_us':round((next_write['time_s']-entry['completion_time_s'])*1e6),
+                    'position_transfer_return':next_write.get('transfer_return')})
+        result['mode_to_first_position_timings']=timings
+        result['minimum_post_mode_settling_us']=min((x['settling_interval_us'] for x in timings),default=None)
+        result['actuator_write_transfer_failures']=sum(x.get('transfer_return')!=1 for x in writes)
+        result['only_actuator_write_payloads_recorded']=all(x['adapter']==20 and x['address']==12 for x in writes)
+        result['read_reply_payloads_recorded']=' i2c_reply:' in raw
+        result['early_start_marker_present']='APOLLO_FOCUS_TRACE_EARLY' in raw
+        result['first_write_before_normal_test']=bool(writes) and writes[0]['time_s']<float(re.search(r'(\d+\.\d+): tracing_mark_write: APOLLO_FOCUS_NORMAL_START',raw)[1]) if 'APOLLO_FOCUS_NORMAL_START' in raw else False
+        (trace/'events/enable').write_text('0\n')
+        trace.rmdir()
+        result['trace_instance_removed']=not trace.exists()
+    else:
+        result['trace_instance_removed']=True
+    kernel=subprocess.check_output(['dmesg'],text=True); (out/'kernel.txt').write_text(kernel)
+    result['kernel_oops']='Internal error: Oops' in kernel or 'BUG:' in kernel
+    result['kernel_warning_count']=kernel.count('WARNING:')
+    result['passed']=result['diagnostic_completed'] and result.get('actuator_write_count',0)>0 and result.get('only_actuator_write_payloads_recorded') and not result.get('read_reply_payloads_recorded',True) and result.get('trace_lost_events',1)==0 and result.get('trace_instance_removed') and not result['kernel_oops']
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print('Startup diagnostic complete; normal focus result:',result['normal_focus_controls_passed'])
+raise SystemExit(0 if result['passed'] else 1)

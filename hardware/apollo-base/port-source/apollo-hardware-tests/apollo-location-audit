@@ -1,0 +1,30 @@
+#!/bin/bash
+set -uo pipefail
+OUT=/run/apollo-audit/navigation
+mkdir -p "$OUT"
+chmod 700 "$OUT"
+run() {
+  local name=$1; shift
+  timeout -k 2 12 "$@" > "$OUT/$name.txt" 2>&1
+  local code=$?
+  echo "$name $code" | tee -a "$OUT/exit-status.txt"
+}
+trap 'systemctl start ModemManager.service' EXIT
+# Keep the other modem services running while isolating bounded QMI requests.
+systemctl stop ModemManager.service
+run qrtr-servers qrtr-lookup
+run operating-before qmicli -v -d qrtr://3 --dms-get-operating-mode
+run loc-mode qmicli -v -d qrtr://3 --loc-get-operation-mode
+run loc-engine-lock qmicli -v -d qrtr://3 --loc-get-engine-lock
+# Android normally controls this runtime lock when location is enabled. This
+# bounded test explicitly enables GPS; Android reapplies its policy on reboot.
+run loc-enable qmicli -v -d qrtr://3 --loc-set-engine-lock=none
+run loc-engine-lock-enabled qmicli -v -d qrtr://3 --loc-get-engine-lock
+run loc-inject-current-time qmicli -v -d qrtr://3 --loc-inject-time
+if [ -x /usr/local/sbin/apollo-gnss-probe ]; then
+  timeout -k 5 345 /usr/local/sbin/apollo-gnss-probe 300 > "$OUT/gnss-session.txt" 2>&1
+  echo "gnss-session $?" | tee -a "$OUT/exit-status.txt"
+fi
+run operating-after qmicli -v -d qrtr://3 --dms-get-operating-mode
+run native-fingerprint bash -c 'ls -l /dev/tee* /dev/qsee* /dev/*fp* 2>/dev/null; ls /sys/bus/platform/drivers | grep -E "fpc|goodix|qsee|qcomtee"; grep -i -e fingerprint -e qsee -e qcomtee /proc/devices; dmesg | grep -i -e qsee -e qcomtee'
+exit 0

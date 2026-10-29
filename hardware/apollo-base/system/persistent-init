@@ -1,0 +1,45 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# Boot a verified local SquashFS with a persistent ext4 overlay; never formats.
+set -eu
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+mkdir -p /proc /sys /dev /run /tmp /dev/pts
+mount -t devtmpfs devtmpfs /dev
+mkdir -p /dev/pts
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devpts devpts /dev/pts
+mount -t tmpfs tmpfs /run
+exec </dev/console >/dev/console 2>&1
+fatal() { echo "Apollo local boot failed: $*"; sync; sleep 30; /sbin/reboot-bootloader; exit 1; }
+# The installed apollo-usb-gadget.service creates the optional maintenance
+# link after switch_root. No background process may keep using /sys or /run
+# while those mounts move away from this initramfs. Boot never waits for a PC.
+TARGET=
+for i in $(seq 1 60); do
+ for entry in /sys/class/block/*/uevent; do
+   if grep -qx 'PARTNAME=userdata' "$entry"; then
+     [ -z "$TARGET" ] || fatal 'duplicate userdata partition'
+     TARGET=/dev/$(basename "$(dirname "$entry")")
+   fi
+ done
+ [ -n "$TARGET" ] && break
+ sleep 1
+done
+[ -n "$TARGET" ] || fatal 'userdata partition absent'
+mkdir -p /run/apollo-storage /run/apollo-lower /newroot
+mount -t ext4 -o rw,noatime "$TARGET" /run/apollo-storage || fatal 'ext4 mount'
+grep -qx 'apollo-persistent-v1' /run/apollo-storage/.apollo-storage-v1 || fatal 'storage marker'
+EXPECTED=$(cat /etc/apollo-live.sha256)
+echo "$EXPECTED  /run/apollo-storage/base/arch-apollo.sqfs" | sha256sum -c - || fatal 'base checksum'
+mkdir -p /run/apollo-storage/state/upper /run/apollo-storage/state/work
+mount -t squashfs -o loop,ro /run/apollo-storage/base/arch-apollo.sqfs /run/apollo-lower || fatal 'base mount'
+mount -t overlay overlay -o lowerdir=/run/apollo-lower,upperdir=/run/apollo-storage/state/upper,workdir=/run/apollo-storage/state/work /newroot || fatal 'persistent overlay'
+[ -x /newroot/usr/lib/systemd/systemd ] || fatal 'systemd missing'
+touch /run/apollo-persistent
+mkdir -p /newroot/run /newroot/proc /newroot/sys /newroot/dev
+mount --move /proc /newroot/proc
+mount --move /sys /newroot/sys
+mount --move /dev /newroot/dev
+mount --move /run /newroot/run
+exec switch_root /newroot /usr/lib/systemd/systemd

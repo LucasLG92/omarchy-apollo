@@ -1,0 +1,22 @@
+pkgname=linux-apollo
+pkgver=7.1.0
+pkgrel=23
+pkgdesc='Mainline Apollo kernel with camera, Bluetooth and live boot integration'
+arch=(aarch64)
+url='https://gitlab.postmarketos.org/royka1/linux'
+license=(GPL-2.0-only)
+depends=(kmod)
+conflicts=(linux-aarch64)
+options=(!strip)
+# The assets are produced by build-kernel.sh from the pinned upstream source,
+# the adjacent patch and config. This package never flashes phone partitions.
+source=("apollo-kernel-assets-$pkgver-$pkgrel.tar.xz")
+sha512sums=(eb5ea32bfc06c01d496df3a48ebb2455be647df2016291c3d7bda9e0f1070ba58e05e582397127d95ff4ad0ea25245d704458f937e92d75de3534f28c4d9461d)
+package() {
+  install -d "$pkgdir/boot" "$pkgdir/usr/lib/modules" "$pkgdir/usr/share/licenses/$pkgname"
+  cp -a assets/boot/apollo "$pkgdir/boot/"
+  cp -a assets/lib/modules/7.1.0 "$pkgdir/usr/lib/modules/"
+  # depmod generates these on the target; they are not immutable package files.
+  rm -f "$pkgdir/usr/lib/modules/7.1.0/"modules.{alias,alias.bin,dep,dep.bin,symbols,symbols.bin,softdep,devname,builtin.bin,builtin.alias.bin}
+  install -m644 assets/COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}

@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+"""Check offline clock fallback without host UTC, network or RTC writes."""
+from pathlib import Path
+import json,subprocess,time
+out=Path('/run/apollo-audit/clock'); out.mkdir(parents=True,exist_ok=True)
+def command(*args): return subprocess.check_output(args,text=True,timeout=10).strip()
+config=Path('/boot/apollo/config').read_text()
+clock=Path('/var/lib/systemd/timesync/clock')
+epoch=clock.stat().st_mtime
+kernel=command('dmesg')
+initial=time.time(); mono=time.monotonic(); time.sleep(12)
+final=time.time(); elapsed=time.monotonic()-mono
+default_route=command('ip','-4','route','show','default')
+default_route6=command('ip','-6','route','show','default')
+ntp=command('timedatectl','show','-p','NTPSynchronized','--value')
+wifi=command('nmcli','-g','GENERAL.STATE','device','show','wlp1s0')
+rtc=Path('/sys/class/rtc/rtc0/since_epoch')
+result={'host_clock_injection_allowed':False,'rtc_written':False,
+    'kernel_hctosys_disabled':'# CONFIG_RTC_HCTOSYS is not set' in config,
+    'kernel_systohc_disabled':'# CONFIG_RTC_SYSTOHC is not set' in config,
+    'image_saved_epoch':epoch,'initial_system_epoch':initial,'final_system_epoch':final,
+    'elapsed_monotonic_seconds':elapsed,'system_clock_elapsed_seconds':final-initial,
+    'wall_clock_keeps_advancing':abs((final-initial)-elapsed)<.25,
+    'system_at_least_saved_image_time':initial>=epoch,
+    'default_ipv4_route_present':bool(default_route),
+    'default_ipv6_route_present':bool(default_route6),
+    'phone_ntp_synchronized':ntp=='yes','wifi_state':wifi,
+    'late_rtc_system_time_override_logged':'setting system clock to 1970-' in kernel,
+    'rtc_counter_epoch':int(rtc.read_text()) if rtc.exists() else None,
+    'accuracy':'Saved image timestamp lower bound only; not accurate persistent offline UTC'}
+result['passed']=all(result[x] for x in ('kernel_hctosys_disabled','kernel_systohc_disabled',
+    'wall_clock_keeps_advancing','system_at_least_saved_image_time')) and not any(result[x] for x in
+    ('default_ipv4_route_present','default_ipv6_route_present','phone_ntp_synchronized','late_rtc_system_time_override_logged')) and wifi.startswith('30 ')
+(out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print('Offline clock lower bound verified' if result['passed'] else 'Offline clock policy needs further work')
+raise SystemExit(0 if result['passed'] else 1)

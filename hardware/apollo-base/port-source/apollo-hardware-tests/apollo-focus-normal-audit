@@ -1,0 +1,95 @@
+#!/usr/bin/python3
+"""Normal actuator opens only: no module, PM-error clearing or extra power."""
+from pathlib import Path
+import fcntl,json,os,struct,subprocess,sys,time
+stage=sys.argv[1] if len(sys.argv)>1 else 'focus-normal'
+assert stage in ('focus-normal','focus-resume')
+count=100 if stage=='focus-normal' else 40
+out=Path('/run/apollo-audit')/stage; out.mkdir(parents=True,exist_ok=True)
+lens=Path('/sys/bus/i2c/devices/20-000c'); controller=Path('/sys/bus/platform/devices/ac4f000.cci')
+result={'stage':stage,'requested_cycles':count,'cycles':[],'audio_used':False,
+    'diagnostic_module_used':False,'pm_error_cleared':False,'extra_supply_used':False,
+    'driver_rebound':False,'optical_focus_verified':False,'hardware_position_readback':False}
+before=subprocess.check_output(['dmesg'],text=True); (out/'kernel-before.txt').write_text(before)
+regulators={}
+for name in ('vreg_l7p','vreg_l1c_1p8'):
+    candidates=[p for p in Path('/sys/class/regulator').iterdir() if (p/'name').read_text().strip()==name]
+    assert len(candidates)==1
+    regulators[name]=candidates[0]
+def users(): return {k:int((p/'num_users').read_text()) for k,p in regulators.items()}
+def state(): return (lens/'power/runtime_status').read_text().strip()
+baseline=None
+result['regulator_users_at_test_entry']=users()
+result['idle_baseline_wait_observations']=[]
+assert not list(Path('/sys/module').glob('apollo_focus_*'))
+nodes=[p for p in Path('/sys/class/video4linux').glob('v4l-subdev*') if (p/'name').read_text().strip()=='ak7375 20-000c']
+assert len(nodes)==1
+node='/dev/'+nodes[0].name
+def cached(fd):
+    buf=bytearray(struct.pack('Ii',0x009a090a,0)); fcntl.ioctl(fd,0xc008561b,buf,True)
+    return struct.unpack('Ii',buf)[1]
+try:
+    result['initial_runtime_state']=state()
+    # The rails are shared with other camera devices. A system resume may
+    # leave their independent autosuspend requests pending briefly. Observe a
+    # stable idle baseline rather than treating a transient shared ref as ours.
+    deadline=time.monotonic()+20; stable_since=None; previous=None
+    while True:
+        observation={'lens_runtime':state(),'regulator_users':users()}
+        if observation!=previous:
+            result['idle_baseline_wait_observations'].append(observation); previous=observation
+        idle=observation['lens_runtime'] in ('suspended','error') and all(n==0 for n in observation['regulator_users'].values())
+        if idle:
+            if stable_since is None: stable_since=time.monotonic()
+            if time.monotonic()-stable_since>=.2: break
+        else: stable_since=None
+        assert time.monotonic()<deadline,'Shared camera supplies did not reach an isolated idle baseline'
+        time.sleep(.02)
+    baseline=users(); result['regulator_users_before']=baseline
+    for index in range(count):
+        # CCI's one-second autosuspend timer may round upwards; allow 2.2s.
+        pause=(.01,.05,.2,2.2)[index%4]
+        time.sleep(pause)
+        entry={'cycle':index+1,'off_pause_s':pause,
+            'runtime_before':state(),'controller_runtime_before':(controller/'power/runtime_status').read_text().strip(),
+            'physical_before':{k:(p/'state').read_text().strip() for k,p in regulators.items()},
+            'accepted_controls':[]}
+        result['cycles'].append(entry); fd=None
+        try:
+            fd=os.open(node,os.O_RDWR|os.O_NONBLOCK); entry['opened']=True
+            for value in (0,640,1280,2560,0):
+                buf=bytearray(struct.pack('Ii',0x009a090a,value))
+                fcntl.ioctl(fd,0xc008561c,buf,True)
+                assert cached(fd)==value,'Unexpected cached control value'
+                entry['accepted_controls'].append(value)
+                time.sleep(.01)
+        except OSError as error: entry.update(error_errno=error.errno,error=str(error))
+        finally:
+            if fd is not None: os.close(fd)
+        deadline=time.monotonic()+3
+        while state() not in ('suspended','error') or users()!=baseline:
+            if time.monotonic()>=deadline:
+                entry['idle_wait_error']='Lens or shared supplies did not return to the stable idle baseline'
+                break
+            time.sleep(.01)
+        entry['runtime_after']=state(); entry['regulator_users_after']=users()
+        entry['control_session_succeeded']=entry.get('opened',False) and not entry.get('error') and len(entry['accepted_controls'])==5
+        entry['passed']=entry['control_session_succeeded'] and not entry.get('idle_wait_error') and state()=='suspended' and users()==baseline
+        print(json.dumps(entry),flush=True)
+        if not entry['passed']: break
+    cameras=subprocess.run(['cam','--list'],capture_output=True,text=True,timeout=15)
+    (out/'cameras-after.txt').write_text(cameras.stdout+cameras.stderr)
+    result['main_camera_still_enumerated']=cameras.returncode==0 and '/base/soc@0/cci@ac4f000/i2c-bus@0/camera@3d' in cameras.stdout
+except Exception as error: result['test_error']=type(error).__name__+': '+str(error)
+finally:
+    result['controller_suspended_before_cycles']=sum(x.get('controller_runtime_before')=='suspended' for x in result['cycles'])
+    result['regulator_users_final']=users()
+    result['lens_runtime_final']=state()
+    result['regulator_users_restored']=baseline is not None and users()==baseline
+    after=subprocess.check_output(['dmesg'],text=True); (out/'kernel-after.txt').write_text(after)
+    result['new_kernel_warning']=after.count('WARNING:')!=before.count('WARNING:')
+    result['kernel_oops']='Internal error: Oops' in after or 'BUG:' in after
+    result['passed']=len(result['cycles'])==count and all(x.get('passed') for x in result['cycles']) and not result.get('test_error') and result['regulator_users_restored'] and result.get('main_camera_still_enumerated') and not result['new_kernel_warning'] and not result['kernel_oops']
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print('Normal focus controls passed' if result['passed'] else 'Normal focus controls need further work')
+raise SystemExit(0 if result['passed'] else 1)

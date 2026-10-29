@@ -1,0 +1,108 @@
+#!/usr/bin/python3
+"""Compare ordinary AF power cycles with its existing rails kept powered."""
+from pathlib import Path
+import fcntl,hashlib,json,os,struct,subprocess,sys,time
+settle_matrix='--settle-matrix' in sys.argv[1:]
+out=Path('/run/apollo-audit')/('focus-settle' if settle_matrix else 'focus-startup'); out.mkdir(parents=True,exist_ok=True)
+module=Path('/run/apollo-focus-startup-audit.ko')
+params=Path('/sys/module/apollo_focus_startup_audit/parameters')
+lens=Path('/sys/bus/i2c/devices/20-000c'); main=Path('/sys/bus/i2c/devices/20-003d')
+result={'audio_used':False,'camera_frames_saved':False,'main_capture_started':False,
+    'driver_unbound':False,'voltage_changed':False,'firmware_written':False,
+    'optical_focus_verified':False,'trials':[],
+    'scope':'Ordinary V4L2 startup versus sequential VDD-then-VIO temporary hold; main sensor remains suspended. Clearing a failed runtime state is diagnostic only.',
+    'module_sha256':hashlib.sha256(module.read_bytes()).hexdigest()}
+result['settle_matrix_requested']=settle_matrix
+before=subprocess.check_output(['dmesg'],text=True); (out/'kernel-before.txt').write_text(before)
+regulators={}
+for label in ('vreg_l7p','vreg_l1c_1p8'):
+    matches=[p for p in Path('/sys/class/regulator').iterdir() if (p/'name').read_text().strip()==label]
+    assert len(matches)==1
+    regulators[label]=matches[0]
+def users(): return {name:int((p/'num_users').read_text()) for name,p in regulators.items()}
+def physical(): return {name:(p/'state').read_text().strip() for name,p in regulators.items()}
+def status(p): return (p/'power/runtime_status').read_text().strip()
+baseline=users(); result['regulator_users_before']=baseline
+assert b'asahi-kasei,ak7377\0' in (lens/'of_node/compatible').read_bytes()
+matches=[p for p in Path('/sys/class/video4linux').glob('v4l-subdev*') if (p/'name').read_text().strip()=='ak7375 20-000c']
+assert len(matches)==1
+node='/dev/'+matches[0].name; loaded=False
+def settle(expected):
+    deadline=time.monotonic()+4
+    while users()!=expected or status(lens) not in ('suspended','error'):
+        assert time.monotonic()<deadline,'Supply/PM references did not settle'
+        time.sleep(.01)
+try:
+    assert status(main)=='suspended' and not params.exists()
+    p=subprocess.run(['insmod',str(module)],capture_output=True,text=True,timeout=10)
+    loaded=params.exists(); result['insmod_exit']=p.returncode; result['insmod_message']=p.stdout+p.stderr
+    assert loaded and p.returncode==0,result['insmod_message']
+    if settle_matrix:
+        cases=[]
+        delays=[0,.01,.05,.2]
+        for round_index in range(8):
+            shift=round_index%4
+            for delay in delays[shift:]+delays[:shift]:
+                cases.append(('settle-%dms'%round(delay*1000),True,1,delay))
+    else:
+        cases=[('normal-before',False,10,0),('held',True,12,0),('normal-after',False,10,0)]
+    for phase,held,count,extra_wait in cases:
+        if settle_matrix:
+            (params/'held').write_text('0'); settle(baseline); time.sleep(.05)
+        (params/'held').write_text('1' if held else '0')
+        expected={k:v+int(held) for k,v in baseline.items()}
+        settle(expected)
+        if extra_wait: time.sleep(extra_wait)
+        for repeat in range(count):
+            entry={'trial':len(result['trials'])+1,'phase':phase,'held':held,
+                'extra_settle_wait_s':extra_wait,
+                'uptime_s':float(Path('/proc/uptime').read_text().split()[0]),
+                'users_before':users(),'physical_before':physical(),'accepted_controls':[]}
+            result['trials'].append(entry)
+            assert status(main)=='suspended'
+            if status(lens)=='error':
+                (params/'clear_error').write_text('1'); entry['runtime_error_cleared']=True
+            fd=None; started=time.monotonic()
+            try:
+                fd=os.open(node,os.O_RDWR|os.O_NONBLOCK); entry['opened']=True
+                for value in (0,1280,0):
+                    data=bytearray(struct.pack('Ii',0x009a090a,value))
+                    fcntl.ioctl(fd,0xc008561c,data,True)
+                    entry['accepted_controls'].append(value)
+                    time.sleep(.02)
+            except OSError as error:
+                entry.setdefault('opened',False); entry['errno']=error.errno; entry['error']=str(error)
+            finally:
+                if fd is not None: os.close(fd)
+            entry['elapsed_s']=round(time.monotonic()-started,4)
+            settle(expected)
+            entry['users_after']=users(); entry['physical_after']=physical()
+            entry['control_session_succeeded']=bool(entry.get('opened') and len(entry['accepted_controls'])==3 and not entry.get('error'))
+            entry['completed']=True
+            print(json.dumps(entry),flush=True)
+            time.sleep(.05)
+    result['error_clear_requests']=int((params/'error_clears').read_text())
+except Exception as error: result['diagnostic_error']=type(error).__name__+': '+str(error)
+finally:
+    try:
+        if loaded:
+            (params/'held').write_text('0')
+            assert (params/'held').read_text().strip()=='N'
+            p=subprocess.run(['rmmod','apollo_focus_startup_audit'],capture_output=True,text=True,timeout=10)
+            result['module_removed']=p.returncode==0 and not params.exists(); result['rmmod_message']=p.stdout+p.stderr
+        settle(baseline)
+        result['regulator_users_restored']=users()==baseline
+        result['driver_still_bound']=(lens/'driver').resolve().name=='ak7375'
+        result['main_still_suspended']=status(main)=='suspended'
+    except Exception as error: result['restore_error']=str(error)
+    after=subprocess.check_output(['dmesg'],text=True); (out/'kernel-after.txt').write_text(after)
+    result['new_kernel_warning']=after.count('WARNING:')!=before.count('WARNING:')
+    result['kernel_oops']='Internal error: Oops' in after or 'BUG:' in after
+    phases=['settle-0ms','settle-10ms','settle-50ms','settle-200ms'] if settle_matrix else ['normal-before','held','normal-after']
+    result['summary']=[{'phase':phase,'attempts':sum(x['phase']==phase for x in result['trials']),
+        'successful_control_sessions':sum(x['phase']==phase and x.get('control_session_succeeded',False) for x in result['trials'])}
+        for phase in phases]
+    result['diagnostic_completed']=len(result['trials'])==32 and all(x.get('completed') for x in result['trials']) and not result.get('diagnostic_error') and not result.get('restore_error') and result.get('module_removed') and result.get('regulator_users_restored') and not result['new_kernel_warning'] and not result['kernel_oops']
+    (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(result['summary']),flush=True)
+raise SystemExit(0 if result['diagnostic_completed'] else 1)

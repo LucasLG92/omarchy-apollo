@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "idle": { "screensaver": 0, "lock": 0 },
+  "bar": {
+    "position": "top",
+    "background": "opaque",
+    "layout": {
+      "left": [{ "id": "omarchy.menu" }, { "id": "apollo.keyboard" }],
+      "centerBegin": [],
+      "center": [{ "id": "omarchy.clock", "format": "HH:mm", "formatAlt": "ddd d MMM" }],
+      "centerEnd": [],
+      "right": [{ "id": "omarchy.network" }, { "id": "omarchy.audio" }, { "id": "omarchy.power" }]
+    }
+  },
+  "dock": { "position": "bottom", "pinned": ["org.gnome.Nautilus", "chromium", "foot", "omacalc", "omawrite", "Waydroid"] },
+  "plugins": []
+}
