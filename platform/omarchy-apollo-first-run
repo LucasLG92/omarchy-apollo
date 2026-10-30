@@ -4,5 +4,7 @@
 set -euo pipefail
 [[ $(omarchy-hw-platform) == "aarch64-apollo" ]]
 systemctl --user daemon-reload
-systemctl --user enable --now omarchy-sleep-lock.service
-omarchy-done mark first-run-user
+if [[ -s /var/lib/omarchy-apollo/lock-validated/$UID ]]; then
+  systemctl --user enable --now omarchy-sleep-lock.service
+fi
+omarchy-done mark apollo-desktop

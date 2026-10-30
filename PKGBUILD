@@ -1,7 +1,7 @@
 # Build from the repository root: makepkg
 pkgname=omarchy-apollo
 pkgver=0.1.0
-pkgrel=1
+pkgrel=5
 pkgdesc='Experimental native Omarchy integration for Xiaomi Apollo'
 arch=('aarch64')
 url='https://github.com/LucasLG92/omarchy-apollo'
@@ -13,7 +13,12 @@ depends=('omarchy-keyring' 'hyprland' 'quickshell' 'uwsm' 'sddm'
   'gum' 'jq' 'git' 'perl' 'fakeroot' 'pacman-contrib' 'ttf-jetbrains-mono-nerd-basic'
   'networkmanager' 'foot' 'xdg-terminal-exec' 'hyprpolkitagent' 'hyprsunset'
   'grim' 'slurp' 'wl-clipboard' 'bluez-tools' 'qt6-virtualkeyboard'
-  'qt6-multimedia' 'qt6-svg' 'qt6-5compat' 'qt6-imageformats')
+  'qt6-multimedia' 'qt6-svg' 'qt6-5compat' 'qt6-imageformats'
+  'imagemagick' 'inotify-tools' 'socat' 'herdr' 'owe' 'omasnap'
+  'omarchy-screensaver' 'omarchy-hyprland-titlebars' 'hyprland-preview-share-picker'
+  'inxi' 'wtype' 'yaru-icon-theme' 'ttf-ia-writer' 'woff2-font-awesome'
+  'xdg-desktop-portal-gtk' 'omarchy-speedtest')
+options=('!strip' '!debug')
 makedepends=('git')
 optdepends=('waydroid: Android applications without Google services'
   'chromium: web browser' 'nautilus: file manager')
@@ -36,6 +41,7 @@ prepare() {
   for change in "$_port_root"/patches/*.patch; do
     patch -Np1 -i "$change"
   done
+  chmod 755 bin/omarchy-hw-aarch64-apollo
 }
 
 package() {

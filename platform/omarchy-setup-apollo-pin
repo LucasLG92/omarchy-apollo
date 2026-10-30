@@ -1,0 +1,11 @@
+#!/bin/bash
+# omarchy:summary=Create or change the phone screen PIN on the phone
+# omarchy:requires-sudo=true
+set -euo pipefail
+[[ $(omarchy-hw-platform) == "aarch64-apollo" ]]
+[[ ${WAYLAND_DISPLAY:-} =~ ^wayland-[0-9]+$ ]] || { echo "Open PIN setup inside the phone desktop." >&2; exit 1; }
+if [[ -t 0 && -t 1 ]]; then
+  exec sudo /usr/lib/omarchy/apollo/pin-setup "$UID" "$WAYLAND_DISPLAY"
+else
+  exec pkexec /usr/lib/omarchy/apollo/pin-setup "$UID" "$WAYLAND_DISPLAY"
+fi

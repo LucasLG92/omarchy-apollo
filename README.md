@@ -2,7 +2,9 @@
 
 **A native Omarchy desktop, adapted for a phone.**
 
-<p><img src="media/omarchy-desktop.png" width="280" alt="Actual Omarchy Apollo desktop on the phone, with touch keyboard, Wi-Fi, audio and power controls"></p>
+<p><img src="media/omarchy-desktop.png" width="240" alt="Actual Omarchy Apollo desktop on the phone, with touch keyboard, Wi-Fi, audio and power controls"> <img src="media/touch-lock-preview.png" width="240" alt="Actual device preview of the trusted touch PIN keypad, with an empty field"></p>
+
+Actual device captures: the native desktop and the touch-lock preview. Owner PIN setup and real screen unlocking are still awaiting validation.
 
 Omarchy Apollo brings the Omarchy workflow to the Xiaomi Mi 10T Pro (`apollo`, M2007J3SG): a touch-friendly Linux desktop, phone-style locking and an optional Android environment for APKs without Google services.
 
@@ -29,7 +31,7 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | Desktop | Native Hyprland 0.57.0 + Omarchy Quickshell session running on the internal panel; live configuration check is clean |
 | Touch interface | Portrait scaling, a simplified status bar and keyboard toggle installed; physical touch acceptance pending |
 | Android | VANILLA ARM image boots; FD650 rendering verified; signed F-Droid 2.0.2 APK installed and repository update completed; launch lifecycle and reboot tests continue |
-| Touch lock | Requested; implementation and owner PIN setup pending |
+| Touch lock | PIN verifier and real PAM conversation pass 15 device-local checks; trusted keypad rendered on device; owner PIN setup and real unlocking pending |
 | Fingerprint | Contact detected previously; enrollment and unlock not implemented |
 | Mobile network | No SIM available for calls, SMS or data tests |
 | GPS | Service integration exists; outdoor accuracy and reliability remain to be validated |
@@ -39,7 +41,7 @@ See [validation](docs/validation.md), [architecture](docs/architecture.md) and [
 
 ## Source layout
 
-`PKGBUILD` and `packaging/` contain the desktop, keyboard and Android recipes. `patches/` contains the small Apollo changes against a pinned upstream commit. `platform/` owns phone-specific lifecycle boundaries. `config/` contains the touch profile. `hardware/apollo-base/` preserves the earlier kernel patches, system services, tests and recovery work, with its original licensing and provenance.
+`PKGBUILD` and `packaging/` contain the desktop, keyboard, lock and Android recipes. `patches/` contains the small Apollo changes against a pinned upstream commit. `platform/` owns phone-specific lifecycle boundaries. `config/` contains the touch profile. `lock/` contains local PIN setup and verification; `tests/` contains its device-local authentication checks. `hardware/apollo-base/` preserves the earlier kernel patches, system services, tests and recovery work, with its original licensing and provenance.
 
 This repository intentionally excludes firmware binaries, partition images, device backups, private diagnostics, network names, account information and credentials. Do not flash a generic Omarchy ARM ISO onto this phone.
 

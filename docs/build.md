@@ -6,6 +6,10 @@ Build as an ordinary user in a clean checkout on aarch64 with the matching, sign
 
 The recipes in `packaging/` build additional components. Put each recipe at the root of a separate clean staging copy of this repository as `PKGBUILD`, then use `makepkg` there. The keyboard recipe pins upstream wvkbd v0.20; the mobile recipe installs interface templates and its keyboard service; the Android recipe installs the ext4 bind-mount dependency and on-demand launcher.
 
+The lock recipe builds the local enrollment application and the narrowly scoped setuid verifier. Installing its package does not enroll an owner PIN or turn on automatic locking. PIN entry and confirmation happen on the device. Keep the Unix administration password separate.
+
+Authentication checks can be run on the test device with `sudo python tests/check_pin_auth.py`. They require the compiler and PAM/libxcrypt development headers, create a temporary non-login account and an isolated verifier directory, then remove them. They do not enroll or use the owner's PIN. The source checks for the retained hardware archive remain under `hardware/apollo-base/tools/check_sources.py` and establish source integrity and syntax, not hardware functionality.
+
 Building a package does not install it, initialize Android, migrate existing Android data, seed a user's desktop or select a display-manager session. Those migration steps are being validated on the test device before becoming a public installer. The current development workflow retains the previous desktop configuration, original Android data directory and boot/recovery backups privately.
 
 Record the upstream commit, resulting package checksums, dependencies changed and actual device tests for every release. Local integration builds and official signed repository packages must remain distinguishable. Do not disable signature verification to make a remote package install.

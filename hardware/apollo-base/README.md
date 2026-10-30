@@ -1,4 +1,4 @@
-> Historical Apollo r5 baseline. This is preserved implementation and recovery documentation, not an Omarchy acceptance report. See the repository root for current status.
+> Historical Apollo r5 baseline. This is preserved implementation and recovery documentation, not an Omarchy acceptance report. Historical KDE media is omitted. See the repository root for current status.
 
 # Apollo Linux
 

@@ -31,6 +31,14 @@ The migration starts from the installed r5 base, `linux-apollo 7.1.0-23`. Physic
 
 Not yet acceptance-tested: physical touch navigation and typing, screen PIN, suspend while locked, repeated Android application launch and close, Android audio/camera integration, and cold-boot persistence of the new session. These results do not establish general APK compatibility or full phone hardware support.
 
+## Touch PIN implementation
+
+- The verifier uses libxcrypt yescrypt and keeps a per-user verifier and retry state in root-only storage. Enrollment requires root authorization; the secret travels over stdin rather than process arguments.
+- The published `tests/check_pin_auth.py` compiles the real verifier against an isolated data directory and uses a temporary account with a non-login shell. Its 15 checks passed on the phone, including correct and incorrect PIN, caller/user restrictions, private-verifier access, retry delay, lockout, and the real PAM conversation with an independent Unix-password fallback. The temporary service and account were removed; no owner credential was used.
+- The keypad is part of the trusted first-party lock surface. The fallback keyboard is embedded in that surface too, avoiding a separate external keyboard above a locked screen. The actual empty-keypad preview has been visually inspected on the phone.
+- The local enrollment application has compiled and its empty setup screen has been inspected on the phone. It asks the owner to create and confirm a PIN locally; the administration password is preserved.
+- Automatic locking and suspend locking remain disabled until the owner completes setup and the real lock/unlock flow is verified. A rendered preview and automated PAM checks are not a substitute for that acceptance test.
+
 ## Publishing evidence
 
 Use actual device captures only. Review every capture for network names, notifications, account names, terminal history and secrets. Earlier KDE captures establish the old baseline and must not be presented as Omarchy screenshots. Private source images and raw diagnostics are not public release assets.

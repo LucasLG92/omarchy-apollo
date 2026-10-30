@@ -49,11 +49,24 @@
  n1x_source=""
 --- /dev/null
 +++ b/bin/omarchy-hw-aarch64-apollo
-@@ -0,0 +1,4 @@
-+#!/bin/bash
-+# omarchy:summary=Check whether this is a Xiaomi Apollo phone
-+# omarchy:hidden=true
-+[[ $(omarchy-hw-platform) == "aarch64-apollo" ]]
+@@ -0,0 +1,17 @@
++#!/bin/bash -p
++
++# omarchy:summary=Detect whether the computer is a Xiaomi Apollo phone.
++
++# Callers run this by absolute path, from systemd and from the shell, so use the
++# detector shipped beside it rather than whichever one PATH finds. -p keeps a
++# root caller's exported functions out, so a launch without it is refused, and
++# nothing here searches PATH.
++if [[ $- != *p* ]]; then
++  echo "Refusing an unsafe Bash startup." >&2
++  exit 126
++fi
++
++dir=${BASH_SOURCE[0]%/*}
++[[ $dir != "${BASH_SOURCE[0]}" ]] || dir=.
++platform=$("$dir/omarchy-hw-platform") || exit 1
++[[ $platform == "aarch64-apollo" ]]
 --- a/bin/omarchy-lifecycle-dispatch
 +++ b/bin/omarchy-lifecycle-dispatch
 @@ -104,6 +104,11 @@
@@ -81,3 +94,53 @@
  
  usage() {
    cat <<USAGE
+--- a/bin/omarchy
++++ b/bin/omarchy
+@@ -27,6 +27,7 @@
+ declare -A GROUP_DESCRIPTIONS
+ 
+ GROUP_DESCRIPTIONS[agent]="AI coding agents, their usage, and subscription accounts"
++GROUP_DESCRIPTIONS[apollo]="Phone keyboard and Android application controls"
+ GROUP_DESCRIPTIONS[ascii]="Text drawn as ASCII art"
+ GROUP_DESCRIPTIONS[audio]="Audio input and output controls"
+ GROUP_DESCRIPTIONS[bar]="Omarchy shell bar layout and settings"
+--- a/test/shell.d/hw-platform-test.sh
++++ b/test/shell.d/hw-platform-test.sh
+@@ -21,7 +21,7 @@
+ fi
+ if (( EUID == 0 )) || unshare --user --map-root-user true 2>/dev/null; then
+   live=$("${root_runner[@]}" "$detector") || fail "root detects the live platform"
+-  [[ $live =~ ^(aarch64-apple|aarch64-qualcomm|aarch64-n1x|aarch64-gb10|aarch64|x86)$ ]] || fail "root detects the live platform" "live: $live"
++  [[ $live =~ ^(aarch64-apple|aarch64-qualcomm|aarch64-apollo|aarch64-n1x|aarch64-gb10|aarch64|x86)$ ]] || fail "root detects the live platform" "live: $live"
+   for platform in aarch64-apple aarch64 x86; do
+     fixture="$test_tmp/$platform"
+     if [[ -f $fixture/proc/device-tree/compatible ]]; then
+@@ -41,7 +41,7 @@
+ 
+ # -p in the shebang is what keeps exported functions and BASH_ENV out, so an
+ # ordinary Bash launch with a decoy -p argument is refused before it reads anything.
+-for command in omarchy-hw-platform omarchy-hw-aarch64-apple omarchy-hw-apple-silicon omarchy-hw-aarch64-qualcomm omarchy-hw-aarch64-n1x omarchy-hw-n1x omarchy-hw-aarch64-gb10; do
++for command in omarchy-hw-platform omarchy-hw-aarch64-apple omarchy-hw-apple-silicon omarchy-hw-aarch64-qualcomm omarchy-hw-aarch64-apollo omarchy-hw-aarch64-n1x omarchy-hw-n1x omarchy-hw-aarch64-gb10; do
+   if /usr/bin/bash "$ROOT/bin/$command" -p >/dev/null 2>"$test_tmp/error"; then
+     fail "$command refuses an ordinary Bash launch"
+   fi
+@@ -135,6 +135,19 @@
+   expect "$board" aarch64 aarch64-qualcomm "the $board device tree is Snapdragon, never Apple Silicon"
+ done
+ pass "real Apple and Snapdragon device trees are recognised"
++
++write_tree apollo proc xiaomi,apollo qcom,kona qcom,sm8250
++expect apollo aarch64 aarch64-apollo "Apollo is a phone family rather than a Snapdragon laptop"
++expect_contradiction apollo x86_64 "an Apollo on an x86 CPU fails"
++write_tree apollo-lookalike proc vendor,xiaomi,apollo qcom,sm8250
++expect apollo-lookalike aarch64 aarch64-qualcomm "only the exact Apollo compatible token selects the phone family"
++TEST_ARCH=aarch64 OMARCHY_PROC_ROOT="$test_tmp/cases/apollo/proc" OMARCHY_SYS_ROOT="$test_tmp/cases/apollo/sys" \
++  PATH="$stub_bin:$ROOT/bin:$PATH" "$ROOT/bin/omarchy-hw-aarch64-apollo" || fail "the Apollo predicate accepts Apollo"
++if TEST_ARCH=aarch64 OMARCHY_PROC_ROOT="$test_tmp/cases/apollo/proc" OMARCHY_SYS_ROOT="$test_tmp/cases/apollo/sys" \
++  PATH="$stub_bin:$ROOT/bin:$PATH" "$ROOT/bin/omarchy-hw-aarch64-qualcomm"; then
++  fail "Apollo must not take Snapdragon laptop setup"
++fi
++pass "Apollo has an exact device-tree identity and its own predicate"
+ 
+ write_tree qemu-virt proc linux,dummy-virt
+ write_tree raspberry-pi proc raspberrypi,5-model-b brcm,bcm2712
