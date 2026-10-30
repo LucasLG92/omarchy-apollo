@@ -1,0 +1,23 @@
+#!/bin/bash
+# Start one keyboard process; input-method events control automatic visibility.
+set -euo pipefail
+(( EUID >= 1000 )) || exit 1
+state=$(systemctl show --property=ActiveState --value omarchy-apollo-owner-pin-setup.service 2>/dev/null) || state=unknown
+case "$state" in
+  inactive|failed) mode=manual ;;
+  *) mode=setup ;;
+esac
+marker=/var/lib/omarchy-apollo/pin-status/$EUID
+if [[ $mode == manual && -f $marker && ! -L $marker ]] &&
+   [[ $(stat --format='%u:%a' -- "$marker") == 0:644 ]] &&
+   [[ $(cat -- "$marker") == configured ]]; then
+  mode=auto
+fi
+if [[ ${1-} == --mode && $# == 1 ]]; then
+  printf '%s\n' "$mode"
+  exit 0
+fi
+(( $# == 0 )) || exit 2
+options=(--hidden -H 300 -L 180 --fn 'JetBrainsMono Nerd Font 18' -l simple,special,emoji)
+[[ $mode != auto ]] || options+=(--auto)
+exec /usr/bin/wvkbd-mobintl "${options[@]}"

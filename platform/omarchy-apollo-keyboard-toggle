@@ -1,7 +1,24 @@
 #!/bin/bash
 # omarchy:summary=Show or hide the Apollo touch keyboard
 set -euo pipefail
+mode=$(omarchy-apollo-keyboard-run --mode)
+if [[ $mode == setup ]]; then
+  printf '%s\n' APOLLO_PIN_SETUP_ACTIVE >&2
+  exit 1
+fi
 if systemctl --user is-active --quiet omarchy-apollo-keyboard.service; then
+  pid=$(systemctl --user show --property=MainPID --value omarchy-apollo-keyboard.service)
+  [[ $pid =~ ^[1-9][0-9]*$ ]] || exit 1
+  mapfile -d '' -t arguments < "/proc/$pid/cmdline"
+  running_mode=manual
+  for argument in "${arguments[@]}"; do
+    [[ $argument != --auto ]] || running_mode=auto
+  done
+  if [[ $running_mode != "$mode" ]]; then
+    systemctl --user restart omarchy-apollo-keyboard.service
+    systemctl --user kill --signal=USR2 omarchy-apollo-keyboard.service
+    exit 0
+  fi
   systemctl --user kill --signal=RTMIN omarchy-apollo-keyboard.service
 else
   systemctl --user start omarchy-apollo-keyboard.service

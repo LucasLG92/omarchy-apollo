@@ -60,9 +60,17 @@ The separate [six-check phase-acknowledgement record](evidence/test-phase-ack-20
 
 ## Display controls and orientation
 
-The installed mobile profile `0.1.0-8` adds a GTK display-settings application and an event-driven desktop-user controller. The [23 actual device checks](evidence/display-controls-2026-10-30.json) run the real implementation on a private nested Hyprland compositor, including all four monitor/touch transform pairs, real accelerometer claim/release, a failed preference write and rollback, compositor reload, service restart, keyboard dimensions and GTK window creation. Sensor authorization succeeds in the normal desktop-user service context; no sensor policy was changed to accommodate the test.
+Mobile profile `0.1.0-8` introduced a GTK display-settings application and an event-driven desktop-user controller. The [23 actual device checks](evidence/display-controls-2026-10-30.json) run the real implementation on a private nested Hyprland compositor, including all four monitor/touch transform pairs, real accelerometer claim/release, a failed preference write and rollback, compositor reload, service restart, keyboard dimensions and GTK window creation. Sensor authorization succeeds in the normal desktop-user service context; no sensor policy was changed to accommodate the test.
 
 The installed executable matches the tested digest. All 15 package payload files, the prior 15-file payload, package-file checks and the native package database were verified. The installed PIN-setup guard rejected an actual change request without altering the physical panel, and the PIN and main audio processes were preserved. The keyboard was restarted while hidden with the new landscape height. Physical touch mapping, actual motion through all orientations, refresh changes, battery impact and cold boot remain pending. See the [procedure and limits](display.md).
+
+## Native keyboard input and session locking
+
+Installed mobile profile `0.1.0-9` and wvkbd `0.20-2` pass [19 candidate checks and 19 installed-binary checks](evidence/keyboard-lifecycle-2026-10-30.json). Both runs use byte-identical native executables and include 12 actual write/hide/show cycles, three GTK text-focus cycles, two real nested session locks, Ctrl-latch cleanup and three native service starts followed immediately by show signals. The repeated input test exposed a pending popup frame callback during hiding; the patch cancels both drawing-surface callbacks and releases the popup viewport before reuse.
+
+The public reproduction runner was actually executed against the installed binary. Its virtual-pointer and lock fixtures refuse the physical output and ordinary desktop runtime. Only synthetic fixture text is used. Installation checked all 23 new package payload files against the reviewed archives, all 17 prior files, package-file consistency and the native package database. The desktop, audio, display controller and owner PIN-setup processes were preserved.
+
+Automatic text-input mode is selected only after a root-owned public enrollment marker exists and the setup surface has finished. The installed keyboard remains hidden in manual mode while enrollment is open. Its button guard and setup-success-hook guard were actually exercised in that state. Real enrollment completion, the automatic transition, physical finger typing, owner PIN unlocking, Android/toolkit compatibility, suspend and cold boot remain pending. See the [keyboard guide](keyboard.md).
 
 ## Native camera application stack and EGL lifecycle
 

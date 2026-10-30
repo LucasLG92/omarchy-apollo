@@ -1,0 +1,238 @@
+--- a/main.c
++++ b/main.c
+@@ -4,6 +4,9 @@
+ #include "proto/fractional-scale-v1-client-protocol.h"
+ #include "proto/viewporter-client-protocol.h"
+ #include "proto/input-method-unstable-v2-protocol.h"
++#include "proto/hyprland-lock-notify-v1-client-protocol.h"
++#include <systemd/sd-daemon.h>
++#include <time.h>
+ #include <errno.h>
+ #include <linux/input-event-codes.h>
+ #include <stdio.h>
+@@ -74,6 +77,10 @@
+ static int rounding = DEFAULT_ROUNDING;
+ static bool hidden = false;
+ static bool im_auto = false;
++static bool im_active, im_pending_active, im_pending_update;
++static bool session_locked;
++static struct hyprland_lock_notifier_v1 *lock_notifier;
++static struct hyprland_lock_notification_v1 *lock_notification;
+ 
+ /* event handler prototypes */
+ static void wl_pointer_enter(void *data, struct wl_pointer *wl_pointer,
+@@ -122,6 +129,8 @@
+                                     uint32_t serial, uint32_t w, uint32_t h);
+ static void layer_surface_closed(void *data,
+                                  struct zwlr_layer_surface_v1 *surface);
++static void lock_locked(void *data, struct hyprland_lock_notification_v1 *notification);
++static void lock_unlocked(void *data, struct hyprland_lock_notification_v1 *notification);
+ static void im_activate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2);
+ static void im_deactivate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2);
+ static void im_surrounding_text(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
+@@ -147,6 +156,11 @@
+     .unavailable = im_unavailable,
+ };
+ 
++static const struct hyprland_lock_notification_v1_listener lock_listener = {
++    .locked = lock_locked,
++    .unlocked = lock_unlocked,
++};
++
+ static const struct wl_pointer_listener pointer_listener = {
+     .enter = wl_pointer_enter,
+     .leave = wl_pointer_leave,
+@@ -324,6 +338,9 @@
+                  struct wl_surface *surface, wl_fixed_t surface_x,
+                  wl_fixed_t surface_y)
+ {
++    /* The first click can arrive after enter without any motion event. */
++    cur_x = wl_fixed_to_int(surface_x);
++    cur_y = wl_fixed_to_int(surface_y);
+ }
+ 
+ void
+@@ -461,6 +478,11 @@
+                       zwp_virtual_keyboard_manager_v1_interface.name) == 0) {
+         vkbd_mgr = wl_registry_bind(
+             registry, name, &zwp_virtual_keyboard_manager_v1_interface, 1);
++    } else if (strcmp(interface, hyprland_lock_notifier_v1_interface.name) == 0) {
++        lock_notifier = wl_registry_bind(registry, name,
++                                        &hyprland_lock_notifier_v1_interface, 1);
++        lock_notification = hyprland_lock_notifier_v1_get_lock_notification(lock_notifier);
++        hyprland_lock_notification_v1_add_listener(lock_notification, &lock_listener, NULL);
+     } else if (im_auto && strcmp(interface, zwp_input_method_manager_v2_interface.name) == 0) {
+         im_mgr = wl_registry_bind(registry, name, &zwp_input_method_manager_v2_interface, 1);
+     }
+@@ -513,16 +535,51 @@
+         .preferred_scale = wp_fractional_scale_preferred_scale,
+ };
+ 
++static void
++lock_locked(void *data, struct hyprland_lock_notification_v1 *notification)
++{
++    session_locked = true;
++    if (keyboard.vkbd) {
++        struct timespec now = {0};
++        clock_gettime(CLOCK_MONOTONIC, &now);
++        uint32_t time = (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
++        if (layer_surface)
++            kbd_release_key(&keyboard, time);
++        const uint32_t masks[] = {Shift, CapsLock, Ctrl, Alt, Super, AltGr};
++        const uint32_t keys[] = {KEY_LEFTSHIFT, KEY_CAPSLOCK, KEY_LEFTCTRL,
++                                 KEY_LEFTALT, KEY_LEFTMETA, KEY_RIGHTALT};
++        for (unsigned i = 0; i < sizeof(masks) / sizeof(masks[0]); ++i)
++            if (keyboard.mods & masks[i])
++                zwp_virtual_keyboard_v1_key(keyboard.vkbd, time, keys[i],
++                                            WL_KEYBOARD_KEY_STATE_RELEASED);
++        keyboard.mods = 0;
++        keyboard.compose = 0;
++        zwp_virtual_keyboard_v1_modifiers(keyboard.vkbd, 0, 0, 0, 0);
++    }
++    cur_press = false;
++    hide();
++}
++
++static void
++lock_unlocked(void *data, struct hyprland_lock_notification_v1 *notification)
++{
++    session_locked = false;
++    if (im_auto && im_active)
++        show();
++}
++
+ void
+ im_activate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
+ {
+-    show();
++    im_pending_active = true;
++    im_pending_update = true;
+ }
+ 
+ void
+ im_deactivate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
+ {
+-    hide();
++    im_pending_active = false;
++    im_pending_update = true;
+ }
+ 
+ void
+@@ -544,11 +601,25 @@
+ void
+ im_done(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
+ {
++    /* Apply the final activation state of the compositor's event batch.
++     * Surrounding-text updates alone must not undo a manual hide request. */
++    if (!im_pending_update)
++        return;
++    im_active = im_pending_active;
++    im_pending_update = false;
++    if (im_active)
++        show();
++    else
++        hide();
+ }
+ 
+ void
+ im_unavailable(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
+ {
++    im_active = im_pending_active = im_pending_update = false;
++    hide();
++    zwp_input_method_v2_destroy(zwp_input_method_v2);
++    fprintf(stderr, "Automatic input method unavailable; manual control remains available.\n");
+ }
+ 
+ void
+@@ -731,6 +802,17 @@
+         wp_viewport_destroy(draw_surf_viewport);
+         draw_surf_viewport = NULL;
+     }
++    /* Both drawing surfaces can have an outstanding frame callback. */
++    if (popup_draw_surf.frame_cb) {
++        wl_callback_destroy(popup_draw_surf.frame_cb);
++        popup_draw_surf.frame_cb = NULL;
++    }
++    popup_draw_surf.attached = false;
++    popup_xdg_surface_configured = false;
++    if (popup_draw_surf_viewport) {
++        wp_viewport_destroy(popup_draw_surf_viewport);
++        popup_draw_surf_viewport = NULL;
++    }
+     if (popup_xdg_popup) {
+         xdg_popup_destroy(popup_xdg_popup);
+         popup_xdg_popup = NULL;
+@@ -755,6 +837,7 @@
+     }
+ 
+     wl_surface_destroy(draw_surf.surf);
++    draw_surf.surf = NULL;
+     draw_surf.attached = false;
+ 
+     hidden = true;
+@@ -763,6 +846,10 @@
+ void
+ show()
+ {
++    if (session_locked) {
++        hidden = true;
++        return;
++    }
+     if (layer_surface) {
+         return;
+     }
+@@ -855,6 +942,17 @@
+ int
+ main(int argc, char **argv)
+ {
++    /* Queue visibility requests throughout initialization. */
++    sigset_t signal_mask;
++    sigemptyset(&signal_mask);
++    sigaddset(&signal_mask, SIGUSR1);
++    sigaddset(&signal_mask, SIGUSR2);
++    sigaddset(&signal_mask, SIGRTMIN);
++    sigaddset(&signal_mask, SIGPIPE);
++    if (sigprocmask(SIG_BLOCK, &signal_mask, NULL) == -1) {
++        die("Failed to disable handled signals: %d\n", errno);
++    }
++
+     /* parse command line arguments */
+     char *layer_names_list = NULL, *landscape_layer_names_list = NULL;
+     char *fc_font_pattern = NULL;
+@@ -1165,19 +1263,16 @@
+         die("Failed to get wayland_fd: %d\n", errno);
+     }
+ 
+-    sigset_t signal_mask;
+-    sigemptyset(&signal_mask);
+-    sigaddset(&signal_mask, SIGUSR1);
+-    sigaddset(&signal_mask, SIGUSR2);
+-    sigaddset(&signal_mask, SIGRTMIN);
+-    sigaddset(&signal_mask, SIGPIPE);
+-    if (sigprocmask(SIG_BLOCK, &signal_mask, NULL) == -1) {
+-        die("Failed to disable handled signals: %d\n", errno);
+-    }
+ 
+     fds[SIGNAL_FD].fd = signalfd(-1, &signal_mask, 0);
+     if (fds[SIGNAL_FD].fd == -1) {
+         die("Failed to get signalfd: %d\n", errno);
++    }
++
++    /* Type=notify waits until the Wayland state and signal channel are ready.
++     * Outside systemd, sd_notify() returns zero without changing behavior. */
++    if (sd_notify(0, "READY=1") < 0) {
++        die("Failed to announce keyboard readiness.\n");
+     }
+ 
+     while (run_display) {
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,7 @@
+ SRC=.
+ MAN1 = ${NAME}.1
+ 
+-PKGS = wayland-client xkbcommon pangocairo
++PKGS = wayland-client xkbcommon pangocairo libsystemd
+ 
+ WVKBD_SOURCES += $(wildcard $(SRC)/*.c)
+ WVKBD_HEADERS += $(wildcard $(SRC)/*.h)

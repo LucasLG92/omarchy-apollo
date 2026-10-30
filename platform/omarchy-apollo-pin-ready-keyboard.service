@@ -1,0 +1,6 @@
+[Unit]
+Description=Refresh Apollo keyboard after owner PIN enrollment
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/omarchy/apollo/pin-ready-keyboard

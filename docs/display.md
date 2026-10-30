@@ -10,7 +10,7 @@ The controller changes the compositor's monitor transform and touch transform to
 
 The service uses sensor and compositor events rather than a polling loop. It restores saved choices after a compositor configuration reload or service restart. The default configuration holds no accelerometer claim and changes no panel setting. Display preferences contain only orientation and refresh choices, in a private per-user state file. A failed preference write restores the previous monitor and touch configuration.
 
-The keyboard profile reserves 300 logical pixels in portrait and 180 in landscape. Both sizes were measured from the real wvkbd layer in the isolated compositor test. The keyboard remains manually controlled by its existing bar button. The installed service was restarted while hidden; the PIN surface was left running.
+The keyboard profile reserves 300 logical pixels in portrait and 180 in landscape. Both sizes were measured from the real wvkbd layer in the isolated compositor test. Mobile revision 9 adds automatic text-input integration after PIN enrollment, while preserving the bar button for manual control. It stays hidden in manual mode while the PIN-creation surface is open. See the separate [19-check keyboard record and limits](keyboard.md).
 
 ## Commands
 

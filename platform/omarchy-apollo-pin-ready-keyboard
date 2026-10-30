@@ -1,0 +1,10 @@
+#!/bin/bash
+# Root OnSuccess hook: update the existing desktop keyboard after enrollment.
+set -euo pipefail
+(( EUID == 0 )) || exit 1
+owner_uid=$(id -u apollo)
+runtime=/run/user/$owner_uid
+[[ -S $runtime/bus ]] || exit 0
+prefix=(runuser -u apollo -- env "XDG_RUNTIME_DIR=$runtime" "DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime/bus")
+[[ $("${prefix[@]}" /usr/bin/omarchy-apollo-keyboard-run --mode) == auto ]] || exit 0
+"${prefix[@]}" systemctl --user try-restart omarchy-apollo-keyboard.service

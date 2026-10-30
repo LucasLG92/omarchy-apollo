@@ -4,7 +4,10 @@ PartOf=graphical-session.target
 After=graphical-session.target
 
 [Service]
-ExecStart=/usr/bin/wvkbd-mobintl --hidden -H 300 -L 180 --fn "JetBrainsMono Nerd Font 18" -l simple,special,emoji
+Type=notify
+NotifyAccess=main
+ExecStart=/usr/bin/omarchy-apollo-keyboard-run
+TimeoutStartSec=15
 Restart=on-failure
 RestartSec=2
 
