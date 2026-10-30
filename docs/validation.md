@@ -29,7 +29,7 @@ The migration starts from the installed r5 base, `linux-apollo 7.1.0-23`. Physic
 - F-Droid 2.0.2 was downloaded from its official site, its detached GPG signature checked against the documented F-Droid key, and its APK installed. Android displayed its first-launch notification permission dialog. F-Droid logs record a completed repository update and database integrity check.
 - The initial overlay-on-overlay mount was unsupported. Waydroid data was copied to the existing native ext4 storage and verified before enabling a dedicated bind mount. The original data copy is retained privately for recovery. Mount and app persistence across a cold boot remain to be tested.
 
-Not yet acceptance-tested: physical touch navigation and typing, screen PIN, suspend while locked, repeated Android application launch and close from the physical screen, Android audio/camera integration, and cold-boot persistence of the new session. These results do not establish general APK compatibility or full phone hardware support.
+Not yet acceptance-tested: physical touch navigation and typing, screen PIN, suspend while locked, repeated Android application launch and close from the physical screen, Android physical audio outputs/cameras, and cold-boot persistence of the new session. The later transport test below verifies a narrower digital-audio path. These results do not establish general APK compatibility or full phone hardware support.
 
 ## Confirmed APK installation and Android restart
 
@@ -41,6 +41,14 @@ Not yet acceptance-tested: physical touch navigation and typing, screen PIN, sus
 - The suite tested Android integration revision `0.1.0-5`. Installed revision `0.1.0-6` adds the explicit `xdg-utils` dependency; all eight client/helper/service files match both package revisions and the installed files byte for byte. Package files and the native package database validate successfully. The main compositor configuration is clean and shell IPC responds; the PIN-setup process was not interrupted.
 
 See the [sanitized 31-check record](evidence/android-apk-lifecycle-2026-10-30.json) and [reproduction guide](android.md). Stop/start persistence is demonstrated; cold-boot and physical application acceptance are separate pending tests.
+
+## Android stereo audio transport
+
+The real Android `AudioTrack` framework played 144,000 stereo frames at 48 kHz through AudioFlinger and the image's audio HAL to an isolated Linux PulseAudio/PipeWire server. Distinct 997 Hz and 1499 Hz signals were recovered from the correct monitor channels. The fixture runs as Android shell UID 2000; it is not an installed application compatibility test.
+
+The temporary server used WirePlumber's policy-only profile and had no physical audio devices. Android had no `/dev/snd`; only synthetic monitor samples were analyzed in RAM. No room microphone or physical speaker was used. Android stopped afterwards, and the existing desktop audio processes, default sink and PIN-setup process were unchanged. The [result and source hashes](evidence/android-audio-transport-2026-10-30.json) and [reproduction procedure](android.md#android-audio-transport) retain these limits. Physical output, microphone quality, latency, long sessions and suspend remain pending.
+
+The separate [six-check phase-acknowledgement record](evidence/test-phase-ack-2026-10-30.json) covers a descriptor-based ownership fix in the root developer-test controller. It does not change the installed APK service or retrospectively rerun the original lifecycle suite.
 
 ## Touch PIN implementation
 

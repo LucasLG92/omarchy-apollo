@@ -33,6 +33,7 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | Desktop | Native Hyprland 0.57.0 + Omarchy Quickshell session running on the internal panel; live configuration check is clean |
 | Touch interface | Portrait scaling, a simplified status bar and keyboard toggle installed; physical touch acceptance pending |
 | Android | Confirmed APK installer and on-demand stop/start lifecycle pass 31 device checks, with F-Droid persistence and FD650 rendering; file association registered; physical file-manager, input and cold-boot checks pending |
+| Android audio | Stereo AudioTrack reaches an isolated Linux audio sink with both channels verified; physical speaker and microphone acceptance pending |
 | Touch lock | PIN verifier and real PAM conversation pass 15 device-local checks; trusted keypad rendered on device; owner PIN setup and real unlocking pending |
 | Update safety | Device-stack protection passes 24 isolated ALPM/boundary checks; PC update entrypoints stop before changes; a validated full-system updater remains unfinished |
 | Fingerprint | Contact detected previously; enrollment and unlock not implemented |

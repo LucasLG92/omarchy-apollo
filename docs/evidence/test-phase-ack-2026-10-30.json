@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-30",
+  "scope": "Root developer-test acknowledgement helper only; not the production APK service",
+  "result": {
+    "passed": 6,
+    "checks": [
+      "old path-based acknowledgement demonstrates symlink ownership change",
+      "actual controller helper rejects a preplaced symlink",
+      "root-only canary ownership and contents are preserved",
+      "normal acknowledgement belongs to the intended user with mode 0600",
+      "an existing acknowledgement is refused without overwriting it",
+      "desktop user cannot read the protected synthetic canary"
+    ],
+    "temporary_files_removed": true,
+    "owner_credentials_used": false,
+    "android_or_desktop_services_modified": false
+  },
+  "source_sha256": {
+    "tests/check_phase_ack.py": "75444c66171855270b06a13c0ebd72ed5c842ab77e7e43e78a3e013fe06aa446",
+    "tests/support/android-lifecycle-controller.py": "689ef88ec555a983d1abce839fe5fab7e47c315d3244194f0f6ae9d256320200"
+  },
+  "limits": [
+    "The fixture reproduces the old operation only inside a root-owned directory inaccessible to desktop processes.",
+    "The six checks do not rerun or replace the previously published 31-check Android lifecycle result."
+  ]
+}

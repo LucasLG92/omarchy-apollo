@@ -17,6 +17,15 @@ def read_owned(path,limit=65536):
         return bytes(contents)
     finally:os.close(fd)
 
+def acknowledge(path):
+    # The owner controls this fixture directory. Create a new inode exclusively
+    # and change that descriptor's owner, never a path which could be a symlink.
+    descriptor=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600)
+    try:
+        os.fchmod(descriptor,0o600)
+        os.fchown(descriptor,owner.pw_uid,owner.pw_gid)
+    finally:os.close(descriptor)
+
 pin_before=subprocess.check_output(['systemctl','show','omarchy-apollo-owner-pin-setup.service','-p','MainPID'],text=True)
 checks=[]
 def check(name,condition):
@@ -71,7 +80,7 @@ try:
                 elif stage=='done':
                     check('container is stopped after testing',subprocess.check_output(['lxc-info','-P','/var/lib/waydroid/lxc','-n','waydroid','-sH'],text=True).strip()=='STOPPED')
                 else:raise RuntimeError('Unexpected integration-test phase')
-                marker=root/('continue-'+stage);marker.touch();os.chown(marker,owner.pw_uid,owner.pw_gid)
+                acknowledge(root/('continue-'+stage))
                 handled.add(stage)
         time.sleep(0.2)
     else:raise TimeoutError('Android lifecycle test exceeded its deadline')

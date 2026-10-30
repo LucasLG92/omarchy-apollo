@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-30",
+  "scope": "Real Android AudioTrack framework to an isolated Linux PulseAudio/PipeWire stereo sink",
+  "result": {
+    "private_pulse_socket_mounted": true,
+    "physical_audio_devices_exposed": false,
+    "probe_sha256": "64811f60cfea0d31ccdb66584506994587292e5c091d94818262368bca713fc5",
+    "framework_probe": {
+      "framework_audio_track": true,
+      "sample_rate": 48000,
+      "channels": 2,
+      "frames_written": 144000,
+      "frames_played": 144000
+    },
+    "owner_result": {
+      "android_booted_with_private_audio": true,
+      "physical_audio_devices_exposed": false,
+      "physical_sound_played": false,
+      "microphone_recorded": false,
+      "synthetic_frames_captured": 216960,
+      "channels": [
+        {
+          "channel": 0,
+          "target_hz": 997,
+          "target_amplitude": 94.579,
+          "opposite_tone_amplitude": 0.0,
+          "separation_db": 109.88
+        },
+        {
+          "channel": 1,
+          "target_hz": 1499,
+          "target_amplitude": 94.579,
+          "opposite_tone_amplitude": 0.003,
+          "separation_db": 90.25
+        }
+      ]
+    },
+    "android_stopped_after_test": true,
+    "desktop_audio_processes_unchanged": true,
+    "desktop_default_sink_unchanged": true,
+    "pin_setup_process_unchanged": true
+  },
+  "source_sha256": {
+    "tests/check_android_audio.py": "50125d049c503c457b4281865d1e4c5501af5e789b25f133c2a6db0776be8be5",
+    "tests/support/android-audio-owner.py": "1d09a5ecc0f95d006f501e44297a6cff0355c62065f996011aa8b545812be992",
+    "tests/support/AndroidAudioProbe.java": "670835947d20611ef592a9f8caa1b1fa5222c37146267d1ed76e78ac43699891",
+    "tests/build_android_audio_probe.py": "cd5567d3f9e0be7e91495bac23797122e7606e91c3845026b29c0b5c5e934472"
+  },
+  "compiler": {
+    "name": "D8",
+    "version": "9.5.28",
+    "sha256": "38a9ffaaebbd17d1514e3ecbff5a85b989bb13c551b9e224c7409514eea84ff5",
+    "origin": "Google Maven",
+    "jdk": "OpenJDK 21.0.12",
+    "public_builder_reproduced_fixture_digest": true
+  },
+  "limits": [
+    "This is a synthetic framework transport probe, not a general APK compatibility result.",
+    "No physical speaker or microphone was exercised; only a virtual sink monitor was sampled.",
+    "Frequency separation is a digital fixture check, not an acoustic quality or noise measurement.",
+    "Latency, physical outputs, microphone input, long sessions and suspend remain unverified.",
+    "No screen capture, owner credential, room recording or PCM file was used or published."
+  ]
+}

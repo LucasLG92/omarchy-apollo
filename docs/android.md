@@ -57,11 +57,35 @@ The runner verifies that exact digest before using the fixture. Its 31 checks co
 
 The [device evidence](evidence/android-apk-lifecycle-2026-10-30.json) records all check names, package checksums and limits. The suite ran against `omarchy-apollo-android 0.1.0-5`; installed revision `0.1.0-6` adds the explicit, already-satisfied `xdg-utils` dependency. All eight installer/client/service files were compared byte for byte against both packages and the installed files. Package-file and database checks pass for revision 6.
 
+The developer-test controller now creates its phase acknowledgements exclusively and changes ownership through the opened descriptor. This prevents a preplaced symlink in the test user's directory from redirecting the root ownership operation. The [six boundary checks](evidence/test-phase-ack-2026-10-30.json) reproduce the old operation against a synthetic canary in an inaccessible fixture, verify the actual replacement helper and check permissions with the real desktop UID. Run `sudo python -I tests/check_phase_ack.py` on the development phone to reproduce them. This change is confined to the test controller; it does not change the installed APK service or imply that the 31-check lifecycle suite was rerun against the revised controller.
+
+## Android audio transport
+
+The Android framework can send stereo PCM audio through its normal audio service and PulseAudio HAL into Linux. The device test generated three seconds at 48 kHz using the real `AudioTrack` class, with a different tone in each channel. Both tones arrived in the correct channels of an isolated PipeWire sink. Android reported all 144,000 frames played.
+
+This was a silent transport test. The temporary audio server had no ALSA, Bluetooth or camera devices; Android had no `/dev/snd`. Only the synthetic sink's monitor was sampled, in memory. No room microphone was captured and no physical sound was played. The real desktop audio services, default output and local PIN-setup process were preserved. The [sanitized result](evidence/android-audio-transport-2026-10-30.json) records the actual measurements and source digests. It does not establish speaker audibility, microphone operation, latency or compatibility with every APK.
+
+Build the fixture on a computer with JDK 17 or newer:
+
+```sh
+python3 tests/build_android_audio_probe.py --output audio-probe.jar
+```
+
+The builder checks a pinned SHA-256 for D8 from Google's official Maven repository. It packages only the probe DEX, with no Android framework stubs. The runtime uses Android's real boot framework. See the upstream [D8 build instructions](https://r8.googlesource.com/r8/+/refs/heads/main/README.md) and [AudioTrack API](https://developer.android.com/reference/android/media/AudioTrack).
+
+Copy the fixture to the development phone and run with Android stopped:
+
+```sh
+sudo python -I tests/check_android_audio.py --probe-jar /path/to/audio-probe.jar
+```
+
+The optional Weston test tool and the installed native audio stack are required. The test starts a separate headless display and policy-only audio server, briefly boots the existing Android environment, runs the probe as Android shell UID 2000, checks the synthetic monitor and stops Android. Temporary fixture files, its test compositor and audio processes are removed. It does not use the physical phone display or the owner's credentials. This is a development check for the provisioned Apollo image.
+
 ## Still to validate
 
 - Physical file-manager activation, progress/result notifications and Android touch navigation.
 - Keyboard interaction, application switching and real app close/reopen from the phone screen.
-- Android sound, microphones, cameras and other hardware APIs.
+- Audible Android sound through physical outputs, microphones, cameras and other hardware APIs.
 - Native Omarchy cold boot, Android storage-mount persistence and suspend/resume with Android.
 - Long-duration battery, memory and thermal behavior.
 
