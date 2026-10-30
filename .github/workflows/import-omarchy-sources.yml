@@ -1,0 +1,39 @@
+name: Import reviewed Omarchy Apollo sources
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/import-omarchy-sources.yml']
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Verify and unpack the reviewed source tree
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile, hashlib, json
+          archive=Path('omarchy-apollo-sources.zip')
+          assert hashlib.sha256(archive.read_bytes()).hexdigest()=='d504db021549fb07a3b47d27843a30251010564bc4df8ed2d11ee59775111ed1'
+          with zipfile.ZipFile(archive) as source:
+            for entry in source.infolist():
+              path=Path(entry.filename)
+              assert not path.is_absolute() and not any(part in ('.git','..') for part in path.parts)
+              assert not entry.is_dir()
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_bytes(source.read(entry))
+          manifest=json.loads(Path('SOURCE-SHA256.json').read_text())
+          for name,expected in manifest.items():
+            assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==expected,name
+          archive.unlink()
+          print('Verified reviewed source files:',len(manifest)+1)
+          PY
+      - name: Commit sources with the GitHub Actions public identity
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          git commit -m 'Fix camera EGL lifetime and integrate the four-sensor mobile camera stack'
+          git push
