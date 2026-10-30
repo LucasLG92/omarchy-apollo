@@ -28,7 +28,7 @@ This is a working development port with important hardware gaps. It is not an of
 | Clean installation | Signed Arch Linux ARM base; no old home, credentials, saved networks or Android data imported; no KDE/Plasma or CachyOS | Public installer from stock Android |
 | Permanent boot | Boot image read-back checksum matches; owner-confirmed cold boot without PC and PIN unlock | Repeated power cycles and long-duration reliability |
 | Desktop and GPU | Native Hyprland/Quickshell on 1080 × 2400; FD650 in Linux and fresh Android; clean configuration diagnostics | Broader application and suspend stress |
-| Lock and administration | Physical PIN unlock, accepted numeric authorization popup and clean power-key cycle; 13 root-PAM/sudo regression cases | Broader failure/suspend scenarios; fingerprint unlock |
+| Lock and administration | Physical PIN unlock, accepted numeric authorization popup and clean power-key cycle; corrected automatic lock protects the real session and turns the display off after two minutes | Physical wake/PIN acceptance for the automatic cycle; broader failure/suspend scenarios; fingerprint unlock |
 | Touch interface | Dedicated apps button and actual native grid; keyboard candidate and installed binaries each pass 19 checks | Finger typing across toolkits, navigation polish and accessibility |
 | Display controls | Orientation, automatic rotation, position lock and refresh; 23 isolated checks include the real accelerometer | Physical motion, touch mapping and power measurements |
 | Wi-Fi | Both bands scanned; shell model receives all three 5 GHz-only networks in the comparison, none missing | Physical selector and connection acceptance in this clean base |
@@ -45,6 +45,8 @@ This is a working development port with important hardware gaps. It is not an of
 The [clean-install record](docs/clean-install.md) separates physical acceptance, automated checks and inherited hardware results. Test counts describe their actual scope; a rendered screen or passing fixture does not establish every phone function.
 
 ## Recent engineering work
+
+An automatic-lock failure was reproduced and corrected in Quickshell's idle notification lifetime. A replacement notification could reuse the old address, leaving the shell bound to a deleted object even though the compositor sent the idle event. The original reproduction fails and the corrected packaged production binary passes. All nine selected graphical unit targets pass; the real two-minute idle cycle now securely locks the session and turns the internal display off. Physical wake/PIN acceptance for this cycle is still pending. See the [focused patch and recipe](packaging/quickshell) and [device evidence](docs/evidence/idle-notification-lifetime-2026-10-30.json).
 
 Runtime revision 12 packages reviewed upstream Omarchy commit `717175d4a8c5a12f6c0fff10dcc3c1c08ef3a0d1`. All seven Apollo patches apply without fuzz. Three changed upstream test suites and installed package-integrity checks pass. The update preserved open applications, the kernel, the PIN policies and the accepted power-key helper.
 

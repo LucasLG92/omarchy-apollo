@@ -1,0 +1,97 @@
+# Based on Omarchy pkgbuilds/quickshell; Apollo changes are described in README.md.
+pkgname=quickshell
+pkgver=0.3.2.r11.g9b0f339
+pkgrel=2
+pkgdesc='Flexible toolkit for making desktop shells with QtQuick'
+arch=(aarch64)
+url='https://github.com/quickshell-mirror/quickshell'
+license=(LGPL-3.0-only)
+depends=(
+  cpptrace
+  glibc
+  hicolor-icon-theme
+  jemalloc
+  libdrm
+  libgcc
+  libglvnd
+  libpipewire
+  libstdc++
+  libxcb
+  mesa
+  pam
+  polkit
+  qt6-base
+  qt6-declarative
+  qt6-svg
+  qt6-wayland
+  wayland
+)
+makedepends=(
+  cli11
+  cmake
+  git
+  ninja
+  qt6-shadertools
+  spirv-tools
+  vulkan-headers
+  wayland-protocols
+  xorg-server-xvfb
+  xorg-xauth
+)
+provides=("$pkgname")
+conflicts=(quickshell-git)
+# master past v0.3.2; the upstream watch writes the tag's commit here when
+# the next release lands.
+_commit=9b0f339b19057f4731bf3b48293307d7ef241671
+_archive="$pkgname"
+source=("$_archive::git+$url.git#commit=$_commit"
+        load_qtquick_611.patch
+        quickshell-check.hook
+        0001-detach-idle-notification-before-replacement.patch
+        0002-test-wait-for-popup-polish.patch
+        Omarchy-packaging.LICENSE)
+sha256sums=('SKIP'
+            '23b65d205d825f11a1cd8501acbc6e50250d09a6ce607e2ff8b3cf5d438bd0ce'
+            '8543e21aeaaa5441b73a679160e7601a957f16c433e8d6bd9257e80bd0e94083'
+            '9eab3b9e3d8d30dc9ee263f77333b85b7f597fd2036f0c9320915681a2ae0c54'
+            '92f8f099c95cfee1495fb80f87fc79e7407e7c19ca34df71818bd596f723f660'
+            '717ba1949502290f8e47688ae2e323acd06c8ca47aec9f7596b15f678c1af4a2')
+
+prepare() {
+  cd "$_archive"
+  for change in load_qtquick_611.patch 0001-detach-idle-notification-before-replacement.patch 0002-test-wait-for-popup-polish.patch; do
+    patch -Np1 --fuzz=0 -i "$srcdir/$change"
+  done
+}
+
+build() {
+  cd "$_archive"
+  cmake -G Ninja -B build -W no-dev \
+    -D CMAKE_BUILD_TYPE=RelWithDebInfo \
+    -D DISTRIBUTOR='Omarchy Apollo' -D BUILD_TESTING=OFF \
+    -D CRASH_REPORTER=Off \
+    -D CMAKE_INSTALL_PREFIX=/usr \
+    -D INSTALL_QML_PREFIX=lib/qt6/qml
+  cmake --build build --parallel 2
+  cmake -G Ninja -B build-tests -W no-dev \
+    -D CMAKE_BUILD_TYPE=RelWithDebInfo -D DISTRIBUTOR='Omarchy Apollo' \
+    -D CRASH_REPORTER=Off -D BUILD_TESTING=ON \
+    -D CMAKE_INSTALL_PREFIX=/usr -D INSTALL_QML_PREFIX=lib/qt6/qml
+  cmake --build build-tests --parallel 2 --target transformwatcher ringbuffer scriptmodel stacklist objectmodel datastream process popupwindow windowattached
+}
+
+check() {
+  mkdir -m700 -p "$srcdir/test-runtime"
+  env -i PATH="$PATH" HOME="$srcdir" LANG=C.UTF-8 \
+    XDG_RUNTIME_DIR="$srcdir/test-runtime" QT_QPA_PLATFORM=xcb \
+    xvfb-run -a -s '-screen 0 1280x720x24 -nolisten tcp' \
+    ctest --test-dir "$_archive/build-tests" --output-on-failure --timeout 30
+}
+
+package() {
+  install -Dm644 quickshell-check.hook -t "$pkgdir/usr/share/libalpm/hooks"
+  cd "$_archive"
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm644 LICENSE LICENSE-GPL -t "$pkgdir/usr/share/licenses/$pkgname"
+  install -Dm644 "$srcdir/Omarchy-packaging.LICENSE" -t "$pkgdir/usr/share/licenses/$pkgname"
+}

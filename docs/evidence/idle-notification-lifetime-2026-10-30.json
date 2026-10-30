@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-30",
+  "installed_package": "quickshell 0.3.2.r11.g9b0f339-2",
+  "installed_package_sha256": "4793e415242716ad1625f4450c153f37ab72a63fa6ee72bdda6a67203a7ec53b",
+  "upstream_commit": "9b0f339b19057f4731bf3b48293307d7ef241671",
+  "original_service_reproduction": {
+    "compositor_sent_idle": true,
+    "service_reported_idle": false,
+    "automatic_action_executed": false
+  },
+  "corrected_service_reproduction": {
+    "compositor_sent_idle": true,
+    "service_reported_idle": true,
+    "fixture_action_executed": true,
+    "actual_desktop_lock_requested_by_fixture": false
+  },
+  "packaged_production_regression": {
+    "configured_seconds": 5,
+    "compositor_sent_idle": true,
+    "idle_notification_observed": true,
+    "fixture_action_completed": true,
+    "real_lock_or_wake_requested": false,
+    "owner_preferences_or_pin_read": false,
+    "physical_wake_and_pin_tested": false
+  },
+  "isolated_original_regression": {
+    "configured_seconds": 5,
+    "compositor_sent_idle": true,
+    "idle_notification_observed": false,
+    "fixture_action_completed": false,
+    "real_lock_or_wake_requested": false,
+    "owner_preferences_or_pin_read": false,
+    "physical_wake_and_pin_tested": false
+  },
+  "fixture_uses_private_home_environment": true,
+  "graphical_unit_targets": {
+    "passed": 9,
+    "failed": 0,
+    "backend": "isolated authenticated Xvfb with XCB and TCP disabled",
+    "popup_test_expected_coordinates_preserved": true,
+    "popup_test_waits_for_existing_deferred_polish": true,
+    "production_popup_source_changed": false
+  },
+  "native_installation": {
+    "qt_compatibility_passed": true,
+    "package_integrity_passed": true,
+    "tested_production_binary_identical_in_license_revision": true,
+    "upstream_license_notices_retained": true,
+    "new_production_binary_running": true,
+    "existing_applications_preserved": true,
+    "compositor_configuration_errors": 0,
+    "exact_signed_previous_package_available_privately": true,
+    "kernel_and_permanent_boot_unchanged": true,
+    "pin_policies_unchanged": true
+  },
+  "actual_automatic_lock": {
+    "configured_seconds": 120,
+    "screensaver_disabled": true,
+    "idle_timeout_action_recorded": true,
+    "session_securely_locked": true,
+    "internal_display_off": true,
+    "physical_wake_and_pin_acceptance_pending": true
+  },
+  "privacy": {
+    "owner_pin_or_verifier_read": false,
+    "input_events_captured": false,
+    "owner_preferences_imported_into_fixture": false,
+    "screenshots_during_pin_entry": false
+  },
+  "limits": [
+    "The isolated service fixture replaces lock and wake commands with harmless completion commands.",
+    "The subsequent actual automatic lock and display-off observation uses the normal trusted shell.",
+    "Physical wake/PIN acceptance for this automatic-lock cycle remains pending.",
+    "Earlier accepted power-key and cold-boot flows are separate evidence.",
+    "No new kernel or hardware functionality is established by these userspace tests."
+  ],
+  "source_sha256": {
+    "packaging/quickshell/PKGBUILD": "3678c09d66683597f52f112727c7674d32ae9b55fe1fc399949d6bc5189cb285",
+    "packaging/quickshell/0001-detach-idle-notification-before-replacement.patch": "97ebcf5b62c15fa4d38002b1b2c952f960c49272284831019e2e30ed1d28a83b",
+    "packaging/quickshell/0002-test-wait-for-popup-polish.patch": "92f8f099c95cfee1495fb80f87fc79e7407e7c19ca34df71818bd596f723f660",
+    "tests/check_idle_notification_replacement.py": "d0b0d61a975347d5802ba95f560977d6b3132078a6aaaac6337cdad195307483"
+  }
+}

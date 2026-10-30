@@ -1,0 +1,14 @@
+--- a/src/window/test/popupwindow.cpp
++++ b/src/window/test/popupwindow.cpp
+@@ -112,8 +112,9 @@
+ 	parent.backingWindow()->setX(10);
+ 	parent.backingWindow()->setY(10);
+ 
+-	QCOMPARE(popup.x(), parent.x() + 10);
+-	QCOMPARE(popup.y(), parent.y() + 10);
++	// Repositioning is committed during the next polish, not in setX/setY.
++	QTRY_COMPARE(popup.x(), parent.x() + 10);
++	QTRY_COMPARE(popup.y(), parent.y() + 10);
+ }
+ 
+ void TestPopupWindow::attachParentLate() { // NOLINT

@@ -8,6 +8,8 @@ El PIN numérico se crea y escribe únicamente en el móvil. Sirve para bloquear
 
 La barra tiene un botón para abrir las aplicaciones. La cuadrícula se ha renderizado en la pantalla real y sus capturas se han revisado. El teclado y los ajustes de giro/frecuencia están integrados; la escritura con el dedo en distintos programas, los gestos y otros detalles de manejo siguen en pruebas.
 
+El bloqueo automático ya protege la sesión y apaga la pantalla tras dos minutos sin uso. Se ha encontrado y corregido un fallo de notificaciones de Quickshell: la prueba reproduce el error original y pasa con el ejecutable corregido del paquete. También pasan nueve pruebas gráficas aisladas. Falta la confirmación física del PIN al despertar de este ciclo automático; el botón lateral y el arranque en frío tienen su aceptación anterior separada.
+
 Linux y Android usan la Adreno 650. Android sin Google pasa 31 pruebas de APK y ciclo de arranque, incluida instalación confirmada, conservación de F-Droid y renderizado FD650. Tras el arranque en frío de Linux se ha observado Android en una ventana nativa, conservando la aplicación abierta. El inicializador con elección de Google pasa 27 pruebas aisladas; estas sustituyen la descarga y no demuestran todavía Google Play.
 
 El selector Wi-Fi de la base limpia recibe las tres redes de solo 5 GHz detectadas en la comparación, sin ninguna ausente y sin publicar nombres ni direcciones. Falta confirmar físicamente selección y conexión. Los resultados de la base antigua permanecen separados.
