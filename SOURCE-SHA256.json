@@ -338,7 +338,7 @@
   "platform/reload-live-compositor": "2e5d7271aee703cd0a43f49ba0cdbb475650f8fddf6e6aa3495cf42f5abef674",
   "platform/var-lib-waydroid.mount": "7a976f46a56f8098ad597a8564cfadb557d7c43375fa953a1fca3a6ab0f8de3d",
   "platform/waydroid-apollo-storage.conf": "b5e94b05fbc50765e3e73ddec7f44ef95fb3fe6c8e772690b818a5e772419542",
-  "README.md": "77eeb5e0d3b235018116c4d782be9cc1d88c28c3c267cbb6947e112bf1889c0b",
+  "README.md": "db1b344255591e66ded4b9e3d5fe2431b08a5b6e40727f0194bcdbf915c5e20e",
   "SECURITY.md": "f2bf2422b261757d3a7a86ed1fd6a4e7d17e4a62484436d7c153d4b827428093",
   "tests/build_android_audio_probe.py": "cd5567d3f9e0be7e91495bac23797122e7606e91c3845026b29c0b5c5e934472",
   "tests/build_keyboard_helpers.py": "ea46f21444582cb560ae782a13f08991fef65270151d25bc2e731e027d62eaca",

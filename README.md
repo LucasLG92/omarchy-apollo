@@ -2,7 +2,7 @@
 
 **Omarchy on a Snapdragon phone. Native Linux, touch-first controls, Android apps when you need them.**
 
-<p><img src="media/omarchy-desktop.png" width="220" alt="Clean native Omarchy Apollo desktop with its applications button"> <img src="media/mobile-apps.png" width="220" alt="Application grid on the Xiaomi internal display"> <img src="media/touch-lock-preview.png" width="220" alt="Empty, disabled preview of the Apollo touch PIN keypad"></p>
+<p><img src="media/omarchy-desktop.png" width="30%" alt="Clean native Omarchy Apollo desktop with its applications button"> <img src="media/mobile-apps.png" width="30%" alt="Application grid on the Xiaomi internal display"> <img src="media/touch-lock-preview.png" width="30%" alt="Empty, disabled preview of the Apollo touch PIN keypad"></p>
 
 Actual device captures, reviewed for personal data. The lock image is an empty preview with input disabled; it contains no entered PIN. The desktop and app grid come from the clean installation.
 
