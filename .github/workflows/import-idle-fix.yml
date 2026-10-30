@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
       - name: Import exact reviewed public blobs and verify the complete source tree
         env:
           GH_TOKEN: ${{ github.token }}
@@ -16,7 +18,8 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import urllib.request, json, base64, hashlib, os, subprocess
-          assert subprocess.check_output(['git','rev-parse','HEAD^'], text=True).strip() == '36143b1d875518eeb4a2cda7fa04f018697cd234'
+          changed = set(subprocess.check_output(['git','diff','--name-only','36143b1d875518eeb4a2cda7fa04f018697cd234','HEAD'], text=True).splitlines())
+          assert changed == {'.github/workflows/import-idle-fix.yml'}, changed
           files = {'README.md': ('df74708dd28ff332920f6ac0dee4113152025388', 'e8749d3f0440fb50f87b7b8f8a808ac8987452b0b8a26058960eb13220c11a10'), 'SOURCE-SHA256.json': ('55a18aec381f9b93b8d76ba90ab39adaf222ceaf', '3baead183f3670f4512e2b5b295c76de8985e58852d2248b5fa702fb10329923'), 'docs/es/README.md': ('43d6dd06bc717148c270537c55ef72d24f707fd2', '06110d2fbb233b08089c3239d778274f803c3e5e849f8ad9b3b0aa52734877a9'), 'docs/evidence/idle-notification-lifetime-2026-10-30.json': ('8b102095733bf06517a01b0a088ba24fad4fb6f0', '72b3f4e9fa322ef2c9f1c2ef253e42f445ff03fcfeb5e500bba54a33254dd8bb'), 'docs/roadmap.md': ('a698d761c9ec801009e9543af220be3079d06863', '02936de2af621c9a8b25d98ee5be9ec0692bd86f96755bd97c803c7edf2e495b'), 'docs/validation.md': ('e3c24895c0fdefe305dce3452a68ba1a69e9e79c', '5391236d4e2fd79dccf8391dad6520ebb763f314f74960d03de000d05d544b13'), 'packaging/quickshell/0001-detach-idle-notification-before-replacement.patch': ('8e986c2f87c7832265a14d164e24bb6e9674ee63', '97ebcf5b62c15fa4d38002b1b2c952f960c49272284831019e2e30ed1d28a83b'), 'packaging/quickshell/0002-test-wait-for-popup-polish.patch': ('bcc0930895db56341ef31bb3ee791970533f16b0', '92f8f099c95cfee1495fb80f87fc79e7407e7c19ca34df71818bd596f723f660'), 'packaging/quickshell/Omarchy-packaging.LICENSE': ('f12cfa766c55541c9d8e008e310c95a721e70a97', '717ba1949502290f8e47688ae2e323acd06c8ca47aec9f7596b15f678c1af4a2'), 'packaging/quickshell/PKGBUILD': ('bd00d3a319ed825e64d23790ff2c518e63d11b62', '3678c09d66683597f52f112727c7674d32ae9b55fe1fc399949d6bc5189cb285'), 'packaging/quickshell/Quickshell.LICENSE': ('0a041280bd00a9d068f503b8ee7ce35214bd24a1', 'e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118'), 'packaging/quickshell/Quickshell.LICENSE-GPL': ('810fce6e9bf2aa10265b85614db5ac65941ecf81', '1b3782ccad7b8614100cda30d3faf42fc39f2e97932908c543005053b654ca68'), 'packaging/quickshell/README.md': ('e02a02eaa490243450b07b414c776ced30f31102', '5903deaf054828e6567268e41044fcfaa52eb05cb019390bd9a8678c2c220995'), 'packaging/quickshell/load_qtquick_611.patch': ('660965b4907bcd67f8d810898c9db5f19d198917', '23b65d205d825f11a1cd8501acbc6e50250d09a6ce607e2ff8b3cf5d438bd0ce'), 'packaging/quickshell/quickshell-check.hook': ('a7a97f776e82ce71baca454d6e86f854fd4869e0', '8543e21aeaaa5441b73a679160e7601a957f16c433e8d6bd9257e80bd0e94083'), 'tests/check_idle_notification_replacement.py': ('f875634b08581a80fd5e5e1d215359ba46998ea2', 'd0b0d61a975347d5802ba95f560977d6b3132078a6aaaac6337cdad195307483')}
           for name, (blob, digest) in files.items():
             path = Path(name)
