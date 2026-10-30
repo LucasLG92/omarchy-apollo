@@ -1,6 +1,18 @@
-# Android applications without Google
+# Android applications, with or without Google
 
-Omarchy remains the native Linux desktop. Waydroid VANILLA supplies an optional ARM Android environment for APKs, without Google Play or Google services. Android starts on demand; it is not a required boot-time desktop service.
+Omarchy remains the native Linux desktop. An optional ARM Waydroid environment supplies Android applications. A new installation can choose **Android without Google (VANILLA)** or **Android with Google Play and Google services (GAPPS)**. Without Google is the default. Android starts on demand; it is not a required boot-time desktop service.
+
+## Choose during a fresh Android installation
+
+The installation entry point is **Instalar aplicaciones Android** in the launcher, or `omarchy-apollo-install-android` from the local desktop. It opens a touch-friendly choice and asks for administrator authorization before initializing the selected image. Cancellation does not initialize Android. The underlying installer also accepts `--flavor vanilla` or `--flavor gapps`.
+
+Both image types are supported by [Waydroid's initialization interface](https://docs.waydro.id/usage/waydroid-command-line-options). Google sign-in happens afterwards, inside Android. The installer does not request a Google account or password. GAPPS can require the owner's [Google Play certification step](https://docs.waydro.id/faq/google-play-certification); compatibility with apps that check device integrity must be evaluated separately.
+
+The choice applies before Android is initialized. The helper refuses an existing configuration, including a dangling configuration symlink. It has no force or reset option and does not convert an existing VANILLA installation to GAPPS. Existing applications and data are preserved when that refusal occurs.
+
+The current owner's selected image remains VANILLA. Revision 10 is installed in the clean image. Its real privileged initializer passed [27 isolated boundary checks](evidence/android-install-profiles-2026-10-30.json), including both selections, the default, reinitialization refusal, diagnostic-file protection and permissions required by an ordinary desktop session. Those checks replace only the Waydroid download/init command with a fixture. They establish argument selection and safeguards, **not a complete GAPPS installation or successful Google Play use**. The choice screen and complete download flow still require acceptance testing.
+
+Fresh VANILLA Android completed its first real boot on the clean Omarchy base in approximately 45 seconds. The same installation then passed [31 APK/lifecycle checks](evidence/android-clean-lifecycle-2026-10-30.json), including F-Droid persistence and FD650 rendering after restart. This repeats the older base's result below using fresh Android data and installed revision 10. The checks use a separate headless display and do not establish physical touch or file-manager acceptance.
 
 The current integration confirms APK installation with Android's package manager. It also releases the privileged install helper before Android stops, fixing an observed restart failure caused by retained container mounts. The published device test passes 31 checks, including application persistence and FD650 rendering after restart. Physical interaction and cold-boot acceptance are still pending.
 
@@ -25,7 +37,7 @@ omarchy-setup-apollo-android
 
 The launcher requests a progress notification and a confirmed result. Opening an APK from the physical file manager and receiving those notifications have not yet been acceptance-tested on the phone's screen.
 
-The installer currently accepts one regular APK file, up to 1 GiB. It does not implement split-APK bundles. Apps must support the Android image and ARM processor; apps requiring Google services need a separate compatibility decision. A successful F-Droid test does not establish compatibility with every APK.
+The APK installer currently accepts one regular APK file, up to 1 GiB. It does not implement split-APK bundles. Apps must support the selected Android image and ARM processor. Apps requiring Google services generally need the GAPPS selection; a successful F-Droid test does not establish compatibility with every APK.
 
 ## Installation and lifecycle boundary
 

@@ -71,6 +71,13 @@ ApplicationWindow {
         font.letterSpacing: 6
       }
     }
+    Text {
+      Layout.fillWidth: true
+      text: root.current.length < 6 ? "Mínimo 6 dígitos · faltan " + (6 - root.current.length) : "Pulsa ✓ para continuar"
+      color: root.current.length < 6 ? "#a9b1d6" : "#9ece6a"
+      horizontalAlignment: Text.AlignHCenter
+      font.pixelSize: 15
+    }
     GridLayout {
       Layout.fillWidth: true
       columns: 3
@@ -82,12 +89,12 @@ ApplicationWindow {
           required property string modelData
           Layout.fillWidth: true
           Layout.preferredHeight: 68
-          enabled: !pinSetup.complete
+          enabled: !pinSetup.complete && (modelData !== "✓" || root.current.length >= 6)
           text: modelData
           font.pixelSize: 28
           contentItem: Text {
             text: parent.text
-            color: "#c0caf5"
+            color: parent.enabled ? "#c0caf5" : "#565f89"
             font: parent.font
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter

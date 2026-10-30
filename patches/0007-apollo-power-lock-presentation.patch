@@ -1,0 +1,108 @@
+--- a/shell/plugins/lock/Service.qml
++++ b/shell/plugins/lock/Service.qml
+@@ -46,6 +46,8 @@
+   // Outputs the lock last saw, so only a display arriving counts as a wake.
+   property int knownScreenCount: 0
+   property bool previewVisible: false
++  // Presentation only: the compositor still has to acquire its real lock.
++  property bool mobilePowerTransition: false
+   property string enteredPassword: ""
+   property string pendingPassword: ""
+   property string failureMessage: ""
+@@ -254,6 +256,8 @@
+   }
+ 
+   function runWake() {
++    mobilePowerTransition = false
++    mobilePowerTransitionLease.stop()
+     if (!wakeProcess.running) wakeProcess.running = true
+     if (lockRequested) armBlankTimer()
+     resumeFingerprint()
+@@ -502,10 +506,17 @@
+       Binding { target: lockSurface.contentItem; property: "LayoutMirroring.enabled"; value: Commons.I18n.rightToLeft }
+       Binding { target: lockSurface.contentItem; property: "LayoutMirroring.childrenInherit"; value: true }
+ 
+-      color: Commons.Color.background
++      color: root.mobilePowerTransition ? "#000000" : Commons.Color.background
++
++      MouseArea {
++        anchors.fill: parent
++        visible: root.mobilePowerTransition
++        onPressed: root.runWake()
++      }
+ 
+       LockView {
+         id: lockView
++        visible: !root.mobilePowerTransition
+         anchors.fill: parent
+         backgroundPath: root.backgroundPath
+         videoPosterPath: root.videoPosterPath
+@@ -515,7 +526,7 @@
+         authenticatingPassword: root.authenticatingPassword
+         failureMessage: root.failureMessage
+         failedAttempts: root.failedAttempts
+-        inputEnabled: root.lockRequested
++        inputEnabled: root.lockRequested && !root.mobilePowerTransition
+         loadBackground: root.locked
+         passwordText: root.enteredPassword
+         onPasswordTextEdited: function(password) { root.enteredPassword = password }
+@@ -764,6 +775,15 @@
+   }
+ 
+   Timer {
++    id: mobilePowerTransitionLease
++    interval: 6000
++    repeat: false
++    // A failed caller cannot leave a visible locked screen without a keypad.
++    // This only restores its presentation; it never wakes or unlocks a session.
++    onTriggered: root.mobilePowerTransition = false
++  }
++
++  Timer {
+     id: idleBlankTimer
+     interval: 5000
+     repeat: false
+@@ -779,7 +799,7 @@
+       // Only a password check in flight should hold the display up. The
+       // fingerprint PAM stays armed for the whole lock, so gating on
+       // `authenticating` here would keep the panel lit until unlock.
+-      if (root.lockRequested && !root.authenticatingPassword) root.runBlank()
++      if (root.lockRequested && sessionLock.secure && !root.authenticatingPassword) root.runBlank()
+     }
+   }
+ 
+@@ -877,6 +897,26 @@
+       return "ok"
+     }
+ 
++    function prepareScreenOff(): string {
++      if (Quickshell.env("OMARCHY_APOLLO_TOUCH_LOCK") !== "1") return "unsupported"
++      if (!root.passwordPamConfigured) return "missing-pam"
++      root.mobilePowerTransition = true
++      mobilePowerTransitionLease.restart()
++      if (!root.currentlyLocked() && !root.beginLock()) {
++        root.mobilePowerTransition = false
++        mobilePowerTransitionLease.stop()
++        return "failed"
++      }
++      return "ok"
++    }
++
++    function showKeypad(): string {
++      root.mobilePowerTransition = false
++      mobilePowerTransitionLease.stop()
++      if (root.lockRequested) root.armBlankTimer()
++      return "ok"
++    }
++
+     function isLocked(): string {
+       return root.currentlyLocked() ? "true" : "false"
+     }
+@@ -888,6 +928,7 @@
+         pending: root.pendingSessionLock,
+         sessionLocked: sessionLock.locked,
+         secure: sessionLock.secure,
++        mobilePowerTransition: root.mobilePowerTransition,
+         realScreens: root.realScreenCount(),
+         passwordPam: root.passwordPamConfigured,
+         fingerprint: root.fingerprintConfigured,

@@ -1,0 +1,9 @@
+#!/bin/bash -p
+# The one-time grant opens only the fixed, trusted local PIN setup service.
+set -euo pipefail
+export PATH=/usr/bin
+[[ $EUID == 0 && ${SUDO_USER:-} == apollo && $# == 0 ]]
+marker=/etc/omarchy-apollo/firstboot-pin-needed
+[[ -f $marker && ! -L $marker && $(stat --format='%u:%a' -- "$marker") == 0:600 ]]
+[[ ! -e /var/lib/omarchy-apollo/pin-status/1001 ]]
+exec systemctl start --no-block omarchy-apollo-owner-pin-setup.service

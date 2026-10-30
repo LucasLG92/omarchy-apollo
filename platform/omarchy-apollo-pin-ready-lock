@@ -1,0 +1,18 @@
+#!/bin/bash
+# A completed enrollment can now ask the desktop to lock with its new PIN.
+set -euo pipefail
+(( EUID == 0 )) || exit 1
+owner_uid=$(id -u apollo)
+runtime=/run/user/$owner_uid
+[[ -S $runtime/bus ]] || exit 0
+prefix=(runuser -u apollo -- env "XDG_RUNTIME_DIR=$runtime" "DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime/bus")
+[[ $("${prefix[@]}" /usr/bin/omarchy-apollo-keyboard-run --mode) == auto ]] || exit 1
+marker=/etc/omarchy-apollo/firstboot-pin-needed
+if [[ -f $marker && ! -L $marker && $(stat --format='%u:%a' -- "$marker") == 0:600 ]]; then
+  rm -- "$marker"
+  rule=/etc/sudoers.d/omarchy-apollo-firstboot-pin
+  if [[ -f $rule && ! -L $rule && $(stat --format='%u:%a' -- "$rule") == 0:440 ]]; then
+    rm -- "$rule"
+  fi
+fi
+"${prefix[@]}" systemctl --user restart omarchy-apollo-startup-lock.service

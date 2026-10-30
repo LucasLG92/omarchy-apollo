@@ -1,0 +1,14 @@
+#!/usr/bin/python3
+"""Resume local setup or open the trusted PIN window through its root service."""
+from pathlib import Path
+import os
+import subprocess
+
+if os.getuid()!=1001:raise SystemExit('Open setup from the local phone account.')
+if not Path('/var/lib/omarchy-apollo/pin-status/1001').exists() and Path('/etc/omarchy-apollo/firstboot-pin-needed').exists():
+    raise SystemExit(subprocess.run(['systemctl','--user','restart','--no-block',
+        'omarchy-apollo-owner-setup.service']).returncode)
+# The system authentication agent uses the selected local administration method.
+# A named service also keeps the desktop keyboard hidden during PIN enrollment.
+raise SystemExit(subprocess.run(['/usr/bin/pkexec','/usr/bin/systemctl','start','--no-block',
+    'omarchy-apollo-owner-pin-setup.service']).returncode)

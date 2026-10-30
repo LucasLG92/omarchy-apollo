@@ -1,7 +1,7 @@
 # Copy this recipe to PKGBUILD inside a staging copy of this repository.
 pkgname=omarchy-apollo-mobile
 pkgver=0.1.0
-pkgrel=9
+pkgrel=13
 pkgdesc='Mobile input, display orientation controls and native camera for Omarchy Apollo'
 arch=('aarch64')
 license=('MIT')
@@ -17,6 +17,9 @@ package() {
   install -Dm644 "$startdir/platform/omarchy-apollo-pin-ready-keyboard.service" "$pkgdir/usr/lib/systemd/system/omarchy-apollo-pin-ready-keyboard.service"
   install -Dm644 "$startdir/platform/omarchy-apollo-owner-pin-keyboard.conf" "$pkgdir/usr/lib/systemd/system/omarchy-apollo-owner-pin-setup.service.d/20-keyboard.conf"
   install -Dm644 "$startdir/platform/omarchy-apollo-public-status.conf" "$pkgdir/usr/lib/tmpfiles.d/omarchy-apollo-public-status.conf"
+  install -Dm755 "$startdir/platform/omarchy-apollo-power-button" "$pkgdir/usr/bin/omarchy-apollo-power-button"
+  install -Dm644 "$startdir/platform/omarchy-apollo-startup-lock.service" "$pkgdir/usr/lib/systemd/user/omarchy-apollo-startup-lock.service"
+  install -Dm644 "$startdir/platform/omarchy-apollo-power.conf" "$pkgdir/usr/lib/systemd/logind.conf.d/40-omarchy-apollo-power.conf"
   install -Dm755 "$startdir/platform/omarchy-apollo-display" "$pkgdir/usr/bin/omarchy-apollo-display"
   install -Dm644 "$startdir/platform/omarchy-apollo-display.service" "$pkgdir/usr/lib/systemd/user/omarchy-apollo-display.service"
   install -Dm644 "$startdir/platform/org.omarchy.Apollo.Display.service" "$pkgdir/usr/share/dbus-1/services/org.omarchy.Apollo.Display.service"

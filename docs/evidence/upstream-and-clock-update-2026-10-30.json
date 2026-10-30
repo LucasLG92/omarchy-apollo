@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-30",
+  "runtime_package": "omarchy-apollo 0.1.0-12",
+  "upstream_commit": "717175d4a8c5a12f6c0fff10dcc3c1c08ef3a0d1",
+  "runtime_package_sha256": "ff1256a1ac70bdde2dca7d729c9a12cdd6d1e979b9ba0d0a86ffbbd0855ada80",
+  "device_package": "omarchy-apollo-device 0.1.0-6",
+  "device_package_sha256": "94de4768d863c9877258cd546bb54f1fccf216cda1974c89b23814400c4b31d3",
+  "three_changed_upstream_test_suites_passed": true,
+  "clock_fixture_cases_passed": 12,
+  "clock_restore_service_success": true,
+  "clock_calibration_valid": true,
+  "clock_restore_and_refresh_enabled": true,
+  "clock_hardware_registers_written": false,
+  "clock_cold_boot_acceptance_pending": true,
+  "pin_policy_and_power_helper_unchanged": true,
+  "kernel_unchanged": true,
+  "existing_application_windows_retained": true,
+  "desktop_restarted": false,
+  "compositor_configuration_errors": 0,
+  "package_resource_permissions_deterministic": true,
+  "package_integrity_checks_passed": true,
+  "source_sha256": {
+    "PKGBUILD": "378db3522f6a66296925bdf0338494afc744ead1f7103235af9186d1b145c712",
+    "platform/omarchy-apollo-clock": "34a70a083ccf132019586866f778646be46555ed500be7579dc203ab08847e29",
+    "platform/omarchy-apollo-clock-restore.service": "541d1dfae08062ef5a883a98e6d9a2dc52b666d357f0e5c52425555d9fbc1437",
+    "platform/omarchy-apollo-clock-save.service": "667f05bb541ad5847dfd077e05eb10a68eee98486e34d561bca0cb6a64a43a53",
+    "platform/omarchy-apollo-clock-save.timer": "757ac1c8d1ce2402f02d24a57cac3c8a30830a07d50e8a6fa6c7a35a7b326d7a",
+    "tests/check_readonly_clock.py": "59709cab63c701131054244ad75bcc153dfb021f4fd7bbdcdf6fa57e8ce97014"
+  },
+  "limits": [
+    "Clock restore passed in the current boot; a later power-off test must establish PMIC counter continuity.",
+    "Offline seed calibration was explicitly supplied by the maintenance host; automatic recalibration requires synchronized network time.",
+    "This is a reviewed component update, not a general full-system updater."
+  ]
+}

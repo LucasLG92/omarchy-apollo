@@ -1,0 +1,56 @@
+#!/usr/bin/python3
+"""Present the fresh installer's Android choice without asking for an account."""
+import json
+import os
+import sys
+from pathlib import Path
+import gi
+gi.require_version('Gtk','4.0')
+from gi.repository import Gtk
+
+if os.getuid()<1000:raise SystemExit('Open the Android choice as the desktop user.')
+profile_file=Path('/usr/share/omarchy-apollo-android/install/android-flavors.json')
+profiles=json.loads(profile_file.read_text())
+if profiles['default']!='vanilla' or [item['id'] for item in profiles['choices']]!=['vanilla','gapps']:
+    raise SystemExit('The Android installation choices are not valid.')
+selection=None
+application=Gtk.Application(application_id='org.omarchy.Apollo.AndroidChoice')
+
+
+def activate(app):
+    window=Gtk.ApplicationWindow(application=app,title='Aplicaciones Android')
+    window.set_default_size(400,560)
+    header=Gtk.HeaderBar();header.set_title_widget(Gtk.Label(label='Aplicaciones Android'))
+    window.set_titlebar(header)
+    content=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=20,
+        margin_start=24,margin_end=24,margin_top=24,margin_bottom=24)
+    introduction=Gtk.Label(label='Elige cómo quieres instalar las aplicaciones Android.',xalign=0,wrap=True)
+    content.append(introduction)
+    buttons={};group=None
+    for item in profiles['choices']:
+        flavor,title,description=item['id'],item['label'],item['description']
+        choice=Gtk.CheckButton();choice.set_size_request(-1,110)
+        if group is None:group=choice
+        else:choice.set_group(group)
+        labels=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8,margin_start=8)
+        heading=Gtk.Label(label=title,xalign=0);heading.add_css_class('heading')
+        detail=Gtk.Label(label=description,xalign=0,wrap=True);detail.set_max_width_chars(30)
+        labels.append(heading);labels.append(detail);choice.set_child(labels)
+        buttons[flavor]=choice;content.append(choice)
+    buttons[profiles['default']].set_active(True)
+    actions=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=12,halign=Gtk.Align.END)
+    cancel=Gtk.Button(label='Cancelar',height_request=48)
+    confirm=Gtk.Button(label='Continuar',height_request=48);confirm.add_css_class('suggested-action')
+    def finish(button):
+        global selection
+        selection='gapps' if buttons['gapps'].get_active() else 'vanilla'
+        app.quit()
+    cancel.connect('clicked',lambda button:app.quit());confirm.connect('clicked',finish)
+    actions.append(cancel);actions.append(confirm);content.append(actions)
+    window.set_child(content);window.present()
+
+
+application.connect('activate',activate)
+application.run([])
+if selection is None:raise SystemExit(2)
+print(json.dumps({'android_flavor':selection}),flush=True)

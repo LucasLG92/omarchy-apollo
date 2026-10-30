@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "apollo.apps",
+  "name": "Aplicaciones",
+  "version": "0.1.0",
+  "description": "One-touch access to the installed application grid",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "Widget.qml" },
+  "barWidget": {
+    "displayName": "Aplicaciones",
+    "category": "Apps",
+    "allowMultiple": false,
+    "defaultSection": "left"
+  }
+}

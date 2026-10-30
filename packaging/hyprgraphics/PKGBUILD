@@ -1,0 +1,33 @@
+pkgname=hyprgraphics
+pkgver=0.5.1
+pkgrel=4.1
+pkgdesc='Hyprland graphics utilities with synchronized asynchronous completion'
+arch=('aarch64')
+url='https://github.com/hyprwm/hyprgraphics'
+license=('BSD-3-Clause')
+provides=('libhyprgraphics.so')
+depends=('cairo' 'file' 'glibc' 'hyprutils' 'libdrm' 'libgcc' 'libstdc++'
+  'libjpeg-turbo' 'libpng' 'libwebp' 'pango' 'pixman' 'librsvg' 'libjxl' 'libheif'
+  'libglvnd' 'libmagic.so' 'libhyprutils.so' 'libjpeg.so' 'libwebp.so'
+  'libpangocairo-1.0.so' 'libjxl.so' 'libjxl_threads.so' 'libheif.so')
+makedepends=('cmake' 'ninja' 'pkgconf')
+options=('!debug')
+# Reproducible archive of upstream v0.5.1, commit
+# 482d4b7ec36ffdaf3573086aa586b178fd5404be; no newer ABI is introduced.
+source=('hyprgraphics-0.5.1.tar' '0001-synchronize-async-resource-completion.patch')
+sha256sums=('5f98c58cbf55a37a5576a39a5dafbeeb9b17ded3cab9151483aeff5843a1387d'
+  '88ff245bc37283feea1f5ef5e74f06458c7ea154c9215e07ed133c09235e2a0e')
+prepare() {
+  cd "$srcdir/hyprgraphics-$pkgver"
+  patch -Np1 --fuzz=0 -i "$srcdir/0001-synchronize-async-resource-completion.patch"
+}
+build() {
+  cmake -S "$srcdir/hyprgraphics-$pkgver" -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib
+  cmake --build build --parallel 2
+}
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm644 "$srcdir/hyprgraphics-$pkgver/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

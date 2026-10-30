@@ -202,7 +202,7 @@ def install_apk(path,ctx):
 
 
 def main():
-    parser=argparse.ArgumentParser(description='Android y APK sin Google para Omarchy Apollo')
+    parser=argparse.ArgumentParser(description='Aplicaciones Android y APK para Omarchy Apollo')
     parser.add_argument('operation',choices=('start','prepare','install','stop','status'),nargs='?',default='start')
     parser.add_argument('apk',nargs='?')
     args=parser.parse_args()

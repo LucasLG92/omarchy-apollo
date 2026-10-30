@@ -1,7 +1,7 @@
 # Build from the repository root: makepkg
 pkgname=omarchy-apollo
 pkgver=0.1.0
-pkgrel=7
+pkgrel=12
 pkgdesc='Experimental native Omarchy integration for Xiaomi Apollo'
 arch=('aarch64')
 url='https://github.com/LucasLG92/omarchy-apollo'
@@ -20,9 +20,9 @@ depends=('omarchy-keyring' 'hyprland' 'quickshell' 'uwsm' 'sddm'
   'xdg-desktop-portal-gtk' 'omarchy-speedtest')
 options=('!strip' '!debug')
 makedepends=('git')
-optdepends=('waydroid: Android applications without Google services'
+optdepends=('waydroid: Android applications with an optional Google-services profile'
   'chromium: web browser' 'nautilus: file manager')
-_commit=573b518be16ec47547d50fe6197bc7f53e982340
+_commit=717175d4a8c5a12f6c0fff10dcc3c1c08ef3a0d1
 _port_root=$startdir
 source=("omarchy::git+https://github.com/omacom/omarchy.git#commit=$_commit")
 sha256sums=('SKIP')
@@ -39,7 +39,7 @@ prepare() {
   fi
   cd "$srcdir/omarchy"
   for change in "$_port_root"/patches/*.patch; do
-    patch -Np1 -i "$change"
+    patch -Np1 --fuzz=0 -i "$change"
   done
   chmod 755 bin/omarchy-hw-aarch64-apollo
 }
@@ -79,4 +79,8 @@ package() {
   install -d "$pkgdir/usr/share/omarchy-apollo"
   cp -a "$_port_root/config" "$pkgdir/usr/share/omarchy-apollo/"
   printf '%s\n' "$_commit" >"$pkgdir/usr/share/omarchy-apollo/upstream-commit"
+  # Git archive may export group-writable modes. Package-owned resources must
+  # have deterministic permissions, including when built from an offline tree.
+  find "$pkgdir" -type d -exec chmod 755 {} +
+  find "$pkgdir" -type f -perm /022 -exec chmod go-w {} +
 }

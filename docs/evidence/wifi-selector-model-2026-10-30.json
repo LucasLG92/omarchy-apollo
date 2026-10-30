@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-30",
+  "component": "Quickshell native Networking model used by the Omarchy selector",
+  "clean_omarchy_image": true,
+  "network_names_or_addresses_exported": false,
+  "owner_secrets_used": false,
+  "physical_selector_interaction_tested": false,
+  "backend_networkmanager": true,
+  "total_model_devices": 2,
+  "device_type_values": [
+    {
+      "type": 1,
+      "connected": false,
+      "has_network_model": true
+    },
+    {
+      "type": 2,
+      "connected": false,
+      "has_network_model": true
+    }
+  ],
+  "wifi_enum": 1,
+  "wifi_devices": 1,
+  "selector_network_rows": 24,
+  "baseline_distinct_5ghz_only_names": 3,
+  "selector_matched_5ghz_only_names": 3,
+  "selector_missing_5ghz_only_names": 0
+}

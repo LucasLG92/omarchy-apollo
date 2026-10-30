@@ -1,0 +1,21 @@
+[Unit]
+Description=Restore Apollo UTC from the read-only PMIC clock
+DefaultDependencies=no
+After=local-fs.target
+Before=time-set.target sysinit.target
+ConditionPathExists=/sys/class/rtc/rtc0/since_epoch
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/omarchy/apollo/clock restore
+User=root
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/omarchy-apollo
+CapabilityBoundingSet=CAP_SYS_TIME
+
+[Install]
+WantedBy=sysinit.target

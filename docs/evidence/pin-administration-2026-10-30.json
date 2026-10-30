@@ -1,0 +1,41 @@
+{
+  "checks_passed": 13,
+  "checks": [
+    "temporary account has no Unix password",
+    "baseline: ordinary-user PAM context accepts the synthetic PIN",
+    "baseline: root PAM context reproduces the rejection",
+    "fixed: ordinary-user PAM context accepts the synthetic PIN",
+    "fixed: root PAM context accepts the same synthetic PIN",
+    "sudo: real-root PAM authentication and account checks pass",
+    "polkit-1: real-root PAM authentication and account checks pass",
+    "root user disallowed",
+    "wrong PAM type disallowed",
+    "ordinary user cannot impersonate another account",
+    "actual sudo authorizes the harmless root command with the PIN",
+    "actual sudo rejects an incorrect PIN",
+    "actual sudo accepts the correct PIN after retry delay"
+  ],
+  "actual_sudo_process_tested": true,
+  "root_pam_context_tested": true,
+  "owner_credentials_used": false,
+  "owner_verifier_store_accessed": false,
+  "physical_polkit_popup_accepted": false,
+  "existing_live_authentication_policies_modified": false,
+  "temporary_account_removed": true,
+  "date": "2026-10-30",
+  "component": "omarchy-apollo-lock 0.1.0-4",
+  "owner_selected_same_numeric_pin_for_administration": true,
+  "owner_confirmed_screen_pin_enrollment_and_real_unlock": true,
+  "owner_reported_numeric_polkit_popup_accepted": true,
+  "owner_root_command_completion_receipt_captured": false,
+  "source_sha256": {
+    "lock/verify-pin.c": "29aaed6c4a46dc88a6223401e3d614790c0f44940272eca81430f52c316e51fe",
+    "platform/omarchy-apollo-enable-pin-administration": "d9c4e4380c8a8aec51ea632c46cd2ec35649972b13a4a1f733f6d11fa66cd2a6",
+    "tests/check_pin_pam_root_context.py": "5322a9761ea3f586aa2a4b24d1e66833a0344fa48fc841dd98da873a26d652f5"
+  },
+  "limits": [
+    "Fixture cases use a disposable account and a synthetic PIN, with no owner verifier access.",
+    "The owner separately reported successful popup acceptance; the strict wrapper timed out before capturing a completed root-command receipt.",
+    "Fingerprint unlock is not implemented."
+  ]
+}

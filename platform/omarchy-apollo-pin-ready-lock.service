@@ -1,0 +1,7 @@
+[Unit]
+Description=Request the phone lock after successful local PIN enrollment
+After=omarchy-apollo-pin-ready-keyboard.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/omarchy/apollo/pin-ready-lock

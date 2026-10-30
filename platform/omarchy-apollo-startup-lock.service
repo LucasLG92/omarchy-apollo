@@ -1,0 +1,13 @@
+[Unit]
+Description=Lock the Apollo desktop after PIN enrollment on session start
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/omarchy-apollo-power-button --startup
+TimeoutStartSec=50
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target

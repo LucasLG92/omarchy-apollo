@@ -119,8 +119,15 @@ def main():
             SERVICE.unlink(missing_ok=True)
             if account_created:
                 assert pwd.getpwnam(NAME).pw_uid == owner.pw_uid
-                result = run(['userdel', NAME])
-                assert result.returncode == 0, result.stderr
+                run(['loginctl', 'terminate-user', NAME])
+                for attempt in range(20):
+                    result = run(['userdel', NAME])
+                    if result.returncode == 0:
+                        break
+                    assert 'currently used by process' in result.stderr, result.stderr
+                    time.sleep(0.2)
+                else:
+                    raise RuntimeError('The temporary account manager did not stop.')
             (Path('/run/faillock')/NAME).unlink(missing_ok=True)
     print(json.dumps({'passed': checks, 'owner_credentials_used': False, 'temporary_account_removed': True}, indent=2))
 

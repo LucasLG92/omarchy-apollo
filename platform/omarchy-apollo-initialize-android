@@ -1,0 +1,55 @@
+#!/usr/bin/python3
+"""Initialize a fresh Android installation with the installer's chosen flavor."""
+from pathlib import Path
+import argparse
+import json
+import os
+import stat
+import subprocess
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--flavor',choices=('vanilla','gapps'),default='vanilla')
+    arguments=parser.parse_args()
+    if os.getuid()!=0 or os.geteuid()!=0:parser.error('Run from the authorized installer as administrator.')
+    os.umask(0o077)
+    storage=Path('/var/lib/waydroid')
+    # This entrypoint deliberately has no force/reset option.
+    if os.path.lexists(storage/'waydroid.cfg'):parser.error('Android is already initialized; the existing installation was preserved.')
+    if not storage.is_dir() or storage.is_symlink():parser.error('Android storage is not prepared.')
+    info=storage.stat()
+    if info.st_uid!=0 or not stat.S_ISDIR(info.st_mode) or info.st_mode&0o022:parser.error('Android storage must belong to the administrator and be protected against other users changing it.')
+    filesystem=subprocess.run(['findmnt','--noheadings','--output','FSTYPE','--target',str(storage)],capture_output=True,text=True,timeout=5)
+    if filesystem.returncode or filesystem.stdout.strip()!='ext4':parser.error('Prepare the dedicated ext4 Android storage before initializing.')
+    flavor={'vanilla':'VANILLA','gapps':'GAPPS'}[arguments.flavor]
+    private=Path('/var/lib/omarchy-apollo/preflight');private.mkdir(parents=True,mode=0o700,exist_ok=True)
+    info=private.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o700:parser.error('The private installer log directory is not protected.')
+    log=private/'android-first-initialization-private.log'
+    descriptor=os.open(log,os.O_WRONLY|os.O_CREAT|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK,0o600)
+    info=os.fstat(descriptor)
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_nlink!=1:
+        os.close(descriptor);parser.error('The private installer log is not a protected regular file.')
+    os.fchmod(descriptor,0o600);os.ftruncate(descriptor,0)
+    # The ordinary Waydroid session reads the shared OS configuration. Android
+    # creates/protects its own app data separately; do not make that data public.
+    storage.chmod(0o755)
+    with os.fdopen(descriptor,'w') as output:
+        process=subprocess.run(['waydroid','init','-s',flavor],stdout=output,stderr=subprocess.STDOUT,umask=0o022)
+    if process.returncode:raise SystemExit('Android initialization failed; inspect the private installer log. Existing data was not reset.')
+    if not (storage/'waydroid.cfg').is_file():raise SystemExit('Android did not create its configuration.')
+    configuration=storage/'waydroid.cfg';info=configuration.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0:raise SystemExit('Android did not create a protected configuration file.')
+    configuration.chmod(0o644)
+    record={'android_flavor':arguments.flavor,'waydroid_system_type':flavor,'initialized':True,'google_account_configured_by_installer':False}
+    target=Path('/var/lib/omarchy-apollo/android-installation.json')
+    temporary=target.with_suffix('.new')
+    descriptor=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o644)
+    with os.fdopen(descriptor,'w') as output:
+        output.write(json.dumps(record,indent=2)+'\n');output.flush();os.fsync(output.fileno())
+    temporary.chmod(0o644);temporary.replace(target)
+    print(json.dumps(record))
+
+
+if __name__=='__main__':main()

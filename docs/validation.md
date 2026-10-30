@@ -1,5 +1,20 @@
 # Validation record
 
+## Current clean-image milestone — 2026-10-30
+
+The clean installation is permanent. The owner completed an unplugged cold boot and PIN unlock, and separately accepted the numeric administration popup and the clean power-key screen-off/wake cycle. These results supersede the corresponding pending items in the chronological records below; they do not retroactively repeat older hardware tests in the new root.
+
+- [Permanent boot](evidence/clean-permanent-boot-2026-10-30.json): boot-image read-back checksum, normal reboot, retained PIN profile and owner-confirmed independent cold boot.
+- [Authentication](evidence/pin-administration-2026-10-30.json): 13 root-context/sudo cases reproduce and fix the production PAM bug. Owner popup acceptance is recorded separately from a completed root-command receipt.
+- [Power key](evidence/phone-power-key-2026-10-30.json): 19 helper fixtures plus physical owner acceptance; startup locking has succeeded on the actual clean boot.
+- [Graphics](evidence/graphics-resource-wait-2026-10-30.json): corrected library passes 512 candidate and 512 installed resources and is active in the current compositor. Long-duration stability is unproven.
+- [Android](evidence/android-clean-lifecycle-2026-10-30.json): fresh VANILLA passes 31 isolated cases; after host cold boot it was separately observed running in a native window with FD650. The already open application was preserved.
+- [Application grid](evidence/mobile-app-grid-2026-10-30.json): dedicated plugin installed/enabled and the actual grid rendered/captured on the phone; physical button tapping was not automated.
+- [Wi-Fi model](evidence/wifi-selector-model-2026-10-30.json): all three comparison networks visible only at 5 GHz are present in the actual shell model. Physical selection/connection acceptance remains pending.
+- [Upstream and clock update](evidence/upstream-and-clock-update-2026-10-30.json): runtime revision 12, three changed upstream suites, deterministic package permissions, installed integrity checks, 12 read-only clock cases and a successful actual restore service. Clock cold-boot acceptance is still pending.
+
+The remaining sections preserve the original sequence and scope of earlier tests. Their package versions and then-pending acceptance statements describe those stages, rather than the current installation.
+
 ## Inherited Apollo baseline
 
 The migration starts from the installed r5 base, `linux-apollo 7.1.0-23`. Physical cold boot without a cable and USB reconnection were confirmed by the owner. Existing automated evidence includes camera frame capture and front-camera cycling, GPU rendering, RTC wake and USB maintenance reconnection. The migration must repeat relevant checks inside the new session.

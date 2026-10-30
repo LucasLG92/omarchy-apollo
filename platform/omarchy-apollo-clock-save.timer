@@ -1,0 +1,10 @@
+[Unit]
+Description=Keep Apollo RTC calibration current when UTC is synchronized
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

@@ -1,6 +1,6 @@
 pkgname=omarchy-apollo-lock
 pkgver=0.1.0
-pkgrel=2
+pkgrel=4
 pkgdesc='Trusted touch PIN setup and rate-limited PAM verification for Apollo'
 arch=('aarch64')
 license=('MIT')

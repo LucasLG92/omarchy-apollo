@@ -1,0 +1,18 @@
+#!/bin/bash
+# Start the trusted PIN window only in the local owner's Wayland session.
+set -euo pipefail
+(( EUID == 0 )) || exit 1
+owner_uid=$(id -u apollo)
+[[ $owner_uid == 1001 ]]
+runtime=/run/user/$owner_uid
+display=
+for candidate in "$runtime"/wayland-*; do
+  [[ -S $candidate && ! -L $candidate ]] || continue
+  [[ $(stat --format=%u -- "$candidate") == "$owner_uid" && -z $display ]] || exit 1
+  display=${candidate##*/}
+done
+[[ $display =~ ^wayland-[0-9]+$ ]]
+runuser -u apollo -- env XDG_RUNTIME_DIR="$runtime" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+  systemctl --user try-restart omarchy-apollo-keyboard.service
+exec /usr/lib/omarchy/apollo/pin-setup "$owner_uid" "$display"

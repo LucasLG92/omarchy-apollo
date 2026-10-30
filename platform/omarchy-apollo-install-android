@@ -1,0 +1,26 @@
+#!/usr/bin/python3
+"""Choose the Android flavor and initialize an empty, prepared installation."""
+from pathlib import Path
+import json
+import os
+import subprocess
+
+if os.getuid()<1000:raise SystemExit('Open Android installation from your desktop account.')
+if os.path.lexists('/var/lib/waydroid/waydroid.cfg'):
+    subprocess.run(['zenity','--info','--title=Aplicaciones Android',
+        '--text=Android ya está instalado. Se conserva su configuración y sus aplicaciones.','--width=360'])
+    raise SystemExit(0)
+choice=subprocess.run(['/usr/bin/omarchy-apollo-select-android'],capture_output=True,text=True)
+if choice.returncode==2:raise SystemExit(0)
+if choice.returncode:raise SystemExit('Could not open the Android installation choices.')
+selection=json.loads(choice.stdout)
+if set(selection)!={'android_flavor'} or selection['android_flavor'] not in ('vanilla','gapps'):
+    raise SystemExit('The Android installation choice is not valid.')
+result=subprocess.run(['/usr/bin/pkexec','/usr/lib/omarchy/apollo/initialize-android',
+    '--flavor',selection['android_flavor']])
+if result.returncode:
+    subprocess.run(['zenity','--error','--title=Aplicaciones Android',
+        '--text=No se pudo completar la instalación. Comprueba la conexión a Internet y vuelve a intentarlo.','--width=360'])
+    raise SystemExit(result.returncode)
+subprocess.run(['zenity','--info','--title=Aplicaciones Android',
+    '--text=Android está preparado. Puedes abrirlo desde Aplicaciones Android.','--width=360'])

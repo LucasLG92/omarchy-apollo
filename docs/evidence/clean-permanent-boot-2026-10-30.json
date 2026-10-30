@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-30",
+  "permanent_installation": {
+    "date": "2026-10-30",
+    "clean_boot_installed_permanently": true,
+    "normal_reboot_into_clean_slot_verified": true,
+    "boot_partition_readback_sha256": "5cef1894ac6fefdd3b42f36b21c5cf38e43e39fadbfedb32f415610a75733e65",
+    "kernel_unchanged": true,
+    "owner_numeric_pin_configuration_persisted": true,
+    "same_pin_administration_profile_persisted": true,
+    "startup_lock_service_succeeded": true,
+    "android_ext4_storage_mount_persisted": true,
+    "owner_pin_or_verifier_read": false,
+    "userdata_formatted_or_repartitioned": false
+  },
+  "owner_cold_boot_acceptance": {
+    "date": "2026-10-30",
+    "owner_confirmed_complete_power_off": true,
+    "owner_confirmed_boot_without_pc_cable": true,
+    "owner_confirmed_pin_unlock_after_cold_boot": true,
+    "clean_slot_active_after_reconnection": true,
+    "real_startup_lock_service_succeeded": true,
+    "compositor_unlocked_after_owner_pin_entry": true,
+    "compositor_configuration_errors": 0,
+    "maintenance_usb_reconnected": true,
+    "owner_credentials_read": false
+  },
+  "installed_versions_at_export": [
+    "linux-apollo 7.1.0-23",
+    "omarchy-apollo 0.1.0-12",
+    "omarchy-apollo-mobile 0.1.0-13",
+    "omarchy-apollo-lock 0.1.0-4",
+    "omarchy-apollo-android 0.1.0-10",
+    "omarchy-apollo-device 0.1.0-6",
+    "hyprgraphics 0.5.1-4.1",
+    "quickshell 0.3.2.r7.g2b4501a-5"
+  ],
+  "source_init_sha256": {
+    "platform/omarchy-apollo-init": "737644b665a9d88891ea14fd799db6e19c6fd1580e35b5b9eec8f164084c041f"
+  },
+  "limits": [
+    "Only the boot partition was replaced in this installation step.",
+    "Cold-boot acceptance predates the later userspace clock update.",
+    "Not a validated installer from stock Android; device-specific private inputs are required."
+  ]
+}

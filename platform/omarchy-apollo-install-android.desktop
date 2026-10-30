@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Instalar aplicaciones Android
+Comment=Elige Android con o sin Google Play
+Exec=omarchy-apollo-install-android
+Icon=android
+Terminal=false
+Type=Application
+Categories=Settings;System;

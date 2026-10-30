@@ -1,0 +1,69 @@
+--- a/src/resource/AsyncResourceGatherer.cpp
++++ b/src/resource/AsyncResourceGatherer.cpp
+@@ -8,15 +8,22 @@
+ }
+ 
+ CAsyncResourceGatherer::~CAsyncResourceGatherer() {
+-    m_asyncLoopState.exit = true;
+-    wakeUpMainThread();
++    {
++        std::lock_guard<std::mutex> lk(m_asyncLoopState.requestMutex);
++        m_asyncLoopState.exit = true;
++        m_asyncLoopState.needsToProcess = true;
++    }
++    m_asyncLoopState.requestsCV.notify_all();
+ 
+     if (m_gatherThread.joinable())
+         m_gatherThread.join();
+ }
+ 
+ void CAsyncResourceGatherer::wakeUpMainThread() {
+-    m_asyncLoopState.needsToProcess = true;
++    {
++        std::lock_guard<std::mutex> lk(m_asyncLoopState.requestMutex);
++        m_asyncLoopState.needsToProcess = true;
++    }
+     m_asyncLoopState.requestsCV.notify_all();
+ }
+ 
+@@ -30,14 +37,19 @@
+ }
+ 
+ void CAsyncResourceGatherer::await(Hyprutils::Memory::CAtomicSharedPointer<IAsyncResource> resource) {
+-    resource->m_impl->awaitingCv = Hyprutils::Memory::makeUnique<std::condition_variable>();
+     std::unique_lock<std::mutex> lk(resource->m_impl->awaitingMtx);
+-    resource->m_impl->awaitingCv->wait(lk, [&resource] { return resource->m_impl->awaitingEvent; });
+-    resource->m_impl->awaitingCv.reset();
++    if (resource->m_ready.load())
++        return;
++
++    // Publish and use the condition variable under the same lock as completion.
++    // Keep it for the lifetime of the resource so multiple waiters remain safe.
++    if (!resource->m_impl->awaitingCv)
++        resource->m_impl->awaitingCv = Hyprutils::Memory::makeUnique<std::condition_variable>();
++    resource->m_impl->awaitingCv->wait(lk, [&resource] { return resource->m_ready.load(); });
+ }
+ 
+ void CAsyncResourceGatherer::asyncAssetSpinLock() {
+-    while (!m_asyncLoopState.exit) {
++    while (true) {
+ 
+         std::unique_lock lk(m_asyncLoopState.requestMutex);
+         if (!m_asyncLoopState.needsToProcess) // avoid a lock if a thread managed to request something already since we .unlock()ed
+@@ -64,11 +76,13 @@
+         for (auto& r : requests) {
+             r->render();
+ 
+-            if (r->m_impl->awaitingCv) {
++            {
++                std::lock_guard<std::mutex> lk(r->m_impl->awaitingMtx);
++                r->m_ready = true;
+                 r->m_impl->awaitingEvent = true;
+-                r->m_impl->awaitingCv->notify_all();
++                if (r->m_impl->awaitingCv)
++                    r->m_impl->awaitingCv->notify_all();
+             }
+-            r->m_ready = true;
+             r->m_events.finished.emit();
+         }
+     }

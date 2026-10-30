@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Configurar Omarchy Apollo
+Comment=Configura el PIN táctil de Omarchy Apollo
+Exec=omarchy-apollo-setup
+Icon=preferences-system
+Type=Application
+Categories=Settings;System;
+StartupNotify=true

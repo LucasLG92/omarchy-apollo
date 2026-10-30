@@ -1,0 +1,22 @@
+{
+  "package": "omarchy-apollo-mobile 0.1.0-13",
+  "package_sha256": "06dd1f6950475c22aafb1942398b347e5de113b3c5910b642412ac3b29cf466a",
+  "one_touch_app_grid_button_installed": true,
+  "plugin_registered_and_enabled": true,
+  "existing_user_settings_preserved": true,
+  "power_helper_unchanged": true,
+  "kernel_unchanged": true,
+  "physical_button_interaction_pending": true,
+  "no_external_project_code_or_assets_imported": true,
+  "date": "2026-10-30",
+  "native_app_grid_route_verified": true,
+  "new_captures_visually_reviewed_for_publication": true,
+  "source_sha256": {
+    "config/omarchy/plugins/apollo.apps/Widget.qml": "d48f5a9c0454c7299c972fd4b9658a36d1ecac5c8a04ae9dde3e49212989e592",
+    "config/omarchy/plugins/apollo.apps/manifest.json": "3aa5f22472e59de1e958da305b49e41065ccd39419eeef89ab0a4bd70de6c488"
+  },
+  "limits": [
+    "The actual native application grid rendered and closed successfully.",
+    "The physical button tap was not automated."
+  ]
+}

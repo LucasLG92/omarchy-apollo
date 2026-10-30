@@ -1,0 +1,16 @@
+[Unit]
+Description=Initial local owner setup for Omarchy Apollo
+After=graphical-session.target omarchy-apollo-keyboard.service
+PartOf=graphical-session.target
+ConditionPathExists=/etc/omarchy-apollo/firstboot-pin-needed
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+ExecStart=/usr/bin/sudo -n /usr/lib/omarchy/apollo/firstboot-pin
+LimitCORE=0
+TimeoutStartSec=infinity
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target

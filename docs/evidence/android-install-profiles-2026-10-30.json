@@ -1,0 +1,50 @@
+{
+  "checks_passed": 27,
+  "checks": [
+    "default: initialization succeeds",
+    "default: selected image type reaches Waydroid",
+    "default: public result describes selection without a Google account",
+    "default: diagnostic log stays private",
+    "default: ordinary session can traverse Android configuration storage",
+    "default: shared Android configuration is readable",
+    "default: a later choice preserves the existing installation",
+    "vanilla: initialization succeeds",
+    "vanilla: selected image type reaches Waydroid",
+    "vanilla: public result describes selection without a Google account",
+    "vanilla: diagnostic log stays private",
+    "vanilla: ordinary session can traverse Android configuration storage",
+    "vanilla: shared Android configuration is readable",
+    "vanilla: a later choice preserves the existing installation",
+    "gapps: initialization succeeds",
+    "gapps: selected image type reaches Waydroid",
+    "gapps: public result describes selection without a Google account",
+    "gapps: diagnostic log stays private",
+    "gapps: ordinary session can traverse Android configuration storage",
+    "gapps: shared Android configuration is readable",
+    "gapps: a later choice preserves the existing installation",
+    "invalid flavor never starts initialization",
+    "even a dangling existing configuration is preserved",
+    "writable Android storage is rejected",
+    "public diagnostic directory is rejected",
+    "diagnostic symlinks cannot overwrite files or start initialization",
+    "failed initialization is reported without a success record"
+  ],
+  "waydroid_command_replaced_by_fixture": true,
+  "real_google_installation_tested": false,
+  "existing_android_data_accessed": false,
+  "date": "2026-10-30",
+  "component": "omarchy-apollo-android 0.1.0-10 installed in clean image",
+  "package_sha256": "d9d0a38989a939d679556891f62f1dcbb796e1bb856f1eb0693ac4897762d9e7",
+  "source_sha256": {
+    "platform/omarchy-apollo-initialize-android": "5a77fa9bf03d8a89c6fa18753fd6c2ff5bb6487456e14eb0f2c30ebcd62e582c",
+    "platform/omarchy-apollo-select-android": "9f62a5655fdfebc25c63aa9d7401396137776ac671ada64ff483c44481dbaa0a",
+    "platform/omarchy-apollo-install-android": "458aaf93e0d940fc0f83fcd7246f407614e22e0a9825fe196ef098e73878ea3c",
+    "config/install/android-flavors.json": "ff3c600f58c549992e90404455f786f9c247cfb11ee5d9bcf2f4e8e9cc9e60df",
+    "tests/check_android_install_profiles.py": "b641f3c2e705797139029138ab805d5ac491391ba94c8bfe0a4836e88732ee9a"
+  },
+  "limits": [
+    "Waydroid download/init was replaced by a fixture.",
+    "Actual GAPPS download and Google Play use remain untested.",
+    "No account credentials were used."
+  ]
+}

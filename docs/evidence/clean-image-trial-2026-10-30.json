@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-30",
+  "device_model": "Xiaomi Mi 10T Pro / Apollo / M2007J3SG",
+  "installation_kind": "Fresh Arch Linux ARM root with native Omarchy in a separate persistent image slot",
+  "official_arm_bootstrap_signature_verified": true,
+  "previous_root_home_passwords_wifi_and_android_userdata_copied": false,
+  "installed_package_count": 737,
+  "kde_plasma_or_cachyos_packages_present": false,
+  "temporary_boot_completed": true,
+  "native_hyprland_configuration_errors": 0,
+  "panel": {
+    "width": 1080,
+    "height": 2400,
+    "scale": 2.5
+  },
+  "native_gpu_check": {
+    "command_returncode": 0,
+    "platform": "surfaceless",
+    "api": "OpenGL ES",
+    "renderer_summary": [
+      "EGL vendor string: Mesa Project",
+      "OpenGL ES profile renderer: FD650"
+    ],
+    "desktop_processes_interrupted": false,
+    "screen_captured": false
+  },
+  "image_mount_validation": {
+    "checks_passed": 14,
+    "checks": [
+      "merged root is traversable by the desktop account",
+      "desktop executable accessible to UID 1001",
+      "new desktop configuration accessible to its owner",
+      "new home is writable through the persistent overlay",
+      "var/cache/pacman/pkg contains no build runtime/cache payload",
+      "run contains no build runtime/cache payload",
+      "dev contains no build runtime/cache payload",
+      "proc contains no build runtime/cache payload",
+      "sys contains no build runtime/cache payload",
+      "no initial password or PIN copied",
+      "no saved Wi-Fi profiles copied",
+      "private host keys retain administrator-only permissions",
+      "image has the Omarchy clean-install marker",
+      "fresh Android uses the new storage slot"
+    ],
+    "image_sha256": "5c1ce3351484abf8be168b69e72096a8b7eec3863be9d5324f1e06ecf785a781",
+    "desktop_session_started": false,
+    "boot_partition_changed": false,
+    "original_overlay_accessed": false
+  },
+  "installed_component_versions": [
+    "linux-apollo 7.1.0-23",
+    "omarchy-apollo 0.1.0-12",
+    "omarchy-apollo-mobile 0.1.0-13",
+    "omarchy-apollo-lock 0.1.0-4",
+    "omarchy-apollo-android 0.1.0-10",
+    "omarchy-apollo-device 0.1.0-6",
+    "hyprgraphics 0.5.1-4.1",
+    "quickshell 0.3.2.r7.g2b4501a-5"
+  ],
+  "selected_android_flavor": "vanilla",
+  "fresh_android_images_initialized": true,
+  "fresh_android_gbm_mesa_configured": true,
+  "fresh_android_boot_tested": true,
+  "boot_partition_replaced": true,
+  "new_image_cold_boot_tested": true,
+  "owner_pin_configured": true,
+  "owner_pin_unlock_tested": true,
+  "limits": [
+    "Current installation is permanent and has owner-confirmed unplugged cold boot and PIN acceptance.",
+    "Later clock calibration still needs its own power-off acceptance.",
+    "Fresh Android APK/lifecycle tests and later running-state observation do not establish all Android hardware features.",
+    "Model firmware binaries, personalized images and recovery backups remain private."
+  ],
+  "source_init_sha256": "737644b665a9d88891ea14fd799db6e19c6fd1580e35b5b9eec8f164084c041f",
+  "onboarding_mode": "numeric-pin",
+  "administration_authentication": "same numeric PIN, owner selected",
+  "fresh_android_apk_lifecycle_checks": 31,
+  "fresh_android_fd650_before_and_after_restart": true,
+  "new_numeric_authorization_popup_physically_accepted": true,
+  "owner_confirmed_boot_without_pc": true,
+  "owner_confirmed_pin_unlock_after_cold_boot": true,
+  "owner_confirmed_clean_power_key_cycle": true
+}

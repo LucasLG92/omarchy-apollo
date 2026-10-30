@@ -1,0 +1,41 @@
+{
+  "checks_passed": 19,
+  "checks": [
+    "startup acquires a lock without blanking",
+    "startup waits for a temporarily unavailable lock service",
+    "startup preserves an existing secure lock",
+    "power locks then blanks an unlocked screen",
+    "power blanks an already locked screen",
+    "power reveals the keypad before waking",
+    "idle locks and blanks",
+    "idle never wakes an already blank locked screen",
+    "idle secures a blank unlocked screen without waking it",
+    "failed blackout preparation never blanks",
+    "failed legacy lock never blanks",
+    "touch during the transition cancels blanking",
+    "enrollment keeps the screen unchanged",
+    "an invalid option changes nothing",
+    "legacy interface still locks before blanking",
+    "legacy interface still wakes a locked screen",
+    "a missing internal panel is rejected",
+    "an unresponsive lock service never blanks",
+    "no enrolled PIN means no lock or display operation"
+  ],
+  "real_helper_executed": true,
+  "ipc_commands_replaced_by_fixtures": true,
+  "physical_screen_changed": false,
+  "owner_credentials_used": false,
+  "baseline_startup_race_reproduced": true,
+  "date": "2026-10-30",
+  "owner_confirmed_screen_off_without_pin_flash": true,
+  "owner_confirmed_pin_required_on_wake": true,
+  "source_sha256": {
+    "platform/omarchy-apollo-power-button": "918e6cfafe8e83d7a1796a81c0e1c3f094a4ae304c8d79e7acc0e3a7d0e2a4ea",
+    "patches/0007-apollo-power-lock-presentation.patch": "96de5b4210e57ae4c387795504d50a25b7b7689f6f66e6c1ae0751c72ac9f7d2",
+    "tests/check_mobile_power_flow.py": "dffcda43dfcac205da6ccea961f22b766888714d5691b06e28e1d68124a03e18"
+  },
+  "limits": [
+    "Nineteen automated cases replace compositor IPC with fixtures.",
+    "Owner acceptance covers the physical short power-key cycle; long-duration suspend and battery behavior remain pending."
+  ]
+}

@@ -1,10 +1,10 @@
 pkgname=omarchy-apollo-android
 pkgver=0.1.0
-pkgrel=6
-pkgdesc='On-demand Google-free Android integration for Apollo'
+pkgrel=10
+pkgdesc='On-demand Android integration and installer flavor selection for Apollo'
 arch=('aarch64')
 license=('MIT')
-depends=('omarchy-apollo' 'waydroid' 'lxc' 'python-dbus' 'python-gobject' 'util-linux' 'libnotify' 'xdg-utils')
+depends=('omarchy-apollo' 'waydroid' 'lxc' 'python-dbus' 'python-gobject' 'gtk4' 'util-linux' 'libnotify' 'xdg-utils' 'polkit' 'zenity')
 options=('!strip' '!debug')
 package() {
   install -Dm644 "$startdir/platform/var-lib-waydroid.mount" "$pkgdir/usr/lib/systemd/system/var-lib-waydroid.mount"
@@ -13,6 +13,11 @@ package() {
   install -Dm644 "$startdir/platform/omarchy-apollo-android.desktop" "$pkgdir/usr/share/applications/omarchy-apollo-android.desktop"
   install -Dm644 "$startdir/platform/omarchy-apollo-apk-install.desktop" "$pkgdir/usr/share/applications/omarchy-apollo-apk-install.desktop"
   install -Dm755 "$startdir/platform/omarchy-setup-apollo-android" "$pkgdir/usr/bin/omarchy-setup-apollo-android"
+  install -Dm755 "$startdir/platform/omarchy-apollo-initialize-android" "$pkgdir/usr/lib/omarchy/apollo/initialize-android"
+  install -Dm755 "$startdir/platform/omarchy-apollo-select-android" "$pkgdir/usr/bin/omarchy-apollo-select-android"
+  install -Dm755 "$startdir/platform/omarchy-apollo-install-android" "$pkgdir/usr/bin/omarchy-apollo-install-android"
+  install -Dm644 "$startdir/platform/omarchy-apollo-install-android.desktop" "$pkgdir/usr/share/applications/omarchy-apollo-install-android.desktop"
+  install -Dm644 "$startdir/config/install/android-flavors.json" "$pkgdir/usr/share/omarchy-apollo-android/install/android-flavors.json"
   for component in apk-service android-client; do
     install -Dm755 "$startdir/platform/$component" "$pkgdir/usr/lib/omarchy/apollo/$component"
   done

@@ -178,6 +178,16 @@ int main(int argc, char **argv) {
     if (errno || parsed < 1000 || parsed > UINT_MAX) return 1;
     target = (uid_t)parsed;
   } else if (argc != 1 && !checking_status) return 1;
+  /* Polkit and sudo can launch PAM helpers with both UIDs already root.
+   * Only a real-root caller may select the account named by PAM_USER.
+   * A setuid invocation by an ordinary user stays bound to its real UID.
+   */
+  if (!enrolling && !checking_status && caller == 0) {
+    const char *pam_user = getenv("PAM_USER");
+    struct passwd *pam_owner = pam_user && *pam_user ? getpwnam(pam_user) : NULL;
+    if (!pam_owner || pam_owner->pw_uid < 1000) return 1;
+    target = pam_owner->pw_uid;
+  }
   struct passwd *owner = getpwuid(target);
   if (!owner || target < 1000) return 1;
   if (!enrolling && !checking_status) {

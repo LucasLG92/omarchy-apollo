@@ -1,0 +1,71 @@
+{
+  "source_commit": "482d4b7ec36ffdaf3573086aa586b178fd5404be",
+  "package_sha256": "0a2d4185c0e9cda89a97d6219dc8fb1420d3c747b22b4280c6aa356659ce2667",
+  "checks": [
+    {
+      "name": "stock completion-before-wait reproduces hard stall",
+      "passed": true,
+      "expected_timeout_seconds": 2
+    },
+    {
+      "name": "patched late",
+      "passed": true,
+      "resources": 128,
+      "result": "late: 128 resources completed"
+    },
+    {
+      "name": "patched early",
+      "passed": true,
+      "resources": 128,
+      "result": "early: 128 resources completed"
+    },
+    {
+      "name": "patched multi",
+      "passed": true,
+      "resources": 128,
+      "result": "multi: 128 resources completed"
+    },
+    {
+      "name": "patched immediate",
+      "passed": true,
+      "resources": 128,
+      "result": "immediate: 128 resources completed"
+    },
+    {
+      "name": "upstream Image and ARG test suites",
+      "passed": true
+    }
+  ],
+  "patched_resources_completed": 512,
+  "physical_desktop_stability_tested": false,
+  "live_library_changed_during_isolated_regression": false,
+  "date": "2026-10-30",
+  "component": "hyprgraphics 0.5.1-4.1 build 2, installed",
+  "installed_package_validation": {
+    "package": "hyprgraphics 0.5.1-4.1",
+    "package_sha256": "0a2d4185c0e9cda89a97d6219dc8fb1420d3c747b22b4280c6aa356659ce2667",
+    "official_rollback_signature_verified": true,
+    "installed_library_resources_completed": 512,
+    "installed_probe_results": [
+      "late: 128 resources completed",
+      "early: 128 resources completed",
+      "multi: 128 resources completed",
+      "immediate: 128 resources completed"
+    ],
+    "desktop_and_kernel_packages_unchanged": true,
+    "graphical_session_restarted": false,
+    "desktop_activation_pending": true,
+    "owner_pin_used": false
+  },
+  "source_sha256": {
+    "packaging/hyprgraphics/PKGBUILD": "b9ab81946a33d8b49b37a3678dbf8030500900451c17af0f7cf27cc2b21711fe",
+    "packaging/hyprgraphics/0001-synchronize-async-resource-completion.patch": "88ff245bc37283feea1f5ef5e74f06458c7ea154c9215e07ed133c09235e2a0e",
+    "tests/check_async_resource_wait.cpp": "21d414ebc02486213e24ab74ba3e02b136eab83da9f55420d554fb3492682386"
+  },
+  "limits": [
+    "Direct candidate and installed-library runs each completed 512 resources.",
+    "The corrected library is active in the compositor after a graphical restart and subsequent cold boot.",
+    "No long-duration stability or complete desktop stress claim."
+  ],
+  "corrected_library_active_in_current_compositor": true
+}

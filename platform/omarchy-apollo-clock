@@ -1,0 +1,125 @@
+#!/usr/bin/python3
+"""Restore trusted UTC using the PMIC's read-only counter; never write the RTC."""
+import argparse
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import tempfile
+import time
+
+STATE = Path('/var/lib/omarchy-apollo/clock')
+RTC = Path('/sys/class/rtc/rtc0')
+MIN_EPOCH = 1577836800  # 2020-01-01 UTC
+MAX_EPOCH = 4102444800  # 2100-01-01 UTC
+MAX_AGE = 366 * 86400
+
+
+def validate_sample(raw, epoch):
+    if type(raw) is not int or not 0 <= raw <= 0xffffffff:
+        raise ValueError('Invalid RTC counter')
+    if type(epoch) is not int or not MIN_EPOCH <= epoch < MAX_EPOCH:
+        raise ValueError('Trusted UTC is outside the supported range')
+
+
+def calibration(raw, epoch, name):
+    validate_sample(raw, epoch)
+    if not isinstance(name, str) or not name.startswith('rtc-pm8xxx ') or len(name) > 160:
+        raise ValueError('Unexpected RTC device')
+    return {'version': 1, 'rtc_name': name, 'counter': raw, 'utc': epoch}
+
+
+def predict(record, raw, name):
+    if not isinstance(record, dict) or record.get('version') != 1:
+        raise ValueError('Unknown calibration format')
+    saved = calibration(record.get('counter'), record.get('utc'), record.get('rtc_name'))
+    validate_sample(raw, saved['utc'])
+    if name != saved['rtc_name']:
+        raise ValueError('RTC device changed')
+    elapsed = raw - saved['counter']
+    if not 0 <= elapsed <= MAX_AGE:
+        raise ValueError('RTC reset, wrapped or calibration expired')
+    epoch = saved['utc'] + elapsed
+    validate_sample(raw, epoch)
+    return epoch
+
+
+def trusted_directory():
+    STATE.mkdir(mode=0o700, exist_ok=True)
+    info = STATE.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or stat.S_IMODE(info.st_mode) != 0o700:
+        raise ValueError('Unsafe clock state directory')
+
+
+def read_record():
+    fd = os.open(STATE/'calibration.json', os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    with os.fdopen(fd) as stream:
+        info = os.fstat(stream.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_nlink != 1 or stat.S_IMODE(info.st_mode) != 0o600 or info.st_size > 2048:
+            raise ValueError('Unsafe clock calibration')
+        return json.load(stream)
+
+
+def save_record(record):
+    fd, name = tempfile.mkstemp(prefix='.calibration-', dir=STATE)
+    try:
+        with os.fdopen(fd, 'w') as stream:
+            json.dump(record, stream, separators=(',', ':'))
+            stream.write('\n'); stream.flush(); os.fsync(stream.fileno())
+        os.replace(name, STATE/'calibration.json')
+        directory = os.open(STATE, os.O_DIRECTORY | os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        Path(name).unlink(missing_ok=True)
+
+
+def synchronized():
+    result = subprocess.run(['/usr/bin/timedatectl', 'show', '-p', 'NTPSynchronized', '--value'], capture_output=True, text=True, timeout=5)
+    return result.returncode == 0 and result.stdout.strip() == 'yes'
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('operation', choices=('restore', 'calibrate', 'status'))
+    parser.add_argument('--trusted-epoch', type=int, help='UTC supplied explicitly by the administrator, for offline calibration')
+    args = parser.parse_args()
+    if os.getuid() != 0 or os.geteuid() != 0:
+        parser.error('Run as the system administrator')
+    if args.trusted_epoch is not None and args.operation != 'calibrate':
+        parser.error('An explicit UTC value is only valid when calibrating')
+    os.umask(0o077)
+    try:
+        trusted_directory()
+        name = (RTC/'name').read_text().strip()
+        raw = int((RTC/'since_epoch').read_text().strip())
+        if args.operation == 'calibrate':
+            if args.trusted_epoch is None and not synchronized():
+                print('No synchronized UTC source; previous calibration retained.')
+                return 0
+            epoch = args.trusted_epoch if args.trusted_epoch is not None else int(time.time())
+            save_record(calibration(raw, epoch, name))
+            print('Read-only RTC calibration saved; hardware clock unchanged.')
+        else:
+            try:
+                record = read_record()
+            except FileNotFoundError:
+                print('No RTC calibration yet; waiting for synchronized UTC.')
+                return 0
+            epoch = predict(record, raw, name)
+            if args.operation == 'status':
+                print(json.dumps({'calibration_valid': True, 'counter_elapsed_seconds': raw-record['counter'], 'system_delta_seconds': epoch-int(time.time()), 'hardware_rtc_writable': False}))
+            else:
+                time.clock_settime(time.CLOCK_REALTIME, epoch)
+                print('UTC restored from calibrated read-only RTC counter.')
+        return 0
+    except (OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as error:
+        print('Clock calibration unavailable: '+str(error))
+        return 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

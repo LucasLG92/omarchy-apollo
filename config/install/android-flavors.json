@@ -1,0 +1,17 @@
+{
+  "default": "vanilla",
+  "choices": [
+    {
+      "id": "vanilla",
+      "waydroid_system_type": "VANILLA",
+      "label": "Android sin Google",
+      "description": "Instala APK directamente. Incluye Android sin Google Play ni servicios de Google."
+    },
+    {
+      "id": "gapps",
+      "waydroid_system_type": "GAPPS",
+      "label": "Android con Google Play",
+      "description": "Incluye Google Play y los servicios de Google. La cuenta se configura después, solo dentro de Android."
+    }
+  ]
+}

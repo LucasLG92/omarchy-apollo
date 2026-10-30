@@ -1,0 +1,76 @@
+#!/usr/bin/python3
+"""Lock before blanking, wake an existing lock, or lock once at session start."""
+from pathlib import Path
+import fcntl
+import json
+import os
+import stat
+import subprocess
+import sys
+import time
+
+
+def run(*args,timeout=2):
+    process=subprocess.run(args,capture_output=True,text=True,timeout=timeout)
+    if process.returncode: raise RuntimeError('Apollo lock/display request failed')
+    return process.stdout.strip()
+
+
+def main():
+    if os.getuid()<1000 or sys.argv[1:] not in ([],['--startup'],['--idle']):return 1
+    startup=sys.argv[1:]==['--startup']
+    idle=sys.argv[1:]==['--idle']
+    marker=Path('/var/lib/omarchy-apollo/pin-status')/str(os.getuid())
+    try: info=marker.lstat()
+    except FileNotFoundError:return 0
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o644:return 1
+    if marker.read_text()!='configured\n':return 1
+    if run('omarchy-apollo-keyboard-run','--mode')!='auto':return 0
+    runtime=Path(os.environ['XDG_RUNTIME_DIR'])
+    if runtime!=Path('/run/user')/str(os.getuid()):return 1
+    descriptor=os.open(runtime/'omarchy-apollo-power-button.lock',os.O_WRONLY|os.O_CREAT|os.O_NOFOLLOW|os.O_CLOEXEC,0o600)
+    try:
+        try:fcntl.flock(descriptor,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:return 0
+        monitors=json.loads(run('hyprctl','monitors','-j'))
+        panels=[m for m in monitors if m['name']=='DSI-1']
+        if len(panels)!=1:return 1
+        was_on=bool(panels[0]['dpmsStatus'])
+        transition_supported=False
+        if not startup:
+            status=json.loads(run('omarchy-shell','lock','status'))
+            transition_supported='mobilePowerTransition' in status
+        deadline=time.monotonic()+(40 if startup else 5)
+        requested=False
+        if not startup and transition_supported:
+            if was_on:
+                if run('omarchy-shell','lock','prepareScreenOff')!='ok':
+                    raise RuntimeError('Apollo screen-off preparation failed')
+                requested=True
+            elif not idle:
+                if run('omarchy-shell','lock','showKeypad')!='ok':
+                    raise RuntimeError('Apollo keypad could not be shown')
+        while True:
+            try:
+                status=json.loads(run('omarchy-shell','lock','status'))
+                if status.get('secure') and status.get('sessionLocked'):break
+                if not requested or not status.get('requested'):
+                    requested=run('omarchy-shell','lock','lock')=='ok'
+            except (RuntimeError,subprocess.TimeoutExpired,json.JSONDecodeError):
+                if not startup:raise
+            if time.monotonic()>=deadline:raise RuntimeError('Apollo session did not acquire a secure lock')
+            time.sleep(0.1)
+        if startup or (idle and not was_on):return 0
+        # Touching the temporary black lock surface cancels screen-off.
+        if was_on and transition_supported and not status.get('mobilePowerTransition'):return 0
+        action='disable' if was_on else 'enable'
+        run('hyprctl','dispatch','hl.dsp.dpms({ action = "'+action+'", monitor = "DSI-1" })')
+        return 0
+    finally:os.close(descriptor)
+
+
+if __name__=='__main__':
+    try: raise SystemExit(main())
+    except (OSError,ValueError,RuntimeError,subprocess.TimeoutExpired) as error:
+        print('Apollo screen lock could not complete: '+str(error),file=sys.stderr)
+        raise SystemExit(1)

@@ -1,0 +1,89 @@
+#!/usr/bin/python3
+"""Enable the owner's selected PIN authentication for sudo and polkit."""
+from pathlib import Path
+import json
+import os
+import re
+import stat
+
+CORE='#%PAM-1.0\nauth include omarchy-lock-password\n'
+EXPECTED={
+    'sudo':[['auth','include','system-auth'],['account','include','system-auth'],
+        ['session','include','system-auth'],['session','optional','pam_systemd.so','class=none']],
+    'polkit-1':[['auth','include','system-auth'],['account','include','system-auth'],
+        ['password','include','system-auth'],['session','include','system-auth']],
+}
+
+def transform(name,text):
+    rows=[line.split() for line in text.splitlines() if line.strip() and not line.lstrip().startswith('#')]
+    expected=EXPECTED[name]
+    if rows==expected:return re.sub(r'(?m)^auth[ \t]+include[ \t]+system-auth[ \t]*$',
+        'auth include omarchy-apollo-admin',text)
+    selected=[row[:] for row in expected];selected[0][2]='omarchy-apollo-admin'
+    if rows==selected:return text
+    raise RuntimeError('The '+name+' authentication policy needs review before changing it.')
+
+def regular(path,mode=None):
+    info=path.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_nlink!=1:
+        raise RuntimeError('A protected regular administrator file is required.')
+    if mode is not None and stat.S_IMODE(info.st_mode)!=mode:
+        raise RuntimeError('Administrator file permissions are not valid.')
+
+def atomic(path,data,mode=0o644):
+    temporary=path.with_name(path.name+'.apollo-new')
+    descriptor=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,mode)
+    try:
+        with os.fdopen(descriptor,'wb') as output:
+            output.write(data);output.flush();os.fchmod(output.fileno(),mode);os.fsync(output.fileno())
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+def main():
+    if os.getuid()!=0 or os.geteuid()!=0:raise SystemExit('Run through the authorized device installer.')
+    os.umask(0o077)
+    profile=Path('/etc/omarchy-apollo/authentication.json');regular(profile,0o644)
+    if json.loads(profile.read_text())!={'screen_lock':'pin','administration':'pin'}:
+        raise SystemExit('PIN administration was not selected by the owner.')
+    marker=Path('/var/lib/omarchy-apollo/pin-status/1001');regular(marker,0o644)
+    if marker.read_text()!='configured\n':raise SystemExit('Create the local owner PIN first.')
+    pam=Path('/etc/pam.d/omarchy-lock-password');regular(pam,0o644)
+    if pam.read_bytes()!=Path('/usr/share/omarchy-apollo-lock/omarchy-lock-password').read_bytes():
+        raise SystemExit('The reviewed screen-PIN authentication policy is required.')
+    changes=[]
+    for name in EXPECTED:
+        target=Path('/etc/pam.d')/name
+        source=target if target.exists() else Path('/usr/lib/pam.d')/name
+        regular(source)
+        changes.append((target,source.read_bytes(),transform(name,source.read_text()).encode(),target.exists()))
+    core=Path('/etc/pam.d/omarchy-apollo-admin')
+    if core.exists():regular(core,0o644);assert core.read_text()==CORE
+    backup=Path('/var/lib/omarchy-apollo/preflight/pam-before-pin-administration')
+    backup.mkdir(parents=True,mode=0o700,exist_ok=True)
+    if backup.is_symlink() or backup.stat().st_uid!=0 or stat.S_IMODE(backup.stat().st_mode)!=0o700:
+        raise SystemExit('Protected authentication backup storage is required.')
+    for target,before,after,existed in changes:
+        saved=backup/target.name
+        if not saved.exists():
+            with saved.open('xb') as output:output.write(before)
+            saved.chmod(0o600)
+    original_core=core.read_bytes() if core.exists() else None
+    applied=[]
+    try:
+        atomic(core,CORE.encode())
+        for target,before,after,existed in changes:
+            atomic(target,after);applied.append((target,before,existed))
+    except Exception:
+        for target,before,existed in reversed(applied):
+            if existed:atomic(target,before)
+            else:target.unlink(missing_ok=True)
+        if original_core is None:core.unlink(missing_ok=True)
+        else:atomic(core,original_core)
+        raise
+    record={'screen_lock':'pin','administration':'pin','services':['sudo','polkit-1'],
+        'account_and_session_policies_preserved':True,'owner_pin_read_by_installer':False}
+    atomic(Path('/var/lib/omarchy-apollo/pin-administration.json'),(json.dumps(record,indent=2)+'\n').encode())
+    print(json.dumps(record))
+
+if __name__=='__main__':main()

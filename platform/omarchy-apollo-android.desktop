@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Android Apps
-Comment=Open Google-free Android applications
+Comment=Open Android applications using the selected installation profile
 Exec=omarchy-apollo-android start
 Icon=waydroid
 Type=Application
