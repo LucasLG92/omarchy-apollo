@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.omarchy.Apollo.Android
+Exec=/usr/lib/omarchy/apollo/apk-service
+User=root
+SystemdService=omarchy-apollo-apk.service

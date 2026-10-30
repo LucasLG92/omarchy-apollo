@@ -1,0 +1,195 @@
+#!/usr/bin/python -I
+"""Install one APK for the caller's existing Waydroid session, with a real result."""
+import fcntl
+import os
+from pathlib import Path
+import re
+import selectors
+import signal
+import stat
+import subprocess
+import tempfile
+
+import dbus
+import dbus.service
+import dbus.mainloop.glib
+from gi.repository import GLib
+
+BUS_NAME='org.omarchy.Apollo.Android'
+INTERFACE='org.omarchy.Apollo.Android1'
+OBJECT_PATH='/org/omarchy/Apollo/Android'
+CACHE=Path('/var/cache/omarchy-apollo-apks')
+MAX_APK=1024*1024*1024
+LXC_CONFIG=Path('/var/lib/waydroid/lxc/waydroid/config')
+
+
+def private_cache():
+    info=CACHE.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or info.st_mode & 0o077:
+        raise RuntimeError('Unsafe APK cache')
+
+
+def trusted_container_config():
+    for directory in (LXC_CONFIG.parent.parent,LXC_CONFIG.parent):
+        info=directory.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or info.st_mode & 0o022:
+            return False
+    info=LXC_CONFIG.lstat()
+    return stat.S_ISREG(info.st_mode) and info.st_uid==0 and not info.st_mode & 0o022
+
+
+def run_package_install(apk,size):
+    command=['/usr/bin/lxc-attach','-P','/var/lib/waydroid/lxc','-n','waydroid',
+             '--clear-env','--uid','2000','--gid','2000',
+             '--set-var','PATH=/system/bin:/system/xbin:/vendor/bin',
+             '--','/system/bin/pm','install','-r','-S',str(size)]
+    process=subprocess.Popen(command,stdin=apk,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
+                             env={'PATH':'/usr/bin','LANG':'C','LC_ALL':'C'},start_new_session=True)
+    captured=bytearray()
+    import time
+    deadline=time.monotonic()+180
+    try:
+        with selectors.DefaultSelector() as ready:
+            ready.register(process.stdout,selectors.EVENT_READ)
+            while ready.get_map():
+                remaining=deadline-time.monotonic()
+                if remaining<=0:
+                    raise subprocess.TimeoutExpired(command,180)
+                for key,events in ready.select(min(remaining,1)):
+                    data=os.read(key.fd,4096)
+                    if not data:
+                        ready.unregister(key.fileobj)
+                    else:
+                        captured.extend(data)
+                        if len(captured)>65536:
+                            os.killpg(process.pid,signal.SIGKILL)
+                            process.wait(timeout=10)
+                            return False,'APOLLO_INSTALL_OUTPUT_LIMIT'
+        process.wait(timeout=max(0.1,deadline-time.monotonic()))
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid,signal.SIGKILL)
+        process.wait(timeout=10)
+        return False,'APOLLO_INSTALL_TIMEOUT'
+    finally:
+        process.stdout.close()
+    text=captured.decode('utf-8','replace')
+    if process.returncode==0 and re.search(r'(?m)^Success\s*$',text):
+        return True,'INSTALLED'
+    failure=re.search(r'\b(INSTALL_(?:FAILED|PARSE_FAILED)_[A-Z0-9_]+)\b',text)
+    return False,failure.group(1) if failure else 'APOLLO_ANDROID_REJECTED'
+
+
+class Installer(dbus.service.Object):
+    def __init__(self,bus,loop):
+        super().__init__(bus,OBJECT_PATH)
+        self.loop=loop
+        self.idle=None
+        self.owner_uid=None
+        try:
+            if bus.name_has_owner('id.waydro.Container'):
+                container=dbus.Interface(bus.get_object('id.waydro.Container','/ContainerManager'),'id.waydro.ContainerManager')
+                owner=str(container.GetSession(timeout=10).get('user_id',''))
+                if owner.isdecimal() and 1000<=int(owner)<65534:
+                    self.owner_uid=int(owner)
+        except dbus.DBusException:
+            pass
+        self.arm_idle()
+
+    def arm_idle(self):
+        if self.idle is not None:
+            GLib.source_remove(self.idle)
+        self.idle=GLib.timeout_add_seconds(10,self.finish_idle)
+
+    def finish_idle(self):
+        self.idle=None
+        self.loop.quit()
+        return GLib.SOURCE_REMOVE
+
+    @dbus.service.method(INTERFACE,in_signature='',out_signature='b',
+                         sender_keyword='sender',connection_keyword='connection')
+    def Release(self,sender=None,connection=None):
+        uid=int(connection.get_unix_user(sender))
+        if self.owner_uid is None or uid!=self.owner_uid:
+            return False
+        # Drop the helper's private mount namespace before Android is restarted.
+        # Reply first, then quit at idle priority; the client waits for the unit
+        # to stop, so retained image mounts cannot race the next container boot.
+        GLib.idle_add(self.finish_idle)
+        return True
+
+    @dbus.service.method(INTERFACE,in_signature='h',out_signature='bs',
+                         sender_keyword='sender',connection_keyword='connection')
+    def InstallApk(self,descriptor,sender=None,connection=None):
+        received=None
+        frozen=False
+        container=None
+        if self.idle is not None:
+            GLib.source_remove(self.idle);self.idle=None
+        try:
+            received=descriptor.take()
+            uid=int(connection.get_unix_user(sender))
+            if uid<1000 or uid>=65534:
+                return False,'APOLLO_ACCESS_DENIED'
+            container=dbus.Interface(dbus.SystemBus().get_object('id.waydro.Container','/ContainerManager'),
+                                     'id.waydro.ContainerManager')
+            session=container.GetSession(timeout=10)
+            if str(session.get('user_id',''))!=str(uid):
+                return False,'APOLLO_ACCESS_DENIED'
+            self.owner_uid=uid
+            state=str(session.get('state','STOPPED'))
+            if state not in ('RUNNING','FROZEN'):
+                return False,'APOLLO_ANDROID_NOT_RUNNING'
+            mode=fcntl.fcntl(received,fcntl.F_GETFL)
+            info=os.fstat(received)
+            if mode & os.O_PATH or mode & os.O_ACCMODE==os.O_WRONLY or not stat.S_ISREG(info.st_mode):
+                return False,'APOLLO_INVALID_APK_INPUT'
+            if info.st_size<1 or info.st_size>MAX_APK:
+                return False,'APOLLO_INVALID_APK_SIZE'
+            if not trusted_container_config():
+                return False,'APOLLO_UNTRUSTED_CONTAINER_CONFIG'
+            private_cache()
+            # Read from an already readable caller-owned FD, never from a host
+            # filename supplied to root. Snapshot privately before Android reads.
+            with tempfile.TemporaryFile(dir=CACHE) as snapshot:
+                total=0
+                while total<info.st_size:
+                    chunk=os.pread(received,min(1024*1024,info.st_size-total),total)
+                    if not chunk:
+                        return False,'APOLLO_APK_CHANGED_DURING_READ'
+                    snapshot.write(chunk);total+=len(chunk)
+                if os.fstat(received).st_size!=total:
+                    return False,'APOLLO_APK_CHANGED_DURING_READ'
+                snapshot.flush();snapshot.seek(0)
+                if state=='FROZEN':
+                    container.Unfreeze(timeout=15);frozen=True
+                return run_package_install(snapshot,total)
+        except (dbus.DBusException,OSError,RuntimeError,ValueError):
+            # No APK paths, contents, app names or raw Android output in logs.
+            return False,'APOLLO_INSTALL_SERVICE_ERROR'
+        finally:
+            if received is not None:
+                os.close(received)
+            if frozen and container is not None:
+                try:
+                    container.Freeze(timeout=15)
+                except dbus.DBusException:
+                    pass
+            self.arm_idle()
+
+
+def main():
+    if os.getuid()!=0 or os.geteuid()!=0:
+        return 1
+    os.umask(0o077)
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    bus=dbus.SystemBus()
+    name=dbus.service.BusName(BUS_NAME,bus=bus,do_not_queue=True)
+    loop=GLib.MainLoop()
+    service=Installer(bus,loop)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT,signal.SIGTERM,lambda:loop.quit())
+    loop.run()
+    return 0
+
+
+if __name__=='__main__':
+    raise SystemExit(main())

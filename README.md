@@ -8,6 +8,8 @@ Actual device captures: the native desktop and the touch-lock preview. Owner PIN
 
 Omarchy Apollo brings the Omarchy workflow to the Xiaomi Mi 10T Pro (`apollo`, M2007J3SG): a touch-friendly Linux desktop, phone-style locking and an optional Android environment for APKs without Google services.
 
+The latest Android integration confirms installation with Android's package manager and closes its privileged helper before a restart. A reproducible suite has passed 31 checks on the phone, including a signed F-Droid installation, rejected invalid input, application persistence and FD650 rendering after a stop/start cycle.
+
 This is an independent experimental port. It is not an official Omarchy image or a finished daily-driver release. The aim is full hardware support; the status below records what has actually been demonstrated.
 
 ## The approach
@@ -30,7 +32,7 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | Wi-Fi | 2.4 and 5 GHz scans and a 5 GHz connection verified on the inherited base; new shell interaction pending |
 | Desktop | Native Hyprland 0.57.0 + Omarchy Quickshell session running on the internal panel; live configuration check is clean |
 | Touch interface | Portrait scaling, a simplified status bar and keyboard toggle installed; physical touch acceptance pending |
-| Android | VANILLA ARM image boots; FD650 rendering verified; signed F-Droid 2.0.2 APK installed and repository update completed; launch lifecycle and reboot tests continue |
+| Android | Confirmed APK installer and on-demand stop/start lifecycle pass 31 device checks, with F-Droid persistence and FD650 rendering; file association registered; physical file-manager, input and cold-boot checks pending |
 | Touch lock | PIN verifier and real PAM conversation pass 15 device-local checks; trusted keypad rendered on device; owner PIN setup and real unlocking pending |
 | Update safety | Device-stack protection passes 24 isolated ALPM/boundary checks; PC update entrypoints stop before changes; a validated full-system updater remains unfinished |
 | Fingerprint | Contact detected previously; enrollment and unlock not implemented |
@@ -38,11 +40,11 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | GPS | Service integration exists; outdoor accuracy and reliability remain to be validated |
 | USB-C video | Direct cable test produced no image; display output is not supported by this port today |
 
-See [validation](docs/validation.md), [architecture](docs/architecture.md), [development update policy](docs/updates.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
+See [Android usage and tests](docs/android.md), [validation](docs/validation.md), [architecture](docs/architecture.md), [development update policy](docs/updates.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
 
 ## Source layout
 
-`PKGBUILD` and `packaging/` contain the desktop, keyboard, lock and Android recipes. `patches/` contains the small Apollo changes against a pinned upstream commit. `platform/` owns phone-specific lifecycle boundaries. `config/` contains the touch profile. `lock/` contains local PIN setup and verification; `tests/` contains its device-local authentication checks. `hardware/apollo-base/` preserves the earlier kernel patches, system services, tests and recovery work, with its original licensing and provenance.
+`PKGBUILD` and `packaging/` contain the desktop, keyboard, lock and Android recipes. `patches/` contains the small Apollo changes against a pinned upstream commit. `platform/` owns phone-specific lifecycle boundaries and the APK installer. `config/` contains the touch profile. `lock/` contains local PIN setup and verification; `tests/` contains authentication, package-boundary and Android integration checks. `hardware/apollo-base/` preserves the earlier kernel patches, system services, tests and recovery work, with its original licensing and provenance.
 
 This repository intentionally excludes firmware binaries, partition images, device backups, private diagnostics, network names, account information and credentials. Do not flash a generic Omarchy ARM ISO onto this phone.
 

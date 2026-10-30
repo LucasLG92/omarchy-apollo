@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Install Android APK
+Name[es]=Instalar APK de Android
+Comment=Install an Android application and show the confirmed result
+Comment[es]=Instala una aplicación de Android y muestra el resultado confirmado
+Exec=omarchy-apollo-android install %f
+Icon=waydroid
+NoDisplay=true
+Terminal=false
+MimeType=application/vnd.android.package-archive;
+Categories=System;

@@ -1,0 +1,8 @@
+#!/bin/bash
+# omarchy:summary=Select the confirmed installer for Android APK files
+set -euo pipefail
+if (( UID < 1000 )); then
+  echo "Run this setup from your desktop account, without sudo." >&2
+  exit 1
+fi
+xdg-mime default omarchy-apollo-apk-install.desktop application/vnd.android.package-archive

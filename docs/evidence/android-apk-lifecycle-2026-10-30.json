@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-30",
+  "scope": "Native on-device Android APK installation and stop/start lifecycle on a separate headless Wayland display",
+  "lifecycle_tests": {
+    "passed": 31,
+    "checks": [
+      "Android prepares on demand on the separate headless display",
+      "write-only descriptors are rejected",
+      "pipe descriptors are rejected without waiting for data",
+      "path-only descriptors are rejected",
+      "empty APK input is rejected",
+      "oversized APK input is rejected before copying",
+      "Android itself rejects the malformed APK",
+      "an invalid APK returns failure rather than installed",
+      "signed F-Droid APK installation returns confirmed success",
+      "Android stops cleanly",
+      "Android starts again on demand",
+      "Android stops after the repeat cycle",
+      "stopping Android twice is harmless",
+      "Waydroid daemon activated from the stopped state",
+      "root cannot install in the owner session",
+      "root cannot release the owner installer",
+      "another desktop UID cannot install in the owner session",
+      "another desktop UID cannot release the owner installer",
+      "installed Android boot completed",
+      "installed F-Droid package and version exist",
+      "installed Android uses the FD650 GPU",
+      "APK helper has exited before Android is stopped",
+      "restarted Android boot completed",
+      "restarted F-Droid package and version exist",
+      "restarted Android uses the FD650 GPU",
+      "container is stopped after testing",
+      "all lifecycle phases completed",
+      "local PIN-setup process was not interrupted",
+      "no APK snapshot files remain in the root cache",
+      "the user APK keeps its owner and file permissions",
+      "the user APK contents are unchanged"
+    ],
+    "apk_sha256": "19d51fad482239f6df6a99120e34513667e9a86d136dafdc4a211a68c3327b52",
+    "physical_display_used": false,
+    "owner_credentials_used": false,
+    "android_stopped_after_test": true
+  },
+  "packages": {
+    "tested": {
+      "version": "0.1.0-5",
+      "sha256": "43e7804ca4b83206178463f3beb0f712f31d7649408d57880c1ce0bab93ba99f"
+    },
+    "installed": {
+      "version": "0.1.0-6",
+      "sha256": "6b4dfce0d57a4e93808e004bc3c1b7ff1ea93190e62c0357a878d406e88b98c3"
+    },
+    "revision_6_change": "Declare the already-installed xdg-utils dependency explicitly; installed helper code is byte-identical to the tested revision 5",
+    "tested_and_installed_helper_sha256": {
+      "platform/apk-service": "9b8b4183bb369dec78563fcad28e1b610785130e9d66d41f9ecfbf767490bc4a",
+      "platform/android-client": "f52d6919e33012ab62fc4c26dabf31c06b8b1407880164b1056d88dd0586d3b7",
+      "platform/omarchy-apollo-android": "17999c48614c1d04e94d19dcd6b1080eee8117c9b79ddbb6cf7770ac435ead79",
+      "platform/omarchy-setup-apollo-android": "990d4b5d2651626cda332ea5e3aa28697d120a1764a0f96e263dd1f5770da27b",
+      "platform/omarchy-apollo-apk.service": "bfc1785c1c090fb32908be3e62f11c2374c1e74d96ee389c6f89541786ac2280",
+      "platform/org.omarchy.Apollo.Android.service": "7ec88dc996df653899b965206a367fcd9baf83a88ea97c08581eea62aefe427f",
+      "platform/org.omarchy.Apollo.Android.conf": "90ceeee0226750ccacd6f59c1ff46c01cf02a6093abcef7e697db47169073a71",
+      "platform/omarchy-apollo-apk-install.desktop": "7e987e3e2e36db29aeb1467fd8e44c7e475190fb16ef1bfeca1f1df18bada313"
+    }
+  },
+  "final_checks": {
+    "installed_helpers_match_tested_package": true,
+    "package_files_and_database_valid": true,
+    "apk_helper_inactive": true,
+    "android_container_stopped": true,
+    "temporary_test_compositor_stopped": true,
+    "pin_setup_process_unchanged": true,
+    "desktop_shell_ping_ok": true,
+    "desktop_configuration_errors": 0,
+    "apk_file_handler_registered": true,
+    "desktop_entry_validation_passed": true,
+    "existing_associations_backed_up_privately": true,
+    "physical_file_manager_interaction_tested": false
+  },
+  "pending": [
+    "Physical file-manager activation and notification delivery",
+    "Physical Android touch input and application navigation",
+    "Android audio and camera access",
+    "Omarchy cold boot and Android data-mount persistence",
+    "Owner PIN enrollment and real screen unlocking"
+  ]
+}

@@ -1,21 +1,5 @@
 #!/bin/bash
-# omarchy:summary=Open Android, install an APK, or stop the Android session
-# omarchy:args=[start|install <apk>|stop]
+# omarchy:summary=Open Android, confirm APK installation, or stop the Android session
+# omarchy:args=[start|prepare|install <apk>|stop|status]
 set -euo pipefail
-case ${1:-start} in
-  start)
-    exec waydroid show-full-ui
-    ;;
-  install)
-    [[ $# == 2 && -f $2 ]] || { echo "Choose an existing APK file." >&2; exit 2; }
-    apk=$(realpath -- "$2")
-    exec waydroid app install "$apk"
-    ;;
-  stop)
-    exec waydroid session stop
-    ;;
-  *)
-    echo "Usage: omarchy-apollo-android [start|install <apk>|stop]" >&2
-    exit 2
-    ;;
-esac
+exec /usr/lib/omarchy/apollo/android-client "$@"

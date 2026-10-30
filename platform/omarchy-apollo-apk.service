@@ -1,0 +1,18 @@
+[Unit]
+Description=Local APK installation for the caller's Waydroid session
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.omarchy.Apollo.Android
+ExecStart=/usr/lib/omarchy/apollo/apk-service
+UMask=0077
+LimitCORE=0
+CacheDirectory=omarchy-apollo-apks
+CacheDirectoryMode=0700
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=-/run/lxc/lock
+TimeoutStopSec=10

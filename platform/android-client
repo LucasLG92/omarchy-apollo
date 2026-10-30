@@ -1,0 +1,236 @@
+#!/usr/bin/python -I
+"""On-demand Android sessions and confirmed APK installation; run as the user."""
+import argparse
+import fcntl
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+import time
+
+import dbus
+
+UNIT='omarchy-apollo-android-session.service'
+
+
+class AndroidError(Exception):
+    pass
+
+
+def notice(text):
+    try:
+        subprocess.run(['/usr/bin/notify-send','--app-name=Android',text],
+                       stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=3)
+    except (OSError,subprocess.TimeoutExpired):
+        pass
+
+
+def context():
+    uid=os.getuid()
+    if uid<1000 or os.geteuid()!=uid:
+        raise AndroidError('Abre Android desde tu sesión de escritorio, sin sudo.')
+    runtime=Path('/run/user')/str(uid)
+    display=os.environ.get('WAYLAND_DISPLAY','')
+    socket=Path(display) if display.startswith('/') else runtime/display
+    try:
+        info=socket.lstat()
+    except OSError:
+        raise AndroidError('No se encuentra la pantalla de esta sesión.')
+    if not socket.resolve().is_relative_to(runtime) or not stat.S_ISSOCK(info.st_mode) or info.st_uid!=uid:
+        raise AndroidError('La pantalla no pertenece a esta sesión.')
+    address=os.environ.get('DBUS_SESSION_BUS_ADDRESS','unix:path='+str(runtime/'bus'))
+    if not address.startswith('unix:'):
+        raise AndroidError('Se necesita una sesión local de escritorio.')
+    return uid,runtime,display,address
+
+
+def container_session():
+    bus=dbus.SystemBus()
+    if not bus.name_has_owner('id.waydro.Container'):
+        return None,{}
+    service=dbus.Interface(bus.get_object('id.waydro.Container','/ContainerManager'),
+                           'id.waydro.ContainerManager')
+    return service,dict(service.GetSession(timeout=10))
+
+
+def own_session(uid,display,session):
+    if not session or session.get('state')=='STOPPED':
+        return False
+    if str(session.get('user_id',''))!=str(uid) or str(session.get('wayland_display',''))!=display:
+        raise AndroidError('Android ya está abierto en otra sesión. Ciérralo allí primero.')
+    return True
+
+
+def manager_environment(runtime):
+    env=dict(os.environ)
+    env['XDG_RUNTIME_DIR']=str(runtime)
+    env['DBUS_SESSION_BUS_ADDRESS']='unix:path='+str(runtime/'bus')
+    return env
+
+
+def release_installer():
+    bus=dbus.SystemBus()
+    if not bus.name_has_owner('org.omarchy.Apollo.Android'):
+        return
+    service=dbus.Interface(bus.get_object('org.omarchy.Apollo.Android','/org/omarchy/Apollo/Android'),
+                           'org.omarchy.Apollo.Android1')
+    try:
+        service.Release(timeout=200)
+    except dbus.DBusException:
+        if bus.name_has_owner('org.omarchy.Apollo.Android'):
+            raise AndroidError('El servicio de instalación todavía no se ha cerrado.')
+    manager=dbus.Interface(bus.get_object('org.freedesktop.systemd1','/org/freedesktop/systemd1'),
+                           'org.freedesktop.systemd1.Manager')
+    try:
+        unit=manager.GetUnit('omarchy-apollo-apk.service',timeout=5)
+    except dbus.DBusException:
+        return
+    properties=dbus.Interface(bus.get_object('org.freedesktop.systemd1',unit),'org.freedesktop.DBus.Properties')
+    deadline=time.monotonic()+15
+    while time.monotonic()<deadline:
+        state=str(properties.Get('org.freedesktop.systemd1.Unit','ActiveState',timeout=5))
+        pid=int(properties.Get('org.freedesktop.systemd1.Service','MainPID',timeout=5))
+        if state in ('inactive','failed') and pid==0:
+            return
+        time.sleep(0.05)
+    raise AndroidError('El servicio de instalación sigue cerrándose. Espera antes de reiniciar Android.')
+
+
+def ensure_session(ctx):
+    uid,runtime,display,address=ctx
+    lock=os.open(runtime/'omarchy-apollo-android-start.lock',os.O_CREAT|os.O_RDWR|os.O_CLOEXEC|os.O_NOFOLLOW,0o600)
+    try:
+        info=os.fstat(lock)
+        if info.st_uid!=uid or not stat.S_ISREG(info.st_mode) or info.st_mode & 0o077:
+            raise AndroidError('No se pudo reservar el arranque de Android.')
+        deadline=time.monotonic()+90
+        while True:
+            try:
+                fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic()>=deadline:
+                    raise AndroidError('Android sigue arrancando. Vuelve a intentarlo en unos segundos.')
+                time.sleep(0.3)
+        service,session=container_session()
+        if own_session(uid,display,session) and session.get('state')=='FROZEN':
+            return
+        if not own_session(uid,display,session):
+            release_installer()
+            env=manager_environment(runtime)
+            state=subprocess.run(['/usr/bin/systemctl','--user','show',UNIT,'-p','ActiveState','--value'],
+                                 capture_output=True,text=True,env=env,timeout=10).stdout.strip()
+            if state not in ('active','activating'):
+                subprocess.run(['/usr/bin/systemctl','--user','reset-failed',UNIT],
+                               stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=env,timeout=10)
+                start=subprocess.run(['/usr/bin/systemd-run','--user','--collect','--unit='+UNIT,
+                    '--property=TimeoutStopSec=30','--setenv=XDG_RUNTIME_DIR='+str(runtime),
+                    '--setenv=WAYLAND_DISPLAY='+display,'--setenv=DBUS_SESSION_BUS_ADDRESS='+address,
+                    '/usr/bin/waydroid','session','start'],capture_output=True,text=True,env=env,timeout=15)
+                if start.returncode:
+                    raise AndroidError('No se ha podido iniciar Android.')
+        # Bounded startup wait, never an idle/background polling service.
+        while time.monotonic()<deadline:
+            service,session=container_session()
+            if own_session(uid,display,session) and session.get('state')=='RUNNING':
+                try:
+                    result=subprocess.run(['/usr/bin/waydroid','prop','get','sys.boot_completed'],
+                        capture_output=True,text=True,timeout=min(5,max(0.1,deadline-time.monotonic())))
+                    if result.returncode==0 and result.stdout.strip()=='1':
+                        return
+                except subprocess.TimeoutExpired:
+                    pass
+            time.sleep(0.4)
+        raise AndroidError('Android no ha terminado de arrancar. Consulta su estado antes de repetir.')
+    finally:
+        os.close(lock)
+
+
+def stop_session(ctx):
+    uid,runtime,display,address=ctx
+    service,session=container_session()
+    release_installer()
+    if own_session(uid,display,session):
+        bus=dbus.SessionBus()
+        if bus.name_has_owner('id.waydro.Session'):
+            interface=dbus.Interface(bus.get_object('id.waydro.Session','/SessionManager'),
+                                     'id.waydro.SessionManager')
+            interface.Stop(timeout=30)
+        else:
+            service.Stop(True,timeout=30)
+    subprocess.run(['/usr/bin/systemctl','--user','stop',UNIT],
+                   capture_output=True,env=manager_environment(runtime),timeout=35)
+    service,session=container_session()
+    if session and session.get('state')!='STOPPED':
+        raise AndroidError('Android todavía no se ha detenido.')
+
+
+def install_apk(path,ctx):
+    try:
+        descriptor=os.open(path,os.O_RDONLY|os.O_CLOEXEC|os.O_NONBLOCK)
+    except OSError:
+        raise AndroidError('No se puede abrir la APK elegida.')
+    try:
+        info=os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_size<1 or info.st_size>1024*1024*1024:
+            raise AndroidError('Elige una APK normal, de hasta 1 GiB.')
+        notice('Preparando Android para instalar la aplicación…')
+        ensure_session(ctx)
+        service=dbus.Interface(dbus.SystemBus().get_object('org.omarchy.Apollo.Android','/org/omarchy/Apollo/Android'),
+                               'org.omarchy.Apollo.Android1')
+        installed,code=service.InstallApk(dbus.types.UnixFd(descriptor),timeout=240)
+        try:
+            release_installer()
+        except AndroidError:
+            if installed:
+                raise AndroidError('La aplicación está instalada, pero su servicio aún no se ha cerrado.')
+            raise
+        if not installed:
+            messages={'INSTALL_FAILED_UPDATE_INCOMPATIBLE':'La firma es distinta de la aplicación instalada. Se ha conservado la versión anterior.',
+                      'INSTALL_FAILED_VERSION_DOWNGRADE':'La APK es más antigua que la aplicación instalada.',
+                      'INSTALL_FAILED_OLDER_SDK':'Esta APK necesita una versión de Android más reciente.',
+                      'INSTALL_FAILED_NO_MATCHING_ABIS':'La APK no es compatible con el procesador del móvil.',
+                      'INSTALL_FAILED_INVALID_APK':'Android ha rechazado la APK: el archivo no es válido.',
+                      'APOLLO_ACCESS_DENIED':'Esta sesión no puede instalar aplicaciones en Android.',
+                      'APOLLO_INSTALL_TIMEOUT':'Android no ha confirmado la instalación a tiempo.'}
+            raise AndroidError(messages.get(str(code),'Android no ha podido instalar la aplicación ('+str(code)+').'))
+        notice('Aplicación instalada en Android.')
+        print('Aplicación instalada en Android.')
+    finally:
+        os.close(descriptor)
+
+
+def main():
+    parser=argparse.ArgumentParser(description='Android y APK sin Google para Omarchy Apollo')
+    parser.add_argument('operation',choices=('start','prepare','install','stop','status'),nargs='?',default='start')
+    parser.add_argument('apk',nargs='?')
+    args=parser.parse_args()
+    if (args.operation=='install')!=bool(args.apk):
+        parser.error('install necesita una APK; las otras acciones no aceptan archivos')
+    try:
+        ctx=context()
+        if args.operation=='install':
+            install_apk(args.apk,ctx)
+        elif args.operation=='stop':
+            stop_session(ctx);print('Android detenido.')
+        elif args.operation=='status':
+            service,session=container_session()
+            active=own_session(ctx[0],ctx[2],session)
+            print('Android en marcha.' if active else 'Android detenido.')
+        else:
+            ensure_session(ctx)
+            if args.operation=='start':
+                result=subprocess.run(['/usr/bin/waydroid','show-full-ui'],timeout=30)
+                if result.returncode:
+                    raise AndroidError('No se ha podido abrir la pantalla de Android.')
+            print('Android preparado.')
+        return 0
+    except (AndroidError,dbus.DBusException,OSError,subprocess.TimeoutExpired) as error:
+        message=str(error) if isinstance(error,AndroidError) else 'No se pudo completar la operación de Android.'
+        print(message,file=sys.stderr);notice(message)
+        return 1
+
+
+if __name__=='__main__':
+    raise SystemExit(main())

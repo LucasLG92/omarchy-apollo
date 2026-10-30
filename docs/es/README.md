@@ -2,7 +2,9 @@
 
 Omarchy funcionando de forma nativa en el Xiaomi Mi 10T Pro: escritorio Linux, interfaz adaptada al tacto y Android sin Google para instalar APK.
 
-El escritorio ya arranca desde la instalación interna. Tanto Hyprland como Android utilizan la Adreno 650. Se han instalado una barra simplificada y un teclado táctil. La prueba de APK incluye F-Droid con firma verificada y descarga de su catálogo.
+El escritorio ya arranca desde la instalación interna. Tanto Hyprland como Android utilizan la Adreno 650. Se han instalado una barra simplificada y un teclado táctil. El instalador de APK confirma el resultado real de Android y ha superado 31 comprobaciones en el móvil: rechaza archivos inválidos, instala F-Droid con firma verificada y conserva la aplicación y la aceleración gráfica después de detener y volver a arrancar Android.
+
+Android se abre desde el lanzador y se ejecuta bajo demanda, sin Google. La asociación para abrir archivos APK está registrada. Falta comprobar la pulsación desde el gestor de archivos, las notificaciones y la navegación táctil en la pantalla física. La [guía de Android](../android.md) incluye los comandos, las pruebas reproducibles y sus límites.
 
 Es un port experimental. El código del PIN táctil ha pasado 15 comprobaciones de autenticación en el dispositivo y el teclado numérico ya se dibuja en la pantalla. Falta que el propietario cree el PIN en el propio móvil y se compruebe el desbloqueo real. No se ha validado el uso diario de todas las funciones. Las huellas no permiten aún registrar ni desbloquear; las llamadas, SMS y datos esperan una SIM de pruebas. El cable USB-C directo no dio imagen en la pantalla externa.
 
