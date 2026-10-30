@@ -1,0 +1,13 @@
+# Development update boundaries
+
+Apollo uses an Android boot image and a persistent ext4 overlay. It has no PC EFI boot partition. A successful package upgrade alone cannot establish that a replacement kernel, initramfs, device tree, firmware or camera stack will boot and retain the hardware work.
+
+The current port therefore stops the generic Omarchy full-system update and package-upgrade entrypoints before authorization, downloads, package changes or migrations. Its update-availability command identifies the reviewed-port-release model rather than claiming that this independent package is current with upstream Omarchy. A fully validated Apollo system-update workflow remains unfinished; this boundary is an interim protection, not that workflow.
+
+An ALPM `PreTransaction` hook with `AbortOnFail` also protects the tested device stack from direct package operations. It covers installation, upgrade and removal of kernel, camera, firmware and PC boot/settings packages, plus boot images, kernel modules, firmware and camera library paths. Ordinary application packages do not trigger it. Existing Omarchy bypass environment flags do not disable this guard. These semantics follow the [pacman ALPM hook specification](https://man.archlinux.org/man/alpm-hooks.5).
+
+The packaged hook is `/usr/share/libalpm/hooks/00-omarchy-apollo-device-stack.hook`; its fixed helper is `/usr/lib/omarchy/apollo/guard-device-packages`. A maintainer updating the protected stack must first stage and verify the complete candidate and its matching boot image, preserve a known working recovery route, and explicitly review the guard as part of that procedure. There is no automatic bypass environment variable and no instruction to run a generic ARM ISO installer.
+
+`tests/check_update_guard.py` exercises the actual hook and helper using pacman, generated packages and disposable installation roots. Its relaxed signature setting applies only to those local test fixtures. The live package database and signature policy are not changed by the test. This proves transaction behavior; it does not prove kernel boot compatibility or completion of the system-update workflow.
+
+A separate post-transaction hook refreshes an already running Apollo compositor after the port package has finished replacing its files. Hyprland's file watcher can otherwise reload partway through extraction and retain a temporary missing-module error. The refresh runs as the desktop account, reloads configuration rather than restarting the session, and does nothing when no compositor is running. It does not close applications or enroll a PIN.

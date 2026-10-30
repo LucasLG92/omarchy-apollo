@@ -1,7 +1,7 @@
 # Build from the repository root: makepkg
 pkgname=omarchy-apollo
 pkgver=0.1.0
-pkgrel=5
+pkgrel=7
 pkgdesc='Experimental native Omarchy integration for Xiaomi Apollo'
 arch=('aarch64')
 url='https://github.com/LucasLG92/omarchy-apollo'
@@ -68,6 +68,11 @@ package() {
   install -Dm644 etc/profile.d/omarchy.sh "$pkgdir/etc/profile.d/omarchy.sh"
   install -Dm644 icon.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/omarchy.png"
   install -Dm755 "$_port_root/platform/omarchy-apollo-first-run" "$pkgdir/usr/bin/omarchy-apollo-first-run"
+  for boundary in guard-device-packages guard-pc-updater reload-live-compositor; do
+    install -Dm755 "$_port_root/platform/$boundary" "$pkgdir/usr/lib/omarchy/apollo/$boundary"
+  done
+  install -Dm644 "$_port_root/platform/00-omarchy-apollo-device-stack.hook" "$pkgdir/usr/share/libalpm/hooks/00-omarchy-apollo-device-stack.hook"
+  install -Dm644 "$_port_root/platform/99-omarchy-apollo-reload.hook" "$pkgdir/usr/share/libalpm/hooks/99-omarchy-apollo-reload.hook"
   for operation in provision-prepare provision-commit provision-verify reset-prepare reset-verify reset-commit reset-rollback update-verify update-takeover luks-slots setup-boot setup-system setup-user post-install pre-remove enable-fingerprint disable-fingerprint; do
     install -Dm755 "$_port_root/platform/lifecycle" "$pkgdir/usr/lib/omarchy/apollo/$operation"
   done

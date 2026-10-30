@@ -1,0 +1,37 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = linux
+Target = linux-*
+Target = !linux-api-headers
+Target = !linux-tools
+Target = !linux-tools-*
+Target = libcamera*
+Target = limine*
+Target = grub*
+Target = mkinitcpio*
+Target = dracut
+Target = omarchy
+Target = omarchy-dev
+Target = omarchy-settings*
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Path
+Target = boot/*
+Target = usr/lib/modules/*
+Target = usr/lib/firmware/*
+Target = usr/lib/initcpio/*
+Target = usr/lib/libcamera*
+Target = etc/mkinitcpio.conf
+Target = etc/mkinitcpio.d/*
+
+[Action]
+Description = Protecting the tested Apollo device stack
+When = PreTransaction
+Exec = /usr/lib/omarchy/apollo/guard-device-packages
+AbortOnFail

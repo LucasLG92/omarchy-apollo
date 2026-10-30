@@ -1,0 +1,59 @@
+{
+  "isolated_tests": {
+    "passed": 24,
+    "checks": [
+      "ordinary application install succeeds",
+      "ordinary application upgrade succeeds",
+      "ordinary application removal succeeds",
+      "kernel package is rejected before extraction",
+      "kernel package never enters the installed database",
+      "camera package is rejected before extraction",
+      "camera package never enters the installed database",
+      "PC settings package is rejected before extraction",
+      "PC settings package never enters the installed database",
+      "boot image path is rejected before extraction",
+      "boot image path never enters the installed database",
+      "firmware path is rejected before extraction",
+      "firmware path never enters the installed database",
+      "camera library path is rejected before extraction",
+      "camera library path never enters the installed database",
+      "isolated existing-kernel fixture is seeded",
+      "kernel upgrade preserves existing files and version",
+      "kernel removal preserves existing files and version",
+      "guard-device-packages ignores Bash startup injection",
+      "guard-device-packages rejects an ordinary Bash launch with decoy -p",
+      "guard-pc-updater ignores Bash startup injection",
+      "guard-pc-updater rejects an ordinary Bash launch with decoy -p",
+      "reload boundary ignores Bash startup injection in an isolated root",
+      "reload boundary rejects an ordinary Bash launch with decoy -p"
+    ],
+    "live_package_database_modified": false,
+    "temporary_fixture_roots_removed": true
+  },
+  "installed_runtime_validation": {
+    "runtime": "omarchy-apollo 0.1.0-7",
+    "package_sha256": "61c2592296e0db313ab7b7b83842ede40f235466557e6e9e5d016f15b2bcebb1",
+    "installed": true,
+    "checks": {
+      "omarchy-update": {
+        "returncode": 1,
+        "phone_policy_applied": true
+      },
+      "omarchy-update-system-pkgs": {
+        "returncode": 1,
+        "phone_policy_applied": true
+      },
+      "omarchy-update-available": {
+        "returncode": 1,
+        "phone_policy_applied": true
+      }
+    },
+    "package_database_check_passed": true,
+    "kernel_unchanged": true,
+    "pin_setup_process_unchanged": true,
+    "desktop_ping_ok": true,
+    "desktop_config_errors": 0,
+    "post_transaction_reload_verified": true,
+    "shell_restarted": false
+  }
+}

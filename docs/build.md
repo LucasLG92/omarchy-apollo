@@ -10,6 +10,8 @@ The lock recipe builds the local enrollment application and the narrowly scoped 
 
 Authentication checks can be run on the test device with `sudo python tests/check_pin_auth.py`. They require the compiler and PAM/libxcrypt development headers, create a temporary non-login account and an isolated verifier directory, then remove them. They do not enroll or use the owner's PIN. The source checks for the retained hardware archive remain under `hardware/apollo-base/tools/check_sources.py` and establish source integrity and syntax, not hardware functionality.
 
+The update boundary can be checked with `sudo python tests/check_update_guard.py`. It uses real pacman transactions against generated local packages in disposable roots, with no network access and no changes to the live package database. Read the [development update policy](updates.md) before changing any boot, kernel, firmware or camera package. The current generic PC full-system updater is deliberately stopped; an Apollo upgrade and rollback workflow still needs implementation and device validation.
+
 Building a package does not install it, initialize Android, migrate existing Android data, seed a user's desktop or select a display-manager session. Those migration steps are being validated on the test device before becoming a public installer. The current development workflow retains the previous desktop configuration, original Android data directory and boot/recovery backups privately.
 
 Record the upstream commit, resulting package checksums, dependencies changed and actual device tests for every release. Local integration builds and official signed repository packages must remain distinguishable. Do not disable signature verification to make a remote package install.

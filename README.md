@@ -32,12 +32,13 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | Touch interface | Portrait scaling, a simplified status bar and keyboard toggle installed; physical touch acceptance pending |
 | Android | VANILLA ARM image boots; FD650 rendering verified; signed F-Droid 2.0.2 APK installed and repository update completed; launch lifecycle and reboot tests continue |
 | Touch lock | PIN verifier and real PAM conversation pass 15 device-local checks; trusted keypad rendered on device; owner PIN setup and real unlocking pending |
+| Update safety | Device-stack protection passes 24 isolated ALPM/boundary checks; PC update entrypoints stop before changes; a validated full-system updater remains unfinished |
 | Fingerprint | Contact detected previously; enrollment and unlock not implemented |
 | Mobile network | No SIM available for calls, SMS or data tests |
 | GPS | Service integration exists; outdoor accuracy and reliability remain to be validated |
 | USB-C video | Direct cable test produced no image; display output is not supported by this port today |
 
-See [validation](docs/validation.md), [architecture](docs/architecture.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
+See [validation](docs/validation.md), [architecture](docs/architecture.md), [development update policy](docs/updates.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
 
 ## Source layout
 

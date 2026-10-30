@@ -39,6 +39,16 @@ Not yet acceptance-tested: physical touch navigation and typing, screen PIN, sus
 - The local enrollment application has compiled and its empty setup screen has been inspected on the phone. It asks the owner to create and confirm a PIN locally; the administration password is preserved.
 - Automatic locking and suspend locking remain disabled until the owner completes setup and the real lock/unlock flow is verified. A rendered preview and automated PAM checks are not a substitute for that acceptance test.
 
+## Package update boundaries
+
+- `omarchy-apollo 0.1.0-7` is installed. The generic Omarchy full update, system-package update and availability check were exercised as the desktop user. They identify the Apollo policy before package updates or PC migrations can begin.
+- `tests/check_update_guard.py` passes 24 checks with real pacman transactions in disposable roots. Ordinary application installation, upgrade and removal succeed. Kernel, camera, firmware, PC settings and protected file-path transactions are rejected before extraction; rejected kernel upgrade/removal preserves the old files and installed version. The test also checks privileged Bash startup boundaries, including decoy `-p` arguments. It never changes the live package database.
+- Native package-database and package-file checks pass after installation; the kernel remains `linux-apollo 7.1.0-23`.
+- A transient missing Lua module was observed when Hyprland's file watcher reloaded during package extraction. The module was present after the transaction. A new post-transaction hook was then installed and actually exercised by the next runtime-package upgrade: compositor diagnostics are clean without a manual reload or shell restart, and the local PIN-setup process remains running with the same PID.
+- This is protection for the development image. Coherent full-system upgrade, rollback and replacement boot-image validation remain pending.
+
+The [sanitized device record](evidence/update-guard-2026-10-30.json) contains the individual check names, installed runtime version and package checksum.
+
 ## Publishing evidence
 
 Use actual device captures only. Review every capture for network names, notifications, account names, terminal history and secrets. Earlier KDE captures establish the old baseline and must not be presented as Omarchy screenshots. Private source images and raw diagnostics are not public release assets.

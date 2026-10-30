@@ -6,6 +6,7 @@
 4. Validate Waydroid VANILLA: start on demand, install a test APK, run with GPU acceleration, then check network, sound, input and shutdown.
 5. Repeat native camera, audio, Wi-Fi, Bluetooth, GPS and power checks from Omarchy. Track Android hardware support separately.
 6. Continue unresolved fingerprint, cellular, external display and long-duration battery/thermal testing with the required accessories and SIM.
-7. Publish a tested installation/recovery procedure and release artifacts only after repeatable cold-boot validation.
+7. Implement and validate coherent Apollo system updates, rollback and matching replacement boot images; preserve the device-stack guard until that procedure is demonstrated.
+8. Publish a tested installation/recovery procedure and release artifacts only after repeatable cold-boot validation.
 
 “100% functional” is the target, not a claim about the current build. Hardware limits and failed tests stay visible.

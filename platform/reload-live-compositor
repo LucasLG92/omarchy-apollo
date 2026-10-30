@@ -1,0 +1,31 @@
+#!/bin/bash -p
+# ALPM runs this as root: ignore inherited Bash startup code and functions.
+if [[ $- != *p* ]]; then
+  exit 126
+fi
+set -euo pipefail
+export PATH=/usr/bin
+
+# The persistent development image has one named desktop account. All compositor
+# requests run as that account; JSON values are arguments, never shell code.
+if ! owner_uid=$(/usr/bin/id -u apollo 2>/dev/null); then
+  exit 0
+fi
+runtime="/run/user/$owner_uid"
+if [[ ! -d $runtime ]]; then
+  exit 0
+fi
+user_command=(/usr/bin/runuser -u apollo -- /usr/bin/env -i PATH=/usr/bin LANG=C.UTF-8 XDG_RUNTIME_DIR="$runtime")
+if ! instances=$(/usr/bin/timeout 5 "${user_command[@]}" /usr/bin/hyprctl instances -j 2>/dev/null); then
+  exit 0
+fi
+
+status=0
+while IFS= read -r signature; do
+  if [[ -n $signature ]]; then
+    if ! /usr/bin/timeout 5 "${user_command[@]}" "HYPRLAND_INSTANCE_SIGNATURE=$signature" /usr/bin/hyprctl reload >/dev/null; then
+      status=1
+    fi
+  fi
+done < <(printf '%s' "$instances" | /usr/bin/jq -er '.[] | .instance | select(type == "string")')
+exit "$status"

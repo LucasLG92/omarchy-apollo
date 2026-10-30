@@ -1,0 +1,46 @@
+--- a/bin/omarchy-update
++++ b/bin/omarchy-update
+@@ -17,6 +17,13 @@
+ set -e
+ omarchy_security_sanitize_bash_environment "$0" "$@"
+ omarchy_security_require_source_root "$0"
++
++# Apollo port releases must validate their boot image and device stack before
++# using the PC update/migration pipeline. This check precedes authorization,
++# package changes and migrations; ordinary application installs remain separate.
++if /usr/bin/omarchy-hw-aarch64-apollo; then
++  exec /usr/lib/omarchy/apollo/guard-pc-updater
++fi
+ # Logging and lock acquisition re-exec this command with a sanitized PATH.
+ # Preserve the caller's path only for the later hook/mise phases.
+ user_path=${OMARCHY_UPDATE_USER_PATH:-$PATH}
+--- a/bin/omarchy-update-system-pkgs
++++ b/bin/omarchy-update-system-pkgs
+@@ -4,6 +4,13 @@
+ # omarchy:requires-sudo=true
+ 
+ set -e
++
++# Apollo port releases must validate their boot image and device stack before
++# using the PC update/migration pipeline. This check precedes authorization,
++# package changes and migrations; ordinary application installs remain separate.
++if /usr/bin/omarchy-hw-aarch64-apollo; then
++  exec /usr/lib/omarchy/apollo/guard-pc-updater
++fi
+ 
+ # The conflict handler's last resort: pacman puts its questions to the person
+ # running the update instead of answering them itself. Nothing here may capture
+--- a/bin/omarchy-update-available
++++ b/bin/omarchy-update-available
+@@ -3,6 +3,11 @@
+ # omarchy:summary=Check whether Omarchy updates are available.
+ 
+ set -euo pipefail
++
++if /usr/bin/omarchy-hw-aarch64-apollo; then
++  echo "Omarchy Apollo uses reviewed port releases; PC update checks do not apply."
++  exit 1
++fi
+ 
+ updates=()
+ 

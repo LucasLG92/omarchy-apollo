@@ -1,0 +1,11 @@
+#!/bin/bash -p
+# A root ALPM boundary: suppress BASH_ENV and exported-function startup injection.
+if [[ $- != *p* ]]; then
+  exit 126
+fi
+
+printf '%s\n' \
+  'Omarchy Apollo: this transaction changes the tested boot, camera or firmware stack.' \
+  'Use a reviewed Apollo port update with a matching boot image and recovery plan.' \
+  'The package transaction has been stopped before package files are changed.' >&2
+exit 1
