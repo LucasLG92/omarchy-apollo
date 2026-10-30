@@ -41,8 +41,8 @@
     "pin_setup_process_unchanged": true
   },
   "source_sha256": {
-    "tests/check_android_audio.py": "50125d049c503c457b4281865d1e4c5501af5e789b25f133c2a6db0776be8be5",
-    "tests/support/android-audio-owner.py": "1d09a5ecc0f95d006f501e44297a6cff0355c62065f996011aa8b545812be992",
+    "tests/check_android_audio.py": "8e30c1a21c32de01f4fd5b4a85232295afaea7bf0ee6a88bc62cdf33727fc51c",
+    "tests/support/android-audio-owner.py": "2758bcb7a943bbc4bd8e43dad013520e4f96f98221361469e50f1c2ea2a83eb4",
     "tests/support/AndroidAudioProbe.java": "670835947d20611ef592a9f8caa1b1fa5222c37146267d1ed76e78ac43699891",
     "tests/build_android_audio_probe.py": "cd5567d3f9e0be7e91495bac23797122e7606e91c3845026b29c0b5c5e934472"
   },
@@ -60,5 +60,10 @@
     "Frequency separation is a digital fixture check, not an acoustic quality or noise measurement.",
     "Latency, physical outputs, microphone input, long sessions and suspend remain unverified.",
     "No screen capture, owner credential, room recording or PCM file was used or published."
-  ]
+  ],
+  "tested_source_sha256": {
+    "tests/check_android_audio.py": "50125d049c503c457b4281865d1e4c5501af5e789b25f133c2a6db0776be8be5",
+    "tests/support/android-audio-owner.py": "1d09a5ecc0f95d006f501e44297a6cff0355c62065f996011aa8b545812be992"
+  },
+  "public_source_normalization": "The two staged Python test files used CRLF line endings. The public files use LF; their bytes otherwise match the files executed on device. Both original and public digests are recorded."
 }
