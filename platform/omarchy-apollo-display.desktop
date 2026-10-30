@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Pantalla Apollo
+Comment=Orientación automática, bloqueo de giro y frecuencia de pantalla
+Exec=omarchy-apollo-display settings
+Icon=preferences-desktop-display
+Terminal=false
+Categories=Settings;HardwareSettings;

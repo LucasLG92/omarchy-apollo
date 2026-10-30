@@ -1,0 +1,405 @@
+#!/usr/bin/python3
+"""Apollo display controls: matched screen/touch rotation and refresh selection."""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import signal
+import socket
+import stat
+import subprocess
+import tempfile
+import time
+
+import dbus
+import dbus.service
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
+
+BUS = 'org.omarchy.Apollo.Display'
+OBJECT = '/org/omarchy/Apollo/Display'
+INTERFACE = BUS + '1'
+SENSOR_BUS = 'net.hadess.SensorProxy'
+SENSOR_PATH = '/net/hadess/SensorProxy'
+TRANSFORMS = {'portrait': 0, 'landscape-left': 1, 'portrait-inverted': 2, 'landscape-right': 3}
+SENSOR_TRANSFORMS = {'normal': 0, 'left-up': 1, 'bottom-up': 2, 'right-up': 3}
+
+
+class DisplayError(Exception):
+    pass
+
+
+class Backend:
+    def __init__(self, output='DSI-1'):
+        self.output = output
+        assert re.fullmatch(r'[A-Za-z0-9_-]+', output)
+        runtime = Path(os.environ['XDG_RUNTIME_DIR'])
+        signature = os.environ['HYPRLAND_INSTANCE_SIGNATURE']
+        assert re.fullmatch(r'[A-Za-z0-9_.-]+', signature)
+        info = (runtime/'hypr'/signature/'.socket.sock').stat()
+        assert stat.S_ISSOCK(info.st_mode) and info.st_uid == os.getuid()
+        self.command = ['hyprctl', '--instance', signature]
+
+    def query(self, *args):
+        result = subprocess.run([*self.command, *args], capture_output=True, text=True, timeout=4)
+        if result.returncode:
+            raise DisplayError('APOLLO_DISPLAY_UNAVAILABLE')
+        return result.stdout.strip()
+
+    def monitor(self):
+        monitors = json.loads(self.query('monitors', '-j'))
+        match = [monitor for monitor in monitors if monitor['name'] == self.output]
+        if len(match) != 1:
+            raise DisplayError('APOLLO_PANEL_UNAVAILABLE')
+        return match[0]
+
+    def setup_busy(self):
+        # Leave the owner's trusted enrollment surface undisturbed. The test
+        # backend targets a separate nested output, never this physical panel.
+        return self.output == 'DSI-1' and subprocess.run(
+            ['systemctl', 'is-active', '--quiet', 'omarchy-apollo-owner-pin-setup.service'],
+            capture_output=True, timeout=4).returncode == 0
+
+    def snapshot(self):
+        return {'monitor': self.monitor(),
+            'touch_transform': json.loads(self.query('getoption', 'input.touchdevice.transform', '-j'))['int'],
+            'touch_output': json.loads(self.query('getoption', 'input.touchdevice.output', '-j'))['str']}
+
+    @staticmethod
+    def mode(monitor, refresh):
+        width, height = monitor['width'], monitor['height']
+        if refresh == 'current':
+            return f'{width}x{height}@{monitor["refreshRate"]:.3f}'
+        for candidate in monitor.get('availableModes', []):
+            found = re.fullmatch(r'(\d+)x(\d+)@([0-9.]+)Hz', candidate)
+            if found and (int(found[1]), int(found[2])) == (width, height) and abs(float(found[3])-int(refresh)) < 0.15:
+                return candidate.removesuffix('Hz')
+        raise DisplayError('APOLLO_REFRESH_UNAVAILABLE')
+
+    def update(self, monitor, transform, mode, touch_transform, touch_output):
+        code = ('hl.monitor({ output = '+json.dumps(self.output)+', mode = '+json.dumps(mode)
+                +', scale = '+str(float(monitor['scale']))+', transform = '+str(transform)+' }); '
+                +'hl.config({ input = { touchdevice = { output = '+json.dumps(touch_output)
+                +', transform = '+str(touch_transform)+' } } })')
+        if self.query('eval', code) != 'ok':
+            raise DisplayError('APOLLO_DISPLAY_APPLY_FAILED')
+
+    def restore_snapshot(self, snapshot):
+        previous = snapshot['monitor']
+        self.update(previous, previous['transform'], self.mode(previous, 'current'),
+            snapshot['touch_transform'], snapshot['touch_output'])
+
+    def apply(self, transform, refresh):
+        if self.setup_busy():
+            raise DisplayError('APOLLO_PIN_SETUP_ACTIVE')
+        snapshot = self.snapshot()
+        previous = snapshot['monitor']
+        mode = self.mode(previous, refresh)
+        try:
+            self.update(previous, transform, mode, transform, self.output)
+            deadline = time.monotonic()+2
+            while True:
+                current = self.monitor()
+                touch = json.loads(self.query('getoption', 'input.touchdevice.transform', '-j'))['int']
+                if current['transform'] == transform and touch == transform:
+                    if refresh == 'current' or abs(current['refreshRate']-int(refresh)) < 0.2:
+                        return current
+                if time.monotonic() >= deadline:
+                    raise DisplayError('APOLLO_DISPLAY_CONFIRM_FAILED')
+                time.sleep(0.05)
+        except Exception:
+            # Restore both original transforms and the original touch output.
+            try:
+                self.restore_snapshot(snapshot)
+            except Exception:
+                pass
+            raise
+
+
+class Controller(dbus.service.Object):
+    def __init__(self, bus, backend, preferences, quit_callback):
+        self.backend = backend
+        self.quit_callback = quit_callback
+        self.preferences = preferences
+        self.saved = preferences.is_file()
+        self.settings = {'auto': False, 'transform': int(backend.monitor()['transform']), 'refresh': 'current'}
+        if self.saved:
+            try:
+                value = json.loads(preferences.read_text())
+                assert type(value['auto']) is bool and type(value['transform']) is int and value['transform'] in range(4)
+                assert value['refresh'] in ('current', '60', '90', '120', '144')
+                self.settings = {key: value[key] for key in self.settings}
+            except (ValueError, KeyError, AssertionError):
+                self.saved = False
+        self.sensor = None
+        self.sensor_available = False
+        self.orientation = 'undefined'
+        self.pending_rotation = 0
+        self.last_error = ''
+        self.bus = bus
+        self.name = dbus.service.BusName(BUS, bus, do_not_queue=True)
+        super().__init__(self.name, OBJECT)
+        self.system = dbus.SystemBus()
+        self.system.add_signal_receiver(self.sensor_changed, signal_name='PropertiesChanged',
+            dbus_interface='org.freedesktop.DBus.Properties', bus_name=SENSOR_BUS, path=SENSOR_PATH)
+        self.system.add_signal_receiver(self.sensor_owner_changed, signal_name='NameOwnerChanged',
+            dbus_interface='org.freedesktop.DBus', arg0=SENSOR_BUS)
+        self.connect_events()
+        if self.saved:
+            GLib.idle_add(self.restore)
+
+    def connect_events(self):
+        signature = os.environ['HYPRLAND_INSTANCE_SIGNATURE']
+        path = Path(os.environ['XDG_RUNTIME_DIR'])/'hypr'/signature/'.socket2.sock'
+        self.events = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.events.connect(str(path)); self.events.setblocking(False)
+        self.event_buffer = bytearray()
+        GLib.io_add_watch(self.events.fileno(), GLib.IO_IN|GLib.IO_HUP|GLib.IO_ERR, self.on_event)
+
+    def on_event(self, descriptor, condition):
+        if condition & (GLib.IO_HUP|GLib.IO_ERR):
+            self.quit_callback()
+            return False
+        try:
+            part = self.events.recv(65536)
+        except BlockingIOError:
+            return True
+        if not part:
+            self.quit_callback()
+            return False
+        self.event_buffer.extend(part)
+        if len(self.event_buffer) > 131072:
+            self.event_buffer.clear()
+        while b'\n' in self.event_buffer:
+            line, _, remaining = self.event_buffer.partition(b'\n'); self.event_buffer = bytearray(remaining)
+            if self.saved and (line.startswith(b'configreloaded>>') or line.startswith(b'monitoradded>>')):
+                GLib.idle_add(self.restore)
+        return True
+
+    def claim_sensor(self):
+        if self.sensor is not None:
+            return
+        proxy = self.system.get_object(SENSOR_BUS, SENSOR_PATH, introspect=False)
+        values = dbus.Interface(proxy, 'org.freedesktop.DBus.Properties').GetAll(SENSOR_BUS, timeout=3)
+        if not bool(values.get('HasAccelerometer', False)):
+            raise DisplayError('APOLLO_ACCELEROMETER_UNAVAILABLE')
+        sensor = dbus.Interface(proxy, SENSOR_BUS)
+        try:
+            sensor.ClaimAccelerometer(timeout=3)
+        except dbus.DBusException as error:
+            if error.get_dbus_name() == 'org.freedesktop.DBus.Error.AccessDenied':
+                raise DisplayError('APOLLO_ACCELEROMETER_ACCESS_DENIED') from error
+            raise
+        self.sensor = sensor
+        self.sensor_available = True
+        self.orientation = str(values.get('AccelerometerOrientation', 'undefined'))
+
+    def release_sensor(self):
+        if self.sensor is not None:
+            try:
+                self.sensor.ReleaseAccelerometer(timeout=3)
+            except dbus.DBusException:
+                pass
+            self.sensor = None
+        if self.pending_rotation:
+            GLib.source_remove(self.pending_rotation); self.pending_rotation = 0
+
+    def sensor_owner_changed(self, name, old, new):
+        self.sensor = None; self.sensor_available = False
+        if new and self.settings['auto']:
+            GLib.idle_add(self.restore)
+
+    def sensor_changed(self, interface, values, invalidated):
+        if str(interface) != SENSOR_BUS or not self.settings['auto'] or self.sensor is None:
+            return
+        if 'AccelerometerOrientation' in values:
+            self.orientation = str(values['AccelerometerOrientation'])
+            if self.pending_rotation:
+                GLib.source_remove(self.pending_rotation)
+            self.pending_rotation = GLib.timeout_add(500, self.rotate_from_sensor)
+
+    def rotate_from_sensor(self):
+        self.pending_rotation = 0
+        transform = SENSOR_TRANSFORMS.get(self.orientation)
+        if transform is not None:
+            try:
+                self.backend.apply(transform, self.settings['refresh'])
+                self.last_error = ''
+            except DisplayError as error:
+                self.last_error = str(error)
+        self.StateChanged(self.state())
+        return False
+
+    def restore(self):
+        try:
+            if self.backend.setup_busy():
+                raise DisplayError('APOLLO_PIN_SETUP_ACTIVE')
+            if self.settings['auto']:
+                self.claim_sensor()
+                transform = SENSOR_TRANSFORMS.get(self.orientation, self.settings['transform'])
+            else:
+                transform = self.settings['transform']
+            self.backend.apply(transform, self.settings['refresh'])
+            self.last_error = ''
+        except (DisplayError, dbus.DBusException):
+            self.last_error = 'APOLLO_DISPLAY_RESTORE_PENDING'
+        self.StateChanged(self.state())
+        return False
+
+    def persist(self):
+        self.preferences.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        descriptor, name = tempfile.mkstemp(prefix='.display-', dir=self.preferences.parent)
+        temporary = Path(name)
+        try:
+            with os.fdopen(descriptor, 'w') as output:
+                output.write(json.dumps(self.settings)+'\n')
+            temporary.replace(self.preferences); self.saved = True
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def state(self):
+        monitor = self.backend.monitor()
+        return json.dumps({**self.settings, 'applied_transform': int(monitor['transform']),
+            'refresh_hz': round(float(monitor['refreshRate']), 2), 'sensor_claimed': self.sensor is not None,
+            'orientation': self.orientation, 'error': self.last_error})
+
+    @dbus.service.method(INTERFACE, in_signature='', out_signature='s')
+    def GetState(self):
+        return self.state()
+
+    @dbus.service.signal(INTERFACE, signature='s')
+    def StateChanged(self, state):
+        pass
+
+    @dbus.service.method(INTERFACE, in_signature='ss', out_signature='bs')
+    def Set(self, category, value):
+        previous = dict(self.settings)
+        original = None
+        try:
+            if self.backend.setup_busy():
+                raise DisplayError('APOLLO_PIN_SETUP_ACTIVE')
+            if category == 'orientation':
+                if value == 'auto':
+                    self.claim_sensor()
+                    self.settings['auto'] = True
+                    transform = SENSOR_TRANSFORMS.get(self.orientation, self.backend.monitor()['transform'])
+                elif value == 'lock' or value in TRANSFORMS:
+                    self.settings['auto'] = False
+                    transform = self.backend.monitor()['transform'] if value == 'lock' else TRANSFORMS[value]
+                else:
+                    raise DisplayError('APOLLO_INVALID_ORIENTATION')
+                self.settings['transform'] = transform
+            elif category == 'refresh' and value in ('60', '90', '120', '144'):
+                self.settings['refresh'] = str(value)
+                transform = self.backend.monitor()['transform']
+            else:
+                raise DisplayError('APOLLO_INVALID_DISPLAY_SETTING')
+            original = self.backend.snapshot()
+            self.backend.apply(transform, self.settings['refresh'])
+            self.persist()
+            if not self.settings['auto']:
+                self.release_sensor()
+            self.last_error = ''
+            self.StateChanged(self.state())
+            return True, self.state()
+        except (DisplayError, dbus.DBusException, OSError, subprocess.SubprocessError) as error:
+            self.settings = previous
+            if not previous['auto']:
+                self.release_sensor()
+            self.last_error = str(error) if isinstance(error, DisplayError) else 'APOLLO_DISPLAY_CHANGE_FAILED'
+            if original is not None:
+                try:
+                    self.backend.restore_snapshot(original)
+                except Exception:
+                    self.last_error = 'APOLLO_DISPLAY_ROLLBACK_FAILED'
+            self.StateChanged(self.state())
+            return False, self.last_error
+
+
+def settings_window(interface):
+    import gi
+    gi.require_version('Gtk', '4.0')
+    from gi.repository import Gtk
+    application = Gtk.Application(application_id='org.omarchy.Apollo.DisplaySettings')
+
+    def activate(app):
+        window = Gtk.ApplicationWindow(application=app, title='Pantalla · Apollo')
+        window.set_default_size(420, 720)
+        header = Gtk.HeaderBar(show_title_buttons=False)
+        header.set_title_widget(Gtk.Label(label='Pantalla Apollo'))
+        close = Gtk.Button(label='Cerrar', height_request=44)
+        close.connect('clicked', lambda button: window.close())
+        header.pack_end(close)
+        window.set_titlebar(header)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12,
+            margin_top=20, margin_bottom=20, margin_start=16, margin_end=16)
+        status = Gtk.Label(wrap=True, xalign=0)
+        def update(raw):
+            value = json.loads(str(raw))
+            mode = 'Automática' if value['auto'] else 'Bloqueada'
+            status.set_text(f"Orientación: {mode} · {value['refresh_hz']:g} Hz")
+        def choose(button, category, value):
+            try:
+                okay, result = interface.Set(category, value, timeout=12)
+                if okay:
+                    update(result)
+                else:
+                    status.set_text('Termina la creación del PIN en el móvil antes de cambiar la pantalla.'
+                        if result == 'APOLLO_PIN_SETUP_ACTIVE' else 'No se pudo aplicar este ajuste; se conserva la configuración anterior.')
+            except dbus.DBusException:
+                status.set_text('El control de pantalla no está disponible en esta sesión.')
+        box.append(Gtk.Label(label='Orientación', xalign=0))
+        for title, value in [('Automática', 'auto'), ('Bloquear posición actual', 'lock'),
+                ('Vertical', 'portrait'), ('Horizontal izquierda', 'landscape-left'),
+                ('Horizontal derecha', 'landscape-right')]:
+            button = Gtk.Button(label=title, height_request=52)
+            button.connect('clicked', choose, 'orientation', value); box.append(button)
+        box.append(Gtk.Label(label='Frecuencia de pantalla', xalign=0))
+        for title, value in [('60 Hz · Menos refresco', '60'), ('90 Hz · Equilibrado', '90'),
+                ('120 Hz', '120'), ('144 Hz · Máxima fluidez', '144')]:
+            button = Gtk.Button(label=title, height_request=52)
+            button.connect('clicked', choose, 'refresh', value); box.append(button)
+        box.append(status)
+        scroll = Gtk.ScrolledWindow(); scroll.set_child(box); window.set_child(scroll)
+        update(interface.GetState(timeout=5))
+        interface.connect_to_signal('StateChanged', update)
+        window.present()
+    application.connect('activate', activate)
+    return application.run([])
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('command', nargs='?', choices=('settings', 'status', 'serve', 'orientation', 'refresh'), default='settings')
+    parser.add_argument('value', nargs='?')
+    args = parser.parse_args()
+    assert os.getuid() >= 1000, 'Run in the local desktop session without sudo'
+    os.umask(0o077)
+    DBusGMainLoop(set_as_default=True)
+    bus = dbus.SessionBus()
+    if args.command == 'serve':
+        preferences = Path(os.environ.get('XDG_STATE_HOME', str(Path.home()/'.local/state')))/'omarchy-apollo/display.json'
+        loop = GLib.MainLoop()
+        controller = Controller(bus, Backend(), preferences, loop.quit)
+        for number in (signal.SIGTERM, signal.SIGINT):
+            GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, number, lambda: (loop.quit(), False)[1])
+        try:
+            loop.run()
+        finally:
+            controller.release_sensor(); controller.events.close()
+    else:
+        interface = dbus.Interface(bus.get_object(BUS, OBJECT), INTERFACE)
+        if args.command == 'settings':
+            return settings_window(interface)
+        if args.command == 'status':
+            print(interface.GetState(timeout=5))
+        else:
+            okay, result = interface.Set(args.command, args.value or '', timeout=12)
+            print(result)
+            return 0 if okay else 1
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

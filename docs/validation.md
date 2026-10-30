@@ -58,6 +58,12 @@ The separate [six-check phase-acknowledgement record](evidence/test-phase-ack-20
 - The local enrollment application has compiled and its empty setup screen has been inspected on the phone. It asks the owner to create and confirm a PIN locally; the administration password is preserved.
 - Automatic locking and suspend locking remain disabled until the owner completes setup and the real lock/unlock flow is verified. A rendered preview and automated PAM checks are not a substitute for that acceptance test.
 
+## Display controls and orientation
+
+The installed mobile profile `0.1.0-8` adds a GTK display-settings application and an event-driven desktop-user controller. The [23 actual device checks](evidence/display-controls-2026-10-30.json) run the real implementation on a private nested Hyprland compositor, including all four monitor/touch transform pairs, real accelerometer claim/release, a failed preference write and rollback, compositor reload, service restart, keyboard dimensions and GTK window creation. Sensor authorization succeeds in the normal desktop-user service context; no sensor policy was changed to accommodate the test.
+
+The installed executable matches the tested digest. All 15 package payload files, the prior 15-file payload, package-file checks and the native package database were verified. The installed PIN-setup guard rejected an actual change request without altering the physical panel, and the PIN and main audio processes were preserved. The keyboard was restarted while hidden with the new landscape height. Physical touch mapping, actual motion through all orientations, refresh changes, battery impact and cold boot remain pending. See the [procedure and limits](display.md).
+
 ## Native camera application stack and EGL lifecycle
 
 - The PipeWire GStreamer plugin and GNOME Camera / Snapshot 51.0 were installed with required repository signature verification. No existing package version changed during those dependency installations. The camera application's isolated launch reached its access-permission dialog; it did not become an accepted graphical preview test.

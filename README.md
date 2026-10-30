@@ -32,6 +32,7 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | Wi-Fi | 2.4 and 5 GHz scans and a 5 GHz connection verified on the inherited base; new shell interaction pending |
 | Desktop | Native Hyprland 0.57.0 + Omarchy Quickshell session running on the internal panel; live configuration check is clean |
 | Touch interface | Portrait scaling, a simplified status bar and keyboard toggle installed; physical touch acceptance pending |
+| Display controls | Orientation, auto-rotation and refresh controls installed; 23 isolated device checks include the actual accelerometer and keyboard; physical motion/touch/refresh acceptance pending |
 | Android | Confirmed APK installer and on-demand stop/start lifecycle pass 31 device checks, with F-Droid persistence and FD650 rendering; file association registered; physical file-manager, input and cold-boot checks pending |
 | Android audio | Stereo AudioTrack reaches an isolated Linux audio sink with both channels verified; physical speaker and microphone acceptance pending |
 | Touch lock | PIN verifier and real PAM conversation pass 15 device-local checks; trusted keypad rendered on device; owner PIN setup and real unlocking pending |
@@ -41,7 +42,7 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | GPS | Service integration exists; outdoor accuracy and reliability remain to be validated |
 | USB-C video | Direct cable test produced no image; display output is not supported by this port today |
 
-See [native cameras](docs/cameras.md), [Android usage and tests](docs/android.md), [validation](docs/validation.md), [architecture](docs/architecture.md), [development update policy](docs/updates.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
+See [display controls](docs/display.md), [native cameras](docs/cameras.md), [Android usage and tests](docs/android.md), [validation](docs/validation.md), [architecture](docs/architecture.md), [development update policy](docs/updates.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
 
 ## Source layout
 

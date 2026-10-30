@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.omarchy.Apollo.Display
+Exec=/usr/bin/omarchy-apollo-display serve
+SystemdService=omarchy-apollo-display.service

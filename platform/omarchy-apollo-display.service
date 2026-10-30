@@ -1,0 +1,14 @@
+[Unit]
+Description=Apollo display orientation and refresh controls
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=dbus
+BusName=org.omarchy.Apollo.Display
+ExecStart=/usr/bin/omarchy-apollo-display serve
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical-session.target
