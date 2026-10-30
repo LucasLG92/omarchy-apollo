@@ -8,7 +8,7 @@ Actual device captures: the native desktop and the touch-lock preview. Owner PIN
 
 Omarchy Apollo brings the Omarchy workflow to the Xiaomi Mi 10T Pro (`apollo`, M2007J3SG): a touch-friendly Linux desktop, phone-style locking and an optional Android environment for APKs without Google services.
 
-The latest Android integration confirms installation with Android's package manager and closes its privileged helper before a restart. A reproducible suite has passed 31 checks on the phone, including a signed F-Droid installation, rejected invalid input, application persistence and FD650 rendering after a stop/start cycle.
+APK installation is confirmed with Android's package manager, with 31 device checks covering installation and the on-demand lifecycle. Native camera work now includes a reproducible fix for retained GPU contexts: the old library failed after seven completed opens, while the corrected candidate completed 40 opens and 1,200 frames across all four cameras. The installed package then passed another 12 opens. Physical photo and video acceptance remains pending.
 
 This is an independent experimental port. It is not an official Omarchy image or a finished daily-driver release. The aim is full hardware support; the status below records what has actually been demonstrated.
 
@@ -28,7 +28,7 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | --- | --- |
 | Native Linux boot | Installed to internal storage; owner verified a cold boot without a PC on the inherited Apollo base |
 | GPU | Native Omarchy compositor renders through Freedreno FD650; Waydroid reports FD650 OpenGL ES 3.2 |
-| Cameras | Repeated captures, front-camera cycles and suspend checks passed on the inherited base; Omarchy application tests pending |
+| Cameras | All four stream through PipeWire in Omarchy; EGL cleanup fix passes 40 candidate opens and 12 installed-package opens; distinct sensor names and GNOME Camera installed; physical photo/video acceptance pending |
 | Wi-Fi | 2.4 and 5 GHz scans and a 5 GHz connection verified on the inherited base; new shell interaction pending |
 | Desktop | Native Hyprland 0.57.0 + Omarchy Quickshell session running on the internal panel; live configuration check is clean |
 | Touch interface | Portrait scaling, a simplified status bar and keyboard toggle installed; physical touch acceptance pending |
@@ -40,7 +40,7 @@ Omarchy now has ARM development builds. Apollo still needs its own integration: 
 | GPS | Service integration exists; outdoor accuracy and reliability remain to be validated |
 | USB-C video | Direct cable test produced no image; display output is not supported by this port today |
 
-See [Android usage and tests](docs/android.md), [validation](docs/validation.md), [architecture](docs/architecture.md), [development update policy](docs/updates.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
+See [native cameras](docs/cameras.md), [Android usage and tests](docs/android.md), [validation](docs/validation.md), [architecture](docs/architecture.md), [development update policy](docs/updates.md) and [roadmap](docs/roadmap.md). A feature moves to “working” only with device evidence. Inherited results do not imply that a new Omarchy application has passed the same test.
 
 ## Source layout
 

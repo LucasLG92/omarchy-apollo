@@ -6,6 +6,8 @@ The desktop package pins upstream Omarchy commit `573b518be16ec47547d50fe6197bc7
 
 The Apollo package deliberately selects desktop defaults rather than copying the upstream PC `/etc` tree. Existing camera, audio, USB maintenance, modem, firmware, memory and boot configuration remain owned by their respective device packages. A registered lifecycle boundary refuses generic reset, LUKS and boot takeover operations which this layout cannot implement.
 
+Native cameras are exposed through the Apollo libcamera package and WirePlumber. The mobile profile provides exact-device naming rules and GNOME Camera. The reviewed `libcamera-apollo 0.7.2-3` update releases software-ISP EGL contexts between streams; kernel and boot configuration are unchanged. The [camera report](cameras.md) separates native stream evidence from physical application and Android-camera acceptance.
+
 Android runs separately through Waydroid VANILLA. It is an Android compatibility environment, not a replacement kernel. Hardware access from Android applications requires its own validation and is not inferred from native Linux support. Google Play, Play Services and Google accounts are outside the requested profile.
 
 Waydroid's data directory is bound from the native ext4 storage rather than being used directly on the host's overlay root. This allows Waydroid to create its own system/vendor overlays. Its service requires that mount; Android runs on demand rather than being a mandatory boot-time desktop dependency.

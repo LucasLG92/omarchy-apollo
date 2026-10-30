@@ -1,0 +1,118 @@
+From: Omarchy Apollo contributors
+Subject: [PATCH] software-isp: release EGL context when streaming stops
+
+The software ISP worker can restart while its camera manager remains alive.
+Stop deleted its image cache but left the EGL context alive; the next start
+overwrote the handle. On Apollo this retained DMA-BUF references across
+PipeWire camera reopen cycles and exhausted the small contiguous-memory heap.
+
+Release the context on the ISP worker, reset owned GL handles and clean up
+failed initialisation. Keep the shared EGL display alive for other cameras.
+
+--- a/include/libcamera/internal/egl.h
++++ b/include/libcamera/internal/egl.h
+@@ -103,6 +103,7 @@
+ 	~eGL();
+ 
+ 	int initEGLContext();
++	void destroyEGLContext();
+ 	static bool isAvailable();
+ 
+ 	int createInputDMABufTexture2D(eGLImage &eglImage, int fd);
+--- a/src/libcamera/egl.cpp
++++ b/src/libcamera/egl.cpp
+@@ -79,11 +79,30 @@
+  */
+ eGL::~eGL()
+ {
+-	if (context_ != EGL_NO_CONTEXT)
++	destroyEGLContext();
++}
++
++/**
++ * \brief Release the context and its retained DMA-BUF resources
++ *
++ * Streaming can stop and start many times while the camera manager stays
++ * alive. Release the context on the ISP worker before that thread exits,
++ * rather than overwriting its handle on the next start. Only unbind our own
++ * context; a caller may have an unrelated graphics context current.
++ */
++void eGL::destroyEGLContext()
++{
++	if (context_ != EGL_NO_CONTEXT) {
++		if (eglGetCurrentContext() == context_)
++			eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+ 		eglDestroyContext(display_, context_);
+-
+-	if (surface_ != EGL_NO_SURFACE)
++		context_ = EGL_NO_CONTEXT;
++	}
++
++	if (surface_ != EGL_NO_SURFACE) {
+ 		eglDestroySurface(display_, surface_);
++		surface_ = EGL_NO_SURFACE;
++	}
+ }
+ 
+ /**
+@@ -385,6 +404,11 @@
+  */
+ int eGL::initEGLContext()
+ {
++	if (context_ != EGL_NO_CONTEXT) {
++		LOG(eGL, Error) << "EGL context already initialised";
++		return -EBUSY;
++	}
++
+ 	EGLint configAttribs[] = {
+ 		EGL_RED_SIZE, 8,
+ 		EGL_GREEN_SIZE, 8,
+@@ -458,7 +482,7 @@
+ 
+ 	return 0;
+ fail:
+-
++	destroyEGLContext();
+ 	return -ENODEV;
+ }
+ 
+--- a/src/libcamera/software_isp/debayer_egl.cpp
++++ b/src/libcamera/software_isp/debayer_egl.cpp
+@@ -685,19 +685,34 @@
+ 
+ 	LOG(Debayer, Debug) << "Available fragment shader texture units " << maxTextureImageUnits;
+ 
+-	if (initBayerShaders(inputPixelFormat_, outputPixelFormat_))
++	if (initBayerShaders(inputPixelFormat_, outputPixelFormat_)) {
++		egl_.destroyEGLContext();
++		programId_ = 0;
+ 		return -EINVAL;
++	}
+ 
+ 	return 0;
+ }
+ 
+ void DebayerEGL::stop()
+ {
++	if (programId_)
++		egl_.makeCurrent();
++
+ 	eglImageOutCache_.clear();
+ 	eglImageInCache_.clear();
+ 
+-	if (programId_)
+-		glDeleteProgram(programId_);
++	if (programId_) {
++		egl_.useProgram(0);
++		egl_.deleteProgram(programId_);
++		programId_ = 0;
++	}
++
++	/* Destroy the context before the worker exits, also releasing deferred
++	 * Mesa DMA-BUF references from the completed stream. The EGL display may
++	 * be shared by other camera pipelines, so it is not terminated here.
++	 */
++	egl_.destroyEGLContext();
+ }
+ 
+ SizeRange DebayerEGL::sizes(PixelFormat inputFormat, const Size &inputSize)

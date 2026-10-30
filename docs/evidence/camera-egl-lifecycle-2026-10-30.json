@@ -1,0 +1,789 @@
+{
+  "date": "2026-10-30",
+  "scope": "Native PipeWire/libcamera camera reopen lifecycle; physical photo quality and Android camera access are separate",
+  "before": {
+    "libcamera": "0.7.2-2",
+    "planned_streams": 12,
+    "completed_streams": 7,
+    "test_returncode": 1,
+    "egl_contexts_created": 7,
+    "egl_contexts_destroyed_before_service_stop": 0,
+    "gpu_fd650_observed": true,
+    "actual_library_mapping_verified": true,
+    "images_saved": false,
+    "runtime_override_removed": true,
+    "interposer_inactive": true,
+    "pin_setup_process_unchanged": true
+  },
+  "candidate": {
+    "libcamera": "0.7.2-3",
+    "planned_streams": 40,
+    "completed_streams": 40,
+    "test_returncode": 0,
+    "egl_contexts_created": 40,
+    "egl_contexts_destroyed_before_service_stop": 40,
+    "gpu_fd650_observed": true,
+    "actual_library_mapping_verified": true,
+    "images_saved": false,
+    "runtime_override_removed": true,
+    "interposer_inactive": true,
+    "pin_setup_process_unchanged": true,
+    "frames_per_open": 30,
+    "total_frames": 1200,
+    "camera_count": 4,
+    "cycles": 10,
+    "stream_cases": [
+      {
+        "cycle": 1,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 18256,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.519
+      },
+      {
+        "cycle": 1,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 15960,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.177
+      },
+      {
+        "cycle": 1,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 15140,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.289
+      },
+      {
+        "cycle": 1,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.399
+      },
+      {
+        "cycle": 2,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 10220,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.541
+      },
+      {
+        "cycle": 2,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 16288,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.21
+      },
+      {
+        "cycle": 2,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 16288,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.35
+      },
+      {
+        "cycle": 2,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.406
+      },
+      {
+        "cycle": 3,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 17108,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.512
+      },
+      {
+        "cycle": 3,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 15140,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.19
+      },
+      {
+        "cycle": 3,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 12352,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.3
+      },
+      {
+        "cycle": 3,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 17108,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.427
+      },
+      {
+        "cycle": 4,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 16124,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.486
+      },
+      {
+        "cycle": 4,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 18256,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.219
+      },
+      {
+        "cycle": 4,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 15316,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.294
+      },
+      {
+        "cycle": 4,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.384
+      },
+      {
+        "cycle": 5,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 15140,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.512
+      },
+      {
+        "cycle": 5,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 15140,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.221
+      },
+      {
+        "cycle": 5,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 15960,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.306
+      },
+      {
+        "cycle": 5,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 18256,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.445
+      },
+      {
+        "cycle": 6,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.494
+      },
+      {
+        "cycle": 6,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 15960,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.192
+      },
+      {
+        "cycle": 6,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.31
+      },
+      {
+        "cycle": 6,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 17108,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.436
+      },
+      {
+        "cycle": 7,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.502
+      },
+      {
+        "cycle": 7,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 12516,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.227
+      },
+      {
+        "cycle": 7,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 15468,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.311
+      },
+      {
+        "cycle": 7,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.422
+      },
+      {
+        "cycle": 8,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 15960,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.515
+      },
+      {
+        "cycle": 8,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 15140,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.209
+      },
+      {
+        "cycle": 8,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 16452,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.292
+      },
+      {
+        "cycle": 8,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 17108,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.43
+      },
+      {
+        "cycle": 9,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 14812,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.541
+      },
+      {
+        "cycle": 9,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 15960,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.196
+      },
+      {
+        "cycle": 9,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 15140,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.325
+      },
+      {
+        "cycle": 9,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 9072,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.394
+      },
+      {
+        "cycle": 10,
+        "camera": "Apollo Front Camera",
+        "cma_free_after_kib": 15960,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.452
+      },
+      {
+        "cycle": 10,
+        "camera": "Apollo Macro Camera",
+        "cma_free_after_kib": 17436,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.178
+      },
+      {
+        "cycle": 10,
+        "camera": "Apollo Main Rear Camera",
+        "cma_free_after_kib": 14976,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 1.286
+      },
+      {
+        "cycle": 10,
+        "camera": "Apollo Ultrawide Camera",
+        "cma_free_after_kib": 15140,
+        "frames": 30,
+        "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+        "buffer_sizes": [
+          1228800
+        ],
+        "timestamps_advance": true,
+        "stream_released": true,
+        "elapsed_seconds": 0.442
+      }
+    ]
+  },
+  "installed": {
+    "installed_package": "libcamera-apollo 0.7.2-3",
+    "package_sha256": "8754e7cf75b1a9decc52ccf2db00bee3c461d28b332c9b51b425400905f88596",
+    "previous_package_backup_verified": true,
+    "only_camera_library_package_changed": true,
+    "installed_files_match_reviewed_archive": true,
+    "installed_stream_tests": {
+      "camera_stream_tests_passed": 12,
+      "frames_per_open": 30,
+      "camera_count": 4,
+      "cycles": 3,
+      "results": [
+        {
+          "cycle": 1,
+          "camera": "Apollo Front Camera",
+          "cma_free_after_kib": 10220,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 0.475
+        },
+        {
+          "cycle": 1,
+          "camera": "Apollo Macro Camera",
+          "cma_free_after_kib": 18256,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 1.185
+        },
+        {
+          "cycle": 1,
+          "camera": "Apollo Main Rear Camera",
+          "cma_free_after_kib": 9072,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 1.297
+        },
+        {
+          "cycle": 1,
+          "camera": "Apollo Ultrawide Camera",
+          "cma_free_after_kib": 15140,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 0.383
+        },
+        {
+          "cycle": 2,
+          "camera": "Apollo Front Camera",
+          "cma_free_after_kib": 15960,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 0.501
+        },
+        {
+          "cycle": 2,
+          "camera": "Apollo Macro Camera",
+          "cma_free_after_kib": 15960,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 1.208
+        },
+        {
+          "cycle": 2,
+          "camera": "Apollo Main Rear Camera",
+          "cma_free_after_kib": 15960,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 1.307
+        },
+        {
+          "cycle": 2,
+          "camera": "Apollo Ultrawide Camera",
+          "cma_free_after_kib": 9072,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 0.441
+        },
+        {
+          "cycle": 3,
+          "camera": "Apollo Front Camera",
+          "cma_free_after_kib": 15960,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 0.546
+        },
+        {
+          "cycle": 3,
+          "camera": "Apollo Macro Camera",
+          "cma_free_after_kib": 15304,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 1.204
+        },
+        {
+          "cycle": 3,
+          "camera": "Apollo Main Rear Camera",
+          "cma_free_after_kib": 15796,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 1.279
+        },
+        {
+          "cycle": 3,
+          "camera": "Apollo Ultrawide Camera",
+          "cma_free_after_kib": 12024,
+          "frames": 30,
+          "caps": "video/x-raw, format=(string)RGBA, interlace-mode=(string)progressive, width=(int)640, height=(int)480, colorimetry=(string)sRGB",
+          "buffer_sizes": [
+            1228800
+          ],
+          "timestamps_advance": true,
+          "stream_released": true,
+          "elapsed_seconds": 0.423
+        }
+      ],
+      "all_four_sources_remain": true,
+      "images_saved": false,
+      "physical_display_used": false,
+      "cma_free_before_kib": 17264,
+      "cma_free_after_kib": 12148,
+      "optical_quality_tested": false,
+      "snapshot_ui_acceptance_tested": false
+    },
+    "test_source_sha256": "4367df831e086c3ee528d50e44d26bf89c0da3c7aca38fc8da19dcd2469f46ac",
+    "temporary_guard_scope_removed": true,
+    "installed_guard_and_configuration_unchanged": true,
+    "candidate_and_audit_overrides_inactive": true,
+    "kernel_unchanged": true,
+    "package_files_and_database_valid": true,
+    "pin_setup_process_unchanged": true,
+    "pipewire_processes_unchanged": true,
+    "desktop_ping_ok": true,
+    "desktop_configuration_errors": 0,
+    "cold_boot_tested": false,
+    "physical_snapshot_acceptance_tested": false
+  },
+  "mobile_profile": {
+    "installed_mobile_package": "omarchy-apollo-mobile 0.1.0-6",
+    "package_sha256": "acc64d1ec0b96e5c05b334fbb110d2f97d3550e0007765981ad8a99429e9f6b5",
+    "installed_payload_files_identical_to_tested_revision_5": 11,
+    "minimum_libcamera_version_declared": "0.7.2-3",
+    "pin_setup_process_unchanged": true,
+    "wireplumber_process_unchanged": true,
+    "package_files_and_database_valid": true
+  },
+  "abi_checks": {
+    "libcamera.so.0.7.2": {
+      "removed_exported_symbols": 0,
+      "added_exported_symbols": 1,
+      "sha256": "e26185a3c3aeed32f0b93a179a028825c036b1518aaf156da3aa5686b149ba0e"
+    },
+    "libcamera-base.so.0.7.2": {
+      "removed_exported_symbols": 0,
+      "added_exported_symbols": 0,
+      "sha256": "895a771dd36f36bcd8e56a5e24a7bc310243514f61d5705430f78a7a41e509c1"
+    }
+  },
+  "installed_dependencies": [
+    "snapshot 51.0-1",
+    "gst-plugin-pipewire 1:1.6.10-1",
+    "gst-plugin-gtk4 0.15.4-1"
+  ],
+  "gain_helper_build_checks": [
+    "s5khmx: 1x/1.5x/2x/4x/8x/16x",
+    "s5k3t2: 1x/1.5x/2x/4x/8x/16x",
+    "s5k5e9: 1x/1.5x/2x/4x/8x/16x"
+  ],
+  "public_test_source_sha256": "4367df831e086c3ee528d50e44d26bf89c0da3c7aca38fc8da19dcd2469f46ac",
+  "limits": {
+    "images_saved": false,
+    "physical_snapshot_acceptance_tested": false,
+    "snapshot_permission_dialog_completed": false,
+    "optical_quality_tested": false,
+    "cold_boot_tested": false,
+    "android_camera_access_tested": false,
+    "battery_life_improvement_claimed": false
+  }
+}

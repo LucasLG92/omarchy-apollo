@@ -50,6 +50,18 @@ See the [sanitized 31-check record](evidence/android-apk-lifecycle-2026-10-30.js
 - The local enrollment application has compiled and its empty setup screen has been inspected on the phone. It asks the owner to create and confirm a PIN locally; the administration password is preserved.
 - Automatic locking and suspend locking remain disabled until the owner completes setup and the real lock/unlock flow is verified. A rendered preview and automated PAM checks are not a substitute for that acceptance test.
 
+## Native camera application stack and EGL lifecycle
+
+- The PipeWire GStreamer plugin and GNOME Camera / Snapshot 51.0 were installed with required repository signature verification. No existing package version changed during those dependency installations. The camera application's isolated launch reached its access-permission dialog; it did not become an accepted graphical preview test.
+- The mobile camera policy now exposes four distinct sensor descriptions. The original configuration produced only two distinct descriptions for four sources. Actual PipeWire properties confirm the new descriptions and priorities.
+- `tests/check_camera_streams.py` was run against the installed old library and the candidate using the same source bytes. The control completed seven of 12 planned opens, then failed. The test-only EGL interposer counted seven successful context creations and zero context destructions before the policy service stopped. DMA-heap allocation errors were observed in the failed reopen.
+- Corrected candidate `libcamera-apollo 0.7.2-3` completed 40 opens in one continuous WirePlumber process: 10 per sensor and 30 complete 640×480 RGBA buffers per open, with advancing timestamps. The real EGL counters were 40 created and 40 destroyed; FD650 rendering was observed. The interposer does not alter EGL results. No frames were saved.
+- Candidate and audit overrides were removed and the ordinary installed library restored before the reviewed package transaction. The retained old archive matched 58 installed files/links. The update changed only the camera-library package; all new installed files match the reviewed candidate archive. The kernel remains version 23 and the normal device-stack guard and its configuration are unchanged.
+- The installed revision then passed 12 more opens / 360 frames in its ordinary environment. Package/database validation, live shell IPC and compositor checks pass. PipeWire/Pulse and owner PIN-setup processes were preserved. Mobile revision 6 adds the minimum fixed-camera dependency, with its 11 payload files compared byte for byte against tested revision 5.
+- The package build passed all three existing Samsung gain-helper checks. No exported camera or camera-base symbol was removed. This test does not establish physical picture quality, camera permission acceptance, saved photos/video, orientation, Android camera access or cold-boot reliability.
+
+See the [camera procedure](cameras.md) and [sanitized before/candidate/installed evidence](evidence/camera-egl-lifecycle-2026-10-30.json). The historical sensor-power and focus tests remain evidence for their original kernel/base versions.
+
 ## Package update boundaries
 
 - `omarchy-apollo 0.1.0-7` is installed. The generic Omarchy full update, system-package update and availability check were exercised as the desktop user. They identify the Apollo policy before package updates or PC migrations can begin.
