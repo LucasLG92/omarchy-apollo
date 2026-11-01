@@ -11,7 +11,7 @@
 
 **An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-> **Omarchy 4.5 RC2 rebase:** R13 is the latest full-desktop RAM trial, with working Wi-Fi. The later **R16** trial tested the original boot splash in **minimal RAM rescue**, on 2026-11-01. Android was restored after these native trials. **The new rebase is not permanently installed, is not a complete daily-driver phone, and has no validated public installer.** Earlier permanent-installation and Waydroid results belong to the [2026-10-30 historical track](docs/history/README-2026-10-30.md).
+> **Omarchy 4.5 RC2 rebase:** **R17** is the latest full-desktop RAM trial. It detected a **PIN-locked SIM**; unlocking, registration and cellular use remain unverified. **Recovery required the phone buttons and the full bootloader; automatic Android return is not reliable.** Android was restored and original boot/DTBO readbacks matched. R13's Wi-Fi result and R16's minimal-rescue splash capture remain historical results. **No permanent installation, complete daily-driver phone or validated public installer is claimed.** See the [earlier track](docs/history/README-2026-10-30.md) separately.
 
 ## On the device
 
@@ -25,12 +25,13 @@
 
 - **Native desktop and touch.** ARM64, systemd, Hyprland and Quickshell on the internal display. Touch input, applications and the on-screen keyboard have been exercised.
 - **Adreno GPU processing.** Freedreno reports **FD650**. All four camera sensors delivered 640×480 images; the main and ultrawide also passed larger RGB captures.
-- **A usable phone session.** The ordinary local user can query calls without the startup PIN prompt. Daemon administration and firmware changes still require administrator authentication.
+- **Ordinary phone permissions (R11).** The local user queried calls without the startup OS authentication prompt. Daemon administration and firmware changes still require administrator authentication; R17's SIM-PIN lock is a separate pending step.
 - **Measured changes.** Increasing CMA from 32 to **256 MiB** resolved the main-camera DMA allocation failure. Normal EFS service stop/restart and original boot/DTBO restoration were checked separately.
 - **Physical haptics.** R12 exercised AW8697 rumble for **120 ms at 8192/65535 magnitude** (about 12.5%). The user confirmed a **very low-strength vibration**; normal-session access and feedbackd discovery were also checked.
 - **Connected Wi-Fi.** In R13, the user connected on the phone screen and an HTTPS request bound to the Wi-Fi interface returned **200**. No network identity or credentials are published.
 - **Sensor scratch-file fix.** Runtime `20261101-6` completed a RAM boot, created the allowed private scratch file and exposed accelerometer/light. The specific missing-file error was absent in the collected boot log and a **20.97-second observation**; this is not a general speed benchmark.
 - **Original boot appearance.** R16 ran Plymouth through native DRM/active VT and produced the reviewed KMS capture above. V2 SDDM loads in actual ARM64 test mode and adds touch input to the original layout; **PAM login on the phone remains untested**.
+- **SIM detection and pending cellular tests.** R17 detected a SIM object and a SIM-PIN requirement. A signed local PIN dialog was installed/launched in RAM, but user completion was not confirmed. No unlock, network registration, call, SMS or cellular data result is verified.
 
 | Component | Latest observed result | Still needed |
 | --- | --- | --- |
@@ -38,7 +39,7 @@
 | Main camera | 24 RGB frames at **3000×2256**; GPU pipeline; autofocus reported focused in a separate illuminated sequence | Optical quality, color, video and full-resolution support; **108 MP is unavailable** in this driver |
 | Ultrawide / other cameras | Ultrawide: 24 RGB frames at **4200×3120**; all four sensors at 640×480 | Front high-resolution capture, macro focus, orientation and quality |
 | Torch | Normal-user one-second on/off control passed | Visible-light confirmation |
-| Modem / phone permissions | Modem detected; read-only call list succeeds; EFS stop/restart passes | **Real calls, SMS, data and call audio untested**; the published cellular trials had no test SIM |
+| Modem / SIM | R17: SIM object detected, SIM-PIN required; earlier read-only permissions/EFS checks retained | Unlock, registration, physical/logical slot mapping, real calls/SMS/data and call audio unverified |
 | Wi-Fi | R13: connected on screen; Wi-Fi-bound HTTPS request returned 200 | Reconnection, both bands, sustained transfer and suspend/resume |
 | Bluetooth | Service active | Pairing and audio |
 | Sensors / NFC | R13: accelerometer/light available after scratch-file fix; R11: NFC adapter registered | Proximity, NFC tag read and broader sensor acceptance |
@@ -46,7 +47,7 @@
 | Infrared | R12: LIRC detected, capabilities `0x302` queried | **No signal transmitted:** optical emission and remote control untested |
 | GPS / fingerprint | Unverified | Native end-to-end support and physical tests |
 | Original boot / V2 login | R16: native Plymouth in minimal RAM rescue; ARM64 SDDM test-mode load | Full-desktop handoff, physical greeter interaction, first local credential and PAM login; no touch LUKS unlock |
-| Boot / updates / battery | Supervised RAM return and original partition readbacks checked | Permanent 4.5 installation, first PIN, standalone boot, coherent updates, suspend and battery life |
+| Boot / updates / battery | R17: manual-button recovery, original DTBO restored in full bootloader, Android/readbacks verified | **Reliable automatic return**, permanent installation, first local credential/admin setup, standalone boot, updates, suspend and battery life |
 
 See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.
 

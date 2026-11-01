@@ -42,8 +42,11 @@ PRUEBAS
   calibración privada. Retorno automático a Android y boot/DTBO originales
   verificados. No se obtuvo confirmación humana separada de la pantalla R16.
 
-R16 no arrancó el escritorio completo. La última prueba de escritorio es R13,
-con Wi-Fi HTTPS verificado, sensores y regla de vibración de runtime v6.
+R16 no arrancó el escritorio completo. R13 conserva sus resultados de Wi-Fi,
+sensores y regla de vibración. La posterior R17 sí alcanzó el escritorio:
+SIM detectada y bloqueada por PIN, sin desbloqueo/registro/telefonía verificados.
+R17 necesitó botones y cargador completo para recuperar Android: el retorno
+automático no es fiable. La credencial local Linux/PAM sigue pendiente.
 No hay instalación permanente ni verificación del 100 % del teléfono.
 La animación upstream de Plymouth no es un porcentaje medido de arranque.
 

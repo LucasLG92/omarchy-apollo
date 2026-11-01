@@ -9,7 +9,7 @@ The current development track starts from a fresh ARM64 userspace and adapts the
 | Omarchy | `4.5.0rc2-1` — [release](https://github.com/omacom/omarchy/releases/tag/v4.5.0-rc2) |
 | Hyprland | `0.57.0` |
 | Mesa | `26.2.6`, Freedreno FD650 |
-| Kernel | R10/R11: `7.1.0-apollo-native-r5`; R12/R13 desktop: `7.1.0-apollo-native-r6` with AW8697/IR additions and `cma=256M`; R16 minimal splash rescue also used R6 |
+| Kernel | R10/R11: `7.1.0-apollo-native-r5`; R12/R13 desktop: `7.1.0-apollo-native-r6` with AW8697/IR additions and `cma=256M`; R16 minimal rescue and R17 desktop also reported R6 |
 | Mobile shell | `0.2.62.apollo45-5` |
 | Mobile core | `0.1.23.apollo45-2` |
 | Phone runtime | R11/R12: `20261101-4` with the R12 haptic rule added in RAM; R13: complete RAM boot of `20261101-6`, including that rule and the sensor scratch-file fix |
@@ -40,7 +40,9 @@ The R12 [kernel input patch and provenance](../patches/rebase-4.5/README.md) inc
 
 The R13 sensor RPC patch creates a missing scratch file only for an already permitted writable mapping, with mode 0600 and no symlink following. Runtime v6 completed a RAM boot and included the earlier haptic access rule: feedbackd opened the device without manual restart. This validates that v6 session, not an intermediate v5 boot or a permanent installation. [R13 evidence](evidence/2026-11-01-r13.json).
 
-R16 is a separate minimal RAM rescue test of Plymouth, with native DRM/VT and a reviewed KMS image. It did not boot this complete userspace stack or stage private calibration. Real ARM64 SDDM test-mode loading is also recorded, but phone PAM login and local credential setup remain untested. R13 remains the latest full-desktop acceptance record. See [V2 sources and scope](../experiments/original-boot-v2/README.md).
+R16 is a separate minimal RAM rescue test of Plymouth, with native DRM/VT and a reviewed KMS image. It did not boot this complete userspace stack or stage private calibration. Real ARM64 SDDM test-mode loading is also recorded, but phone PAM login and local credential setup remain untested. See [V2 sources and scope](../experiments/original-boot-v2/README.md).
+
+R17 is the latest full-desktop RAM trial, reporting Omarchy `4.5.0rc2`, kernel R6 and systemd as PID 1. It detected a PIN-locked SIM; a signed local dialog was installed/launched but completion, unlock and registration were unverified. No cellular calls, SMS or data were tested. Recovery required buttons/full bootloader, then original DTBO restoration and verified Android boot/readbacks. Automatic return is not reliable. This update publishes the [R17 summary](evidence/2026-11-01-r17.json), not SIM-development code, binaries or private device data.
 
 ## Next release gate
 

@@ -2,6 +2,8 @@
 
 This is a development port, not a hardened consumer phone release. The current 4.5 RC2 track is a supervised RAM system, not a permanent installation. Earlier ext4/PIN results are historical. A graphical lock is not disk encryption; a final encrypted installation and first-PIN profile remain unvalidated. See [current status](docs/status.md).
 
+R17 required hardware-button recovery through the full bootloader; automatic Android return is not reliable. The local account still lacks a configured password and administrative Polkit setup remains pending. A SIM-PIN dialog launch is not a successful SIM unlock or OS/PAM login. Do not rely on either as completed acceptance.
+
 Do not report a vulnerability by publishing credentials, a PIN, password hashes, SSH keys, biometrics, modem identifiers or private logs in an issue. Describe the component and reproduction using disposable data. Use GitHub's private vulnerability reporting when it is available for this repository.
 
 The repository contains source, sanitized validation and reviewed captures. Personal device state, firmware dumps, partition backups, local build caches and credentials must stay outside it. Package downloads require their normal upstream signatures; locally built integration packages are identified separately.

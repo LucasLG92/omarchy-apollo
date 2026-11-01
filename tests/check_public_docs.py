@@ -249,6 +249,28 @@ def original_boot_review():
     ast.parse((directory / "stage.py").read_text(encoding="utf-8"))
 
 
+def sim_trial_boundaries():
+    data = json.loads((ROOT / "docs/evidence/2026-11-01-r17.json").read_text(encoding="utf-8"))
+    assert data["trial"] == "R17" and data["evidence_type"] == "sanitized supervised-device result summary"
+    for field in ("systemd_pid1_verified", "sim_available_for_tests", "sim_object_detected", "sim_pin_required",
+                  "signed_local_pin_dialog_installed_and_launched_in_ram",
+                  "manual_fastboot_buttons_required_for_recovery",
+                  "limited_fastboot_rejected_download_before_partition_write",
+                  "original_dtbo_restored_in_full_bootloader", "android_boot_completed_verified",
+                  "original_boot_readback_verified", "original_dtbo_readback_verified"):
+        assert data[field] is True, ("R17", field)
+    for field in ("independent_reproduction", "device_identifiers_included", "raw_logs_included",
+                  "private_camera_images_included", "calibration_or_firmware_included",
+                  "sim_unlock_completed_verified", "ordinary_network_registration_verified",
+                  "physical_to_logical_sim_slot_mapping_verified", "pin_dialog_user_completion_confirmed",
+                  "calls_tested", "sms_tested", "cellular_data_tested", "calls_or_messages_sent_by_agent",
+                  "pin_received_by_agent", "subscriber_identifiers_exported",
+                  "sim_pin_protection_disabled_or_changed", "calibration_partitions_written",
+                  "automatic_android_return_reliable", "userdata_formatted", "permanent_installation_complete",
+                  "sddm_pam_login_tested_on_phone", "full_phone_functionality_verified"):
+        assert data[field] is False, ("R17", field)
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -290,6 +312,7 @@ def main():
     input_patch_provenance()
     sensor_patch_provenance()
     original_boot_review()
+    sim_trial_boundaries()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")
