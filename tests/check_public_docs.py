@@ -2,13 +2,16 @@
 # SPDX-License-Identifier: MIT
 """Offline publication checks. No device access, downloads or personal data."""
 from pathlib import Path
+import ast
 import hashlib
 import json
 import re
 import subprocess
+import struct
 import sys
 import urllib.parse
 import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -162,6 +165,90 @@ def sensor_patch_provenance():
     assert hashlib.sha256(license_text).hexdigest() == origin["copying_sha256"]
 
 
+def original_boot_review():
+    data = json.loads((ROOT / "docs/evidence/2026-11-01-r16.json").read_text(encoding="utf-8"))
+    for field in ("independent_reproduction", "device_identifiers_included", "raw_logs_included",
+                  "private_camera_images_included", "calibration_or_firmware_included",
+                  "capture_text_metadata_present", "capture_is_reference_or_html_mockup",
+                  "final_r16_human_display_confirmation_specifically_obtained",
+                  "performance_or_boot_time_comparison_available", "sddm_pam_login_tested_on_phone",
+                  "local_password_or_pin_configured", "qt_virtualkeyboard_required",
+                  "plymouth_touch_luks_unlock_implemented", "theme_selected_for_permanent_phone_boot",
+                  "autologin_or_pam_changed", "full_desktop_trial", "private_calibration_staged",
+                  "userdata_formatted", "permanent_installation_complete",
+                  "full_phone_functionality_verified", "raw_boot_logs_or_identifiers_exported"):
+        assert data[field] is False, ("R16", field)
+    for field in ("physical_native_plymouth_daemon_verified", "physical_drm_device_opened",
+                  "physical_active_vt_verified", "native_kms_framebuffer_captured",
+                  "capture_visually_reviewed", "capture_contains_generic_branding_only",
+                  "daemon_diagnostic_trace_disabled", "target_arm64_sddm_theme_loaded_in_test_mode",
+                  "sddm_test_did_not_authenticate", "temporary_bootstrap_only",
+                  "original_boot_readback_verified", "original_dtbo_readback_verified",
+                  "android_boot_completed_verified"):
+        assert data[field] is True, ("R16", field)
+    assert data["ufs_nodes_read_only"] == 122 and data["xkb_errors_in_collected_rescue_log"] == 0
+    assert data["observed_daemon_rss_kib_one_sample"] == 18304
+    directory = ROOT / "experiments/original-boot-v2"
+    manifest = json.loads((directory / "source-manifest.json").read_text(encoding="utf-8"))
+    assert data["omarchy_design_commit"] == manifest["upstream_commit"] == "5978d93ae7da0a325b7493501911e3f1266cadd3"
+    assert manifest["assets_modified"] is False
+    for original, info in manifest["original_sddm_assets"].items():
+        if not original.endswith(".png"):
+            continue
+        content = (directory / "native/sddm/omarchy-apollo-original" / Path(original).name).read_bytes()
+        assert hashlib.sha256(content).hexdigest() == info["sha256"]
+        assert hashlib.sha1(b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest() == info["git_blob"]
+    for name, blob in manifest["original_plymouth_asset_blobs"].items():
+        content = (directory / "native/plymouth/omarchy-apollo-original" / name).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest() == blob
+    for kind in ("sddm", "plymouth"):
+        license_text = (directory / "native" / kind / "omarchy-apollo-original/LICENSE-Omarchy").read_bytes()
+        assert hashlib.sha256(license_text).hexdigest() == "717ba1949502290f8e47688ae2e323acd06c8ca47aec9f7596b15f678c1af4a2"
+    qml = json.loads((directory / "review/qml-review.json").read_text(encoding="utf-8"))
+    arm = json.loads((directory / "review/arm64-sddm.json").read_text(encoding="utf-8"))
+    parser = json.loads((directory / "review/plymouth-review.json").read_text(encoding="utf-8"))
+    browser = json.loads((directory / "review/browser-review.json").read_text(encoding="utf-8"))
+    main_hash = hashlib.sha256((directory / "native/sddm/omarchy-apollo-original/Main.qml").read_bytes()).hexdigest()
+    keyboard_hash = hashlib.sha256((directory / "native/sddm/omarchy-apollo-original/MobileKeyboard.qml").read_bytes()).hexdigest()
+    assert main_hash == qml["native_main_sha256"] == arm["main_qml_sha256"]
+    assert keyboard_hash == qml["keyboard_sha256"] == arm["keyboard_qml_sha256"]
+    assert len(qml["checks"]) == 17 and all(c["passed"] for c in qml["checks"]) and not qml["messages"]
+    assert len(browser["checks"]) == 6 and all(c["passed"] for c in browser["checks"])
+    assert not qml["pam_authentication_tested"] and not arm["pam_authentication_tested"]
+    assert arm["actual_arm64_sddm_test_mode_load_passed"] and arm["package_integrity_files"] == 35
+    assert not arm["system_theme_selection_or_authentication_changed"]
+    assert parser["actual_upstream_parser_passed"] and parser["upstream_parser_version"] == "26.134.222"
+    assert not parser["drm_render_tested"] and not parser["phone_boot_tested"]
+    assert hashlib.sha256((directory / "native/plymouth/omarchy-apollo-original/omarchy-apollo-original.script").read_bytes()).hexdigest() == parser["script_sha256"]
+    assert (directory / "previews/login-initial-432.png").read_bytes() == (directory / "previews/upstream-reference-432.png").read_bytes()
+    capture = (ROOT / "media/apollo-boot-r16.png").read_bytes()
+    assert len(capture) == 15296 and hashlib.sha256(capture).hexdigest() == data["capture_sha256"]
+    assert capture[:8] == b"\x89PNG\r\n\x1a\n"
+    assert struct.unpack(">II", capture[16:24]) == (data["capture_width"], data["capture_height"]) == (1080, 2400)
+    cursor, chunks = 8, []
+    while cursor < len(capture):
+        length = struct.unpack(">I", capture[cursor:cursor + 4])[0]
+        chunks.append(capture[cursor + 4:cursor + 8])
+        cursor += 12 + length
+    assert cursor == len(capture) and chunks[0] == b"IHDR" and chunks[-1] == b"IEND"
+    assert set(chunks) <= {b"IHDR", b"sRGB", b"IDAT", b"IEND"}, "No personal/text metadata in R16 capture"
+    html = (directory / "preview.html").read_text(encoding="utf-8")
+    class PreviewParser(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            assert tag not in {"input", "textarea", "form"}, "Offline preview must not collect credentials"
+            for key, value in attrs:
+                if key in {"src", "href"}:
+                    assert value and (value.startswith("data:image/png;base64,") or value.startswith("#"))
+    PreviewParser().feed(html)
+    assert "connect-src 'none'" in html and "form-action 'none'" in html
+    assert not re.search(r"fetch\s*\(|XMLHttpRequest|WebSocket|localStorage|document\.cookie", html)
+    helper = (directory / "tools/capture_splash.c").read_text(encoding="utf-8")
+    assert "SPDX-License-Identifier: MIT" in helper and "/etc/apollo/ram-splash-probe" in helper and "xiaomi,apollo" in helper
+    assert "PROT_READ" in helper and "PROT_WRITE" not in helper
+    assert not re.search(r"\b(?:drmSetMaster|drmModeSetCrtc|drmModeAtomicCommit)\s*\(", helper)
+    ast.parse((directory / "stage.py").read_text(encoding="utf-8"))
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -202,6 +289,7 @@ def main():
     evidence_boundaries()
     input_patch_provenance()
     sensor_patch_provenance()
+    original_boot_review()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

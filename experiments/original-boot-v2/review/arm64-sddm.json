@@ -1,0 +1,12 @@
+{
+  "theme": "omarchy-apollo-original",
+  "target_qt": "6.12.0-3",
+  "target_sddm": "0.21.0-7",
+  "actual_arm64_sddm_test_mode_load_passed": true,
+  "main_qml_sha256": "f3b8ef3fdcf868bb38c6843fe10f583d0c7f2a6937df51b21f2ea59d8d395ca1",
+  "keyboard_qml_sha256": "3093d19c891c3dbd070887fe9ce04f2d32a74fd2181d6e7ed6c065df87dafc68",
+  "pam_authentication_tested": false,
+  "theme_installed_with_target_gpg_and_alpm_in_pc_builder": true,
+  "package_integrity_files": 35,
+  "system_theme_selection_or_authentication_changed": false
+}

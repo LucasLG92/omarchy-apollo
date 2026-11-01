@@ -8,6 +8,7 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 - Implement the Apollo-specific permanent storage/boot/recovery procedure and local first-PIN setup.
 - Validate repeated unplugged boot, recovery and an update/rollback path that retains the device stack.
 - Keep generic PC reset/installer/updater paths guarded until their Apollo equivalents are proven.
+- Integrate the [original V2 Plymouth/SDDM sources](../experiments/original-boot-v2/README.md) with a complete desktop. R16 tested the splash in minimal RAM rescue and ARM64 test mode only loaded the greeter; physical login, first local credential, PAM acceptance and recovery remain to be validated before selecting it permanently.
 
 ## 2. Finish the hardware acceptance
 
@@ -23,6 +24,7 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 - Touch targets, navigation, app switching, toolkit keyboard behavior and accessible controls.
 - Translation coverage and readable device/lens names.
 - Safe screen-off/wake, suspend, alarms, charging, thermal and battery measurements on real storage.
+- Implement and test a separate touch-based encrypted-storage unlock path if LUKS is used; the SDDM keyboard does not provide it.
 - Performance profiles measured against latency and power, not guessed from service startup.
 
 ## 4. Revalidate optional Android compatibility

@@ -1,0 +1,54 @@
+{
+  "upstream_commit": "5978d93ae7da0a325b7493501911e3f1266cadd3",
+  "upstream_tag": "v4.5.0-rc2",
+  "assets_modified": false,
+  "original_sddm_assets": {
+    "default/sddm/omarchy/bullet.png": {
+      "git_blob": "62249b3bd82b0b670a8a503a3bb69bbfe79cc4f4",
+      "sha256": "875ea8297db71415aeef2e03a5ccd67997a13c16f794d4e4929a9d669aaa7327"
+    },
+    "default/sddm/omarchy/entry-failed.png": {
+      "git_blob": "a42f9188478f536ac0e439b61bcf86db9919346e",
+      "sha256": "f8f3ab148ea6c7e0580d918593fecfb6784d2c4859b9d1822c5f0ba7e8090e83"
+    },
+    "default/sddm/omarchy/entry.png": {
+      "git_blob": "5c7891792b8872db933f17a667a449a478c0be53",
+      "sha256": "494587957a28b0a69c7e1477a535f7a11d9b1790e9b7db7c77ed5fb231dfce4c"
+    },
+    "default/sddm/omarchy/lock-failed.png": {
+      "git_blob": "a88afece7ac58e0a76d6177d7d4cb9ce11791138",
+      "sha256": "e30c49a41e6b2c8d26ea6410c9551ecf927492682d8ba35d7c7543af603f26a9"
+    },
+    "default/sddm/omarchy/lock.png": {
+      "git_blob": "3046de1b6a3f20d194f010fee671c936326beb27",
+      "sha256": "36be04a15773170b656bdadfa129dc14695e296abed3ac62247e23dbf213d836"
+    },
+    "default/sddm/omarchy/logo.png": {
+      "git_blob": "f185b2660763bebf2343775d2a682133d5bf78d2",
+      "sha256": "ba8f1547a02ab5db64fe3923d0b834a220e2c3798c1674374a0eb92a18dfddfb"
+    },
+    "default/sddm/omarchy/Main.qml": {
+      "git_blob": "e593c1f32c52707b4dbb894d2eaca10c5ba1fcc9",
+      "sha256": "aa578ec8a6269079e2141842073821fa24940fa4495a13815fa0754652e6027f"
+    },
+    "default/sddm/omarchy/metadata.desktop": {
+      "git_blob": "38036b4bf815a75886baf12c030f4ca06f0d31d3",
+      "sha256": "d7a94b02b897c3356c07ee31e6543924baf1a7ee2c2205b97fc4d0db915e5ea2"
+    },
+    "default/sddm/omarchy/theme.conf": {
+      "git_blob": "e94cbbd3027df32cb00f4fca093d5c72d9696a85",
+      "sha256": "a371ee2822ab833c1349cbe193bf4b9292d6ab6b49a22b525fc1dcd95aa933c1"
+    }
+  },
+  "original_plymouth_asset_blobs": {
+    "logo.png": "f185b2660763bebf2343775d2a682133d5bf78d2",
+    "lock.png": "3046de1b6a3f20d194f010fee671c936326beb27",
+    "entry.png": "5c7891792b8872db933f17a667a449a478c0be53",
+    "bullet.png": "62249b3bd82b0b670a8a503a3bb69bbfe79cc4f4",
+    "progress_bar.png": "dbb9fd74fc853d8a79ff072f5070cc660ea11897",
+    "progress_box.png": "6a263f2469f24502a93f7c3a1ba85cd9f18466b4"
+  },
+  "original_plymouth_script_blob": "0c9492bd97a68a7a5c12ce6c4076066843c0e59b",
+  "source_license": "MIT; copyright David Heinemeier Hansson; license retained",
+  "reference_render": "Original QML and PNGs; only an empty unused SddmComponents module is supplied by the Windows test harness."
+}

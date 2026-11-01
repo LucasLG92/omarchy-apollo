@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=Omarchy Apollo Original
+Description=Original Omarchy appearance adapted to portrait touch input
+Author=Omarchy Apollo contributors
+Copyright=(c) David Heinemeier Hansson; mobile adaptation (c) Omarchy Apollo contributors
+License=MIT
+Type=sddm-theme
+Version=0.2
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=omarchy-apollo-original
+Theme-API=2.0
+QtVersion=6

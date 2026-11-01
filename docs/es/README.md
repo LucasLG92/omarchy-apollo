@@ -8,11 +8,19 @@
 
 ## Estado actual: 4.5 RC2 en RAM
 
-La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. La última prueba registrada es **R13, del 1 de noviembre**. Android no actúa como anfitrión. Son sesiones temporales en RAM: al terminar se restaura el DTBO original, se vuelve a Android y se comprueban los hashes de las particiones de arranque.
+La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. La última prueba de escritorio completo es **R13**; la posterior **R16, del 1 de noviembre**, probó el arranque original en un **rescate RAM mínimo**, sin escritorio completo. Android no actúa como anfitrión. Al terminar se restaura el DTBO original, se vuelve a Android y se comprueban las particiones de arranque.
 
 **La instalación permanente de esta nueva base sigue pendiente. No es todavía un móvil plenamente funcional ni existe un instalador público validado.** La instalación y las pruebas de Waydroid del 30 de octubre pertenecen a una [etapa anterior](../history/README-2026-10-30.md); no demuestran esas funciones en la nueva base.
 
 <p align="center"><a href="../../media/apollo-home-r11.png"><img src="../../media/apollo-home-r11.png" width="245" alt="Captura real del inicio de la sesión R11, sin el aviso de PIN"></a></p>
+
+## Arranque original de Omarchy: V2
+
+<p align="center"><img src="../../media/apollo-boot-r16.png" width="180" alt="Captura KMS real de Plymouth en R16"> <img src="../../experiments/original-boot-v2/previews/login-keyboard-432.png" width="180" alt="Render Qt del acceso V2 con teclado; no es una autenticación real del móvil"></p>
+
+Izquierda: **captura real** del arranque nativo R16, solo logo y fondo. Derecha: **render Qt** del acceso SDDM con ayuda táctil. Se conservan los PNG oficiales MIT de Omarchy y el fondo `#1a1b26`; el estado inicial a 432×960 coincide píxel a píxel con la referencia original.
+
+El tema carga con Qt/SDDM ARM64 real en modo de prueba, pero **el acceso PAM en el móvil no se ha probado**. No se ha configurado contraseña/PIN ni cambiado PAM, autologin o selección permanente del tema. El teclado aparece al tocar el campo, no tiene PIN fijo y no necesita QtVirtualKeyboard. El desbloqueo táctil LUKS sigue pendiente. [Fuentes y límites](../../experiments/original-boot-v2/README.md) · [Integración en español](../../experiments/original-boot-v2/INTEGRACION.txt).
 
 ## Avances comprobados
 
@@ -31,7 +39,7 @@ R12 necesitó añadir la regla del motor durante la sesión. En R13 se probó un
 
 ## Lo que falta
 
-No hay una SIM de pruebas: **no están verificadas las llamadas reales, SMS, datos ni audio de llamada**. Faltan reconexión y suspensión con Wi-Fi, además de emparejamiento y audio Bluetooth. La detección del adaptador NFC no demuestra todavía lectura de etiquetas.
+En las pruebas de telefonía publicadas no había SIM: **no están verificadas las llamadas reales, SMS, datos ni audio de llamada**. Faltan reconexión y suspensión con Wi-Fi, además de emparejamiento y audio Bluetooth. La detección del adaptador NFC no demuestra todavía lectura de etiquetas.
 
 Quedan GPS, huella, proximidad, emisión óptica y uso como mando IR; la intensidad del motor y su respuesta en aplicaciones necesitan más pruebas. También faltan suspensión, autonomía, primer PIN definitivo, arranque independiente de la nueva base y actualizaciones coherentes. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
 

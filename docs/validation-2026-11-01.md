@@ -56,6 +56,20 @@ Runtime v6 included the earlier haptic access rule from the start. The active lo
 
 CMA remained 256 MiB, all 122 observed UFS nodes were read-only, and there were no failed system units at the check. Graphics stopped, Android returned without a request for buttons, and original boot/DTBO readbacks matched. No userdata formatting, call or SMS occurred. [R13 result](evidence/2026-11-01-r13.json).
 
+## R16 — original Plymouth in minimal RAM rescue
+
+This was a **splash-only native RAM rescue trial**, with kernel `7.1.0-apollo-native-r6`, not another full-desktop trial. R13 remains the latest desktop acceptance record. R16 did not stage private calibration, configure a password/PIN, change PAM/autologin or select a permanent phone theme.
+
+The V2 theme keeps the official Omarchy 4.5 RC2 PNG assets and `#1a1b26` background from commit `5978d93ae7da0a325b7493501911e3f1266cadd3`. Plymouth's native daemon, DRM device and active VT were verified. A **real 1080×2400 KMS framebuffer capture** was taken and reviewed: only the wordmark and background, a standard sRGB color tag, no text/EXIF metadata or device identifiers. The image is not the HTML preview. A separate human confirmation of the final R16 screen was not obtained.
+
+Complete XKB data was present, there were **zero XKB errors in the collected rescue log**, and diagnostic tracing was disabled. One daemon RSS sample was **18,304 KiB**. No performance or boot-time comparison is available, and the inherited animation is not a measured boot percentage.
+
+Separately, V2 had 17 Windows Qt checks, 6 offline-browser checks and a Plymouth 26.134.222 parser check. The initial 432×960 Qt render matched the upstream reference pixel for pixel. Real ARM64 Qt 6.12.0-3 / SDDM 0.21.0-7 loaded the theme in **test mode without authentication**. Package `apollo-mobile-boot 0.2.0-1` was prepared and verified through the normal GPG/ALPM path in the PC builder, with 35 integrity entries; active theme selection stayed unchanged. These checks do not establish phone PAM login, physical touch-greeter behavior or a complete Plymouth→desktop handoff.
+
+The keyboard source submits through normal SDDM/PAM and has no fixed PIN or hardcoded credential. It does not require QtVirtualKeyboard and does not implement Plymouth touch-based LUKS unlocking. First local credential setup and actual phone authentication remain pending.
+
+All 122 observed UFS nodes remained read-only. The rescue session returned automatically to Android without a request for buttons, and original boot/DTBO readbacks matched. No userdata formatting or permanent installation occurred. [R16 evidence](evidence/2026-11-01-r16.json) · [V2 source, previews and review scopes](../experiments/original-boot-v2/README.md).
+
 ## What is public
 
 The JSON files are manually reviewed summaries: versions, dimensions, counts, Boolean outcomes and limitations. They exclude device/radio identifiers, network names, credentials, calibration, partition images, raw logs and camera photographs. [The R11 home screenshot](../media/apollo-home-r11.png) contains only the generic desktop. No personal PIN was published.

@@ -1,0 +1,84 @@
+{
+  "version": "0.2",
+  "qt_version": "6.10.2",
+  "platform": "Windows offscreen software rendering",
+  "sddm_backend": "Rejecting mock only; no PAM access",
+  "reference_render_uses_unmodified_upstream_qml": true,
+  "reference_has_unused_sddmcomponents_stub": true,
+  "initial_reference_and_mobile_432_render_identical": true,
+  "native_main_sha256": "f3b8ef3fdcf868bb38c6843fe10f583d0c7f2a6937df51b21f2ea59d8d395ca1",
+  "keyboard_sha256": "3093d19c891c3dbd070887fe9ce04f2d32a74fd2181d6e7ed6c065df87dafc68",
+  "checks": [
+    {
+      "name": "reference QML and assets loaded without modifying upstream source",
+      "passed": true
+    },
+    {
+      "name": "initial 432x960 mobile render matches original pixel for pixel",
+      "passed": true
+    },
+    {
+      "name": "touch keyboard initially hidden",
+      "passed": true
+    },
+    {
+      "name": "normal UWSM session selection",
+      "passed": true
+    },
+    {
+      "name": "tap on original entry opens touch keyboard",
+      "passed": true
+    },
+    {
+      "name": "actual Qt pointer press types q",
+      "passed": true
+    },
+    {
+      "name": "touch backspace",
+      "passed": true
+    },
+    {
+      "name": "all ASCII lowercase digits and punctuation present",
+      "passed": true
+    },
+    {
+      "name": "Spanish characters present",
+      "passed": true
+    },
+    {
+      "name": "Shift space accents and symbols reach the actual input",
+      "passed": true
+    },
+    {
+      "name": "complete supplementary Unicode character erased",
+      "passed": true
+    },
+    {
+      "name": "credential is not truncated to a fixed PIN length",
+      "passed": true
+    },
+    {
+      "name": "physical Unicode preserved",
+      "passed": true
+    },
+    {
+      "name": "submission immediately clears the credential",
+      "passed": true
+    },
+    {
+      "name": "only rejecting mock receives login request",
+      "passed": true
+    },
+    {
+      "name": "backend failure restores input and original failure state",
+      "passed": true
+    },
+    {
+      "name": "1080x2400 portrait scale",
+      "passed": true
+    }
+  ],
+  "messages": [],
+  "phone_render_tested": false,
+  "pam_authentication_tested": false
+}

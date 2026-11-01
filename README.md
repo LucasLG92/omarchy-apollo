@@ -11,13 +11,15 @@
 
 **An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-> **Current track: Omarchy 4.5 RC2, latest RAM trial R13 on 2026-11-01.** These sessions boot native ARM64 Linux, without Android as the host. They returned to Android after each trial. **The new rebase is not permanently installed, is not a complete daily-driver phone, and has no validated public installer.** Earlier permanent-installation and Waydroid results belong to the [2026-10-30 historical track](docs/history/README-2026-10-30.md).
+> **Omarchy 4.5 RC2 rebase:** R13 is the latest full-desktop RAM trial, with working Wi-Fi. The later **R16** trial tested the original boot splash in **minimal RAM rescue**, on 2026-11-01. Android was restored after these native trials. **The new rebase is not permanently installed, is not a complete daily-driver phone, and has no validated public installer.** Earlier permanent-installation and Waydroid results belong to the [2026-10-30 historical track](docs/history/README-2026-10-30.md).
 
 ## On the device
 
-<p align="center"><a href="media/apollo-home-r11.png"><img src="media/apollo-home-r11.png" width="245" alt="Actual R11 RAM-session home screen: portrait app grid and search, without the startup PIN prompt"></a></p>
+<p align="center"><a href="media/apollo-home-r11.png"><img src="media/apollo-home-r11.png" width="200" alt="Actual R11 home-screen capture"></a> <a href="media/apollo-boot-r16.png"><img src="media/apollo-boot-r16.png" width="200" alt="Actual R16 native Plymouth KMS capture"></a> <a href="experiments/original-boot-v2/README.md"><img src="experiments/original-boot-v2/previews/login-initial-432.png" width="200" alt="V2 SDDM Qt render preview; phone PAM login remains untested"></a></p>
 
-<p align="center"><em>Actual R11 device capture. The header artwork is an illustration; this is the tested interface. No camera photos, credentials or personal notifications are published.</em></p>
+<p align="center"><em>Left: actual R11 desktop. Center: actual R16 native splash. Right: a Qt render of the original-style V2 SDDM theme, not a successful phone login. The header is an illustration. No personal notifications or credentials are published.</em></p>
+
+[Original Omarchy V2 sources, touch-keyboard preview and validation boundaries](experiments/original-boot-v2/README.md). The official MIT assets and `#1a1b26` background are retained; the initial 432×960 QML render matches the upstream reference pixel for pixel.
 
 ## What is demonstrated
 
@@ -28,6 +30,7 @@
 - **Physical haptics.** R12 exercised AW8697 rumble for **120 ms at 8192/65535 magnitude** (about 12.5%). The user confirmed a **very low-strength vibration**; normal-session access and feedbackd discovery were also checked.
 - **Connected Wi-Fi.** In R13, the user connected on the phone screen and an HTTPS request bound to the Wi-Fi interface returned **200**. No network identity or credentials are published.
 - **Sensor scratch-file fix.** Runtime `20261101-6` completed a RAM boot, created the allowed private scratch file and exposed accelerometer/light. The specific missing-file error was absent in the collected boot log and a **20.97-second observation**; this is not a general speed benchmark.
+- **Original boot appearance.** R16 ran Plymouth through native DRM/active VT and produced the reviewed KMS capture above. V2 SDDM loads in actual ARM64 test mode and adds touch input to the original layout; **PAM login on the phone remains untested**.
 
 | Component | Latest observed result | Still needed |
 | --- | --- | --- |
@@ -35,13 +38,14 @@
 | Main camera | 24 RGB frames at **3000×2256**; GPU pipeline; autofocus reported focused in a separate illuminated sequence | Optical quality, color, video and full-resolution support; **108 MP is unavailable** in this driver |
 | Ultrawide / other cameras | Ultrawide: 24 RGB frames at **4200×3120**; all four sensors at 640×480 | Front high-resolution capture, macro focus, orientation and quality |
 | Torch | Normal-user one-second on/off control passed | Visible-light confirmation |
-| Modem / phone permissions | Modem detected; read-only call list succeeds; EFS stop/restart passes | **No SIM available:** real calls, SMS, data and call audio untested |
+| Modem / phone permissions | Modem detected; read-only call list succeeds; EFS stop/restart passes | **Real calls, SMS, data and call audio untested**; the published cellular trials had no test SIM |
 | Wi-Fi | R13: connected on screen; Wi-Fi-bound HTTPS request returned 200 | Reconnection, both bands, sustained transfer and suspend/resume |
 | Bluetooth | Service active | Pairing and audio |
 | Sensors / NFC | R13: accelerometer/light available after scratch-file fix; R11: NFC adapter registered | Proximity, NFC tag read and broader sensor acceptance |
 | Haptics | R12: very soft physical AW8697 rumble; R13: local access and feedbackd opening from a fresh runtime v6 RAM boot | Strength and wider app feedback |
 | Infrared | R12: LIRC detected, capabilities `0x302` queried | **No signal transmitted:** optical emission and remote control untested |
 | GPS / fingerprint | Unverified | Native end-to-end support and physical tests |
+| Original boot / V2 login | R16: native Plymouth in minimal RAM rescue; ARM64 SDDM test-mode load | Full-desktop handoff, physical greeter interaction, first local credential and PAM login; no touch LUKS unlock |
 | Boot / updates / battery | Supervised RAM return and original partition readbacks checked | Permanent 4.5 installation, first PIN, standalone boot, coherent updates, suspend and battery life |
 
 See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.

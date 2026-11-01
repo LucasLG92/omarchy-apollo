@@ -1,6 +1,6 @@
 # Hardware status
 
-**Current track:** Omarchy 4.5 RC2 rebase, last recorded trial **R13 · 2026-11-01**. Results are from one Apollo development device. They are not independent certification or a claim that every Mi 10T variant behaves identically. Each row retains the trial that actually tested it; R13 did not repeat every earlier test.
+**Current track:** Omarchy 4.5 RC2 rebase. **R13** remains the latest full-desktop RAM trial; the later **R16 · 2026-11-01** tested the original Plymouth splash in minimal RAM rescue. Results are from one Apollo development device, not independent certification. Each row retains the trial that actually tested it; the splash trial did not repeat desktop or phone acceptance.
 
 The target is a complete, fast native Linux phone. That target is **not achieved**. The new track remains RAM-only; Android and original boot partitions were restored after the tests. No permanent 4.5 installation, complete public installer or working native updater is claimed.
 
@@ -8,6 +8,8 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | --- | --- | --- |
 | Native OS | Omarchy `4.5.0rc2-1`; systemd PID 1; Hyprland/Quickshell on ARM64 | Permanent installation and repeated standalone boot |
 | Display / touch | Internal portrait display and FD650 GPU; touch, app opening and keyboard exercised | App coverage, gesture polish, accessibility and sustained performance |
+| Original Plymouth splash | R16: native DRM, active VT and reviewed 1080×2400 KMS capture in minimal RAM rescue | Handoff to a full desktop, repeated boots and separate user confirmation of the final R16 screen |
+| Original SDDM V2 | Real ARM64 Qt 6.12.0-3 / SDDM 0.21.0-7 test-mode load; package 0.2.0-1 prepared/verified in PC builder | Phone PAM login, physical keyboard interaction and first local credential; active theme selection unchanged |
 | Main camera — S5KHMX | R9: illuminated 240-frame sequence with AF state “focused”; R10: 24 RGB frames, 3000×2256, FD650 | Optical focus quality, color, video, rotation; sensor driver exposes 3008×2256 RAW, **not 108 MP** |
 | Ultrawide — OV13B10 | R10: 24 RGB frames, 4200×3120, FD650 | Image quality and video; crop/delay driver warnings remain |
 | Front — S5K3T2 | R9: 640×480 captured | A high-resolution R10 attempt timed out; investigate stride/configuration |
@@ -15,7 +17,7 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | Camera app | Native Wayland preview observed in omacam | Capture/video UX across all lenses and orientations |
 | Torch | R9: normal-user one-second brightness 0 → 255 → 0 | Physical light not separately confirmed |
 | Modem / EFS | Modem discovered; EFS normal stop/restart succeeds after fix | Actual EFS transfer and cellular stability |
-| Phone permissions | R11: active UID voice/messaging checks pass; read-only call list succeeds; no startup authentication job | Real calls/SMS/data/audio **untested, no SIM** |
+| Phone permissions | R11: active UID voice/messaging checks pass; read-only call list succeeds; no startup authentication job | Real calls/SMS/data/audio **untested**; no SIM was available in R11 |
 | Privileged administration | R11: service control and firmware still require `auth_admin` | First definitive PIN and complete permanent security profile |
 | Wi-Fi | R13: user connected on screen; connection verified and an HTTPS request bound to Wi-Fi returned 200 from `omarchy.org` | Both bands, sustained transfer, reconnect and suspend/resume; no network identity or credentials exported |
 | Bluetooth | Service active | Pairing, audio and reconnection |
@@ -29,7 +31,7 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | GPS / fingerprint | Unverified | Fix/reliability; enrollment, verification and unlock |
 | Audio | Earlier-track results remain historical | Speaker, microphone, routing and call AEC in 4.5 |
 | Power / alarms | USB-connected observation only | Real battery measurements, charge behavior, RTC alarms and suspend |
-| Return / recovery | R10/R11/R12/R13 returned after graphical shutdown without a request for hardware buttons; original boot/DTBO readbacks matched | General reboot reliability and standalone recovery |
+| Return / recovery | R10–R13 desktop trials and R16 minimal rescue returned without a request for hardware buttons; original boot/DTBO readbacks matched | General reboot reliability and standalone recovery |
 | Updates / Android apps | Earlier integration is archived; native 4.5 updater remains guarded/incomplete | Coherent upgrade/rollback and new-track Waydroid validation |
 
 ## How to read a result
@@ -41,6 +43,8 @@ R9 had a DMA allocation failure. R10 resolved that failure for the main camera b
 R12 used kernel `7.1.0-apollo-native-r6` with runtime `20261101-4` and a haptic rule added in RAM. R13 completed a new RAM boot of runtime **`20261101-6`**, including that rule and the sensor scratch-file fix. Feedbackd opened the haptic device without manual restart. This tests v6; it does not retroactively record a boot of the intermediate v5 package or establish permanent standalone boot.
 
 Current evidence: [R9 cameras/torch/EFS](evidence/2026-11-01-r9.json), [R10 DMA comparison](evidence/2026-11-01-r10.json), [R11 permissions/recovery](evidence/2026-11-01-r11.json), [R12 haptics/IR/recovery](evidence/2026-11-01-r12.json), [R13 Wi-Fi/runtime/sensors](evidence/2026-11-01-r13.json). Raw diagnostics, camera images and per-device data remain private.
+
+Separate splash evidence: [R16 minimal RAM rescue](evidence/2026-11-01-r16.json) and [original V2 theme sources/reviews](../experiments/original-boot-v2/README.md). R16 had no complete desktop or private calibration. Its single Plymouth RSS sample was 18,304 KiB; no speed/boot-time comparison is available. There were zero XKB errors in the collected rescue log and diagnostic tracing was disabled. No local password/PIN, PAM/autologin or permanent theme selection changed. SDDM's touch keyboard does not implement Plymouth touch-based LUKS unlocking.
 
 The [hardware investigation notes](hardware-investigation.md) keep newly identified Android paths and upstream driver candidates separate from native acceptance.
 

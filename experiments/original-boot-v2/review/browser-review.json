@@ -1,0 +1,31 @@
+{
+  "version": "0.2",
+  "browser": "Isolated Chrome headless",
+  "checks": [
+    {
+      "name": "three native renders embedded offline",
+      "passed": true
+    },
+    {
+      "name": "keyboard hidden initially",
+      "passed": true
+    },
+    {
+      "name": "show touch input preview",
+      "passed": true
+    },
+    {
+      "name": "return to original appearance",
+      "passed": true
+    },
+    {
+      "name": "no credential inputs or forms",
+      "passed": true
+    },
+    {
+      "name": "432 pixel viewport has no horizontal overflow",
+      "passed": true
+    }
+  ],
+  "credential_inputs_present": false
+}

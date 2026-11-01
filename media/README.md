@@ -9,3 +9,9 @@
 Screen captures document the rendered desktop. Upstream interface, application icons and wallpaper retain their respective authorship and licenses; no separate wallpaper asset is redistributed. See [Omarchy](https://github.com/omacom/omarchy) and [Omarchy Mobile](https://github.com/derekross/omarchy-mobile). The project's MIT license does not relicense third-party visual content.
 
 Do not replace these with raw terminal, camera, account, network or personal-gallery captures. Future images need manual review, not only a metadata scan.
+
+## Original boot V2 and R16
+
+`apollo-boot-r16.png` is a real 1080×2400 native KMS capture from the R16 minimal RAM rescue trial. It contains only the original Omarchy wordmark and background. It has a standard sRGB color tag and no text/EXIF metadata or identifiers. It is distinct from the SDDM Qt previews in [the V2 experiment](../experiments/original-boot-v2/README.md). No separate human confirmation of the final R16 screen was obtained.
+
+V2 previews are renders of the original MIT Omarchy composition and the portrait/touch adaptation, not photographs or successful phone PAM logins. The reference and initial 432×960 renders are byte-identical; the keyboard preview exercises a rejecting mock. Their only ancillary image data is technical DPI. Native theme PNG assets are unchanged upstream files. **David Heinemeier Hansson's original MIT attribution remains in each native theme directory.** This does not claim ownership of or endorsement by upstream Omarchy.

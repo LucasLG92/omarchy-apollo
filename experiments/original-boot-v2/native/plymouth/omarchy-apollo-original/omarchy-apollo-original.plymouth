@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Omarchy Apollo Original
+Description=Original Omarchy boot identity fitted to Apollo
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/omarchy-apollo-original
+ScriptFile=/usr/share/plymouth/themes/omarchy-apollo-original/omarchy-apollo-original.script

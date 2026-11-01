@@ -1,0 +1,71 @@
+OMARCHY APOLLO — APARIENCIA ORIGINAL, V2
+Fuentes y revisión pública actualizadas con R16, 1 de noviembre de 2026.
+
+DISEÑO Y CRÉDITOS
+Fuente: Omarchy v4.5.0-rc2, commit
+5978d93ae7da0a325b7493501911e3f1266cadd3.
+Diseño y PNG originales: David Heinemeier Hansson, licencia MIT conservada en
+LICENSE-Omarchy dentro de cada tema. Adaptación, teclado y staging: MIT.
+
+Se conservan los PNG oficiales sin modificación, el fondo #1a1b26 y la
+composición original. A 432x960, la captura QML inicial coincide píxel a píxel
+con la referencia original. El diseño se escala uniformemente a 1080x2400.
+El teclado permanece oculto hasta tocar el campo de credencial; al abrirlo,
+el conjunto sube para dejar visible el acceso. No requiere QtVirtualKeyboard.
+
+AUTENTICACIÓN
+La fuente llama a sddm.login(usuario, credencial, sesión) y vacía el campo al
+enviar. Conserva el backend PAM normal: no contiene contraseña ni PIN fijo,
+no limita la credencial a seis dígitos y no registra lo que se escribe.
+Las viñetas originales son una máscara visual; la cuenta/PAM decide aceptar.
+
+No se ha probado un acceso PAM real en el móvil ni configurado una primera
+credencial. No se han cambiado PAM, autologin, cuentas o selección permanente
+del tema. La carga ARM64 en modo de prueba no equivale a autenticarse.
+El teclado de SDDM no implementa el desbloqueo táctil de LUKS en Plymouth.
+
+PRUEBAS
+- Qt 6.10.2 Windows: 17 comprobaciones, render offscreen y backend simulado
+  que siempre rechaza. Sin prueba de PAM.
+- Vista HTML autocontenida: 6 comprobaciones; sin campos de credencial,
+  formularios ni conexión de red. Las imágenes son renders Qt.
+- Parser Plymouth 26.134.222: sintaxis y callbacks comprobados.
+- ARM64 real: Qt 6.12.0-3 y SDDM 0.21.0-7 cargaron el tema en test-mode.
+- Paquete apollo-mobile-boot 0.2.0-1 preparado/verificado en el builder del PC
+  por la vía normal de firmas GPG/ALPM, con 35 entradas de integridad.
+- R16: Plymouth nativo en un rescate RAM mínimo, DRM y VT activo comprobados.
+  Captura KMS real 1080x2400 revisada: solo logo y fondo, sin texto/EXIF/IDs.
+  El PNG conserva el marcador de color sRGB estándar. No es la maqueta HTML.
+  Cero errores XKB en el registro de rescate recogido; trazado desactivado.
+  RSS 18304 KiB en una sola muestra, sin comparación de velocidad o arranque.
+  Los 122 nodos UFS observados permanecieron en solo lectura. No se incluyó
+  calibración privada. Retorno automático a Android y boot/DTBO originales
+  verificados. No se obtuvo confirmación humana separada de la pantalla R16.
+
+R16 no arrancó el escritorio completo. La última prueba de escritorio es R13,
+con Wi-Fi HTTPS verificado, sensores y regla de vibración de runtime v6.
+No hay instalación permanente ni verificación del 100 % del teléfono.
+La animación upstream de Plymouth no es un porcentaje medido de arranque.
+
+STAGING, SIN ACTIVACIÓN
+Desde esta carpeta:
+
+    python3 stage.py --output /ruta/nueva/apollo-original-stage
+
+La carpeta debe ser nueva. Se preparan usr/share/plymouth/themes,
+usr/share/sddm/themes y documentación/licencias dentro de esa carpeta.
+No se escribe configuración activa en /etc, no se selecciona el tema ni se
+modifican initramfs, particiones, cuentas o autenticación. No es un instalador.
+No se distribuyen paquetes firmados, imágenes de arranque ni toolchains aquí.
+
+Falta integrar y probar con el escritorio completo el paso Plymouth→SDDM,
+la interacción física del teclado y la primera credencial local normal PAM,
+además de arranque independiente, recuperación, actualizaciones y cifrado.
+Una credencial real se configura localmente; no debe enviarse por chat.
+
+CONSULTA
+README.md: estado, imágenes diferenciadas y fuentes oficiales.
+source-manifest.json: origen de los assets y blobs Git.
+review/: resultados pequeños con alcance de cada prueba, sin registros brutos.
+tools/capture_splash.c: helper MIT con guardas RAM/Apollo, consultas KMS y mmap
+PROT_READ; no pide DRM master ni cambia modos. Se publica solo la fuente.

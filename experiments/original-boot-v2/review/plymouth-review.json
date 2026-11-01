@@ -1,0 +1,18 @@
+{
+  "version": "0.2",
+  "actual_upstream_parser_passed": true,
+  "upstream_parser_version": "26.134.222",
+  "callbacks_verified_in_upstream_api": [
+    "SetBootProgressFunction",
+    "SetDisplayMessageFunction",
+    "SetDisplayNormalFunction",
+    "SetDisplayPasswordFunction",
+    "SetHideMessageFunction",
+    "SetRefreshFunction"
+  ],
+  "script_sha256": "f038bb0c7fb7f7566f72fab28638194276c79d5e189f8bc4cf40bb288ba41486",
+  "upstream_animation_logic_retained": true,
+  "drm_render_tested": false,
+  "phone_boot_tested": false,
+  "initramfs_changed": false
+}
