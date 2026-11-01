@@ -1,6 +1,6 @@
 # Hardware investigation
 
-These notes distinguish driver leads from the bounded physical results in [R13 status](status.md). Android driver names and a patch tested on another phone do not prove complete Apollo functionality.
+These notes distinguish driver leads from the bounded physical results in [current status](status.md). Android driver names and a patch tested on another phone do not prove complete Apollo functionality.
 
 ## Infrared
 

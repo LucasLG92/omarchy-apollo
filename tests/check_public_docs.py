@@ -271,6 +271,88 @@ def sim_trial_boundaries():
         assert data[field] is False, ("R17", field)
 
 
+def sim_registration_and_ui_review():
+    data = json.loads((ROOT / "docs/evidence/2026-11-01-r18.json").read_text(encoding="utf-8"))
+    assert data["trial"] == "R18" and data["registration_state"] == "home"
+    for field in ("user_entered_sim_pin_on_handset", "sim_access_pin_unlocked_verified",
+                  "ordinary_network_registration_verified", "lte_access_technology_reported",
+                  "nr5g_access_technology_reported", "packet_service_attached_reported",
+                  "pin2_reported_separately_from_sim_access_pin", "voice_interface_present",
+                  "messaging_interface_present", "root_pin_ui_only_in_supervised_ram_session",
+                  "this_trial_returned_automatically_without_requesting_buttons",
+                  "original_dtbo_restored", "android_boot_completed_verified",
+                  "original_boot_readback_verified", "original_dtbo_readback_verified"):
+        assert data[field] is True, ("R18", field)
+    for field in ("independent_reproduction", "device_identifiers_included", "raw_logs_included",
+                  "private_camera_images_included", "calibration_or_firmware_included",
+                  "pin_received_or_logged_by_agent", "actual_5g_throughput_measured",
+                  "cellular_ip_internet_tested", "physical_to_logical_sim_slot_mapping_verified",
+                  "pin2_or_puk_entered", "pin2_message_fix_phone_tested",
+                  "user_call_attempt_result_confirmed", "call_audio_verified", "sms_tested",
+                  "calls_or_messages_sent_by_agent", "subscriber_ids_numbers_or_operator_exported",
+                  "modem_general_authorization_policy_changed", "local_credentials_or_pam_changed",
+                  "screen_or_pin_captured", "private_calibration_exported",
+                  "manual_fastboot_buttons_required_for_recovery", "automatic_return_reliability_proven",
+                  "userdata_formatted", "permanent_installation_complete",
+                  "sddm_pam_login_tested_on_phone", "full_phone_functionality_verified"):
+        assert data[field] is False, ("R18", field)
+    assert data["phone_ui_package_tested"] == "apollo-sim-unlock 0.1.2-1"
+    assert data["pin2_message_fix_candidate"] == "apollo-sim-unlock 0.1.3-1"
+    assert data["max_call_objects_in_bounded_observations"] == 0
+    directory = ROOT / "experiments/sim-unlock"
+    candidate = json.loads((directory / "candidate.json").read_text(encoding="utf-8"))
+    review = json.loads((directory / "arm64-synthetic-review.json").read_text(encoding="utf-8"))
+    source = (directory / "apollo-sim-unlock.py").read_bytes()
+    assert hashlib.sha256(source).hexdigest() == candidate["source_sha256"]
+    assert candidate["package"] == data["pin2_message_fix_candidate"] and not candidate["phone_tested"]
+    assert candidate["radio_pin_attempts_in_synthetic_test"] == 0
+    assert not candidate["logs_pin_or_reads_subscriber_ids"]
+    assert review["real_arm64_gtk_gio_loaded"] and review["synthetic_modem_only"]
+    assert review["real_radio_pin_attempts"] == 0 and not review["subscriber_properties_queried"]
+    assert review["pin2_puk2_not_mistaken_for_access_pin"]
+    license_text = (directory / "LICENSE").read_text(encoding="utf-8")
+    assert "MIT License" in license_text and "Copyright (c) 2026 Apollo contributors" in license_text
+    tree = ast.parse(source.decode("utf-8"))
+    app = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "SimUnlock")
+    properties = {
+        node.args[2].value for node in ast.walk(app)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name) and node.func.value.id == "self"
+        and node.func.attr == "get" and len(node.args) == 3 and isinstance(node.args[2], ast.Constant)
+    }
+    assert properties == {"Sim", "UnlockRequired", "UnlockRetries"}, "Do not query subscriber/operator properties"
+    assert not any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                   and node.func.id in {"print", "open", "eval", "exec"} for node in ast.walk(tree))
+    # Exercise only the classification method with fake property reads.
+    # GTK is not imported and no bus or radio object exists in this test.
+    method = next(node for node in app.body if isinstance(node, ast.FunctionDef) and node.name == "refresh")
+    namespace = {"MODEM": "org.freedesktop.ModemManager1.Modem",
+                 "__builtins__": {"dict": dict, "isinstance": isinstance, "str": str}}
+    exec(compile(ast.Module(body=[method], type_ignores=[]), "<SIM refresh classification>", "exec"), namespace)
+    class Control:
+        def set_sensitive(self, value):
+            self.sensitive = value
+        def set_text(self, value):
+            self.text = value
+    class FakeModem:
+        def __init__(self, lock, retries, blocked):
+            self.values = {"UnlockRequired": lock, "UnlockRetries": {2: retries}}
+            self.modem = "/synthetic"
+            self.send_blocked = blocked
+            self.button, self.entry, self.keypad, self.status = (Control() for _ in range(4))
+        def get(self, path, interface, prop):
+            assert path == self.modem and interface == namespace["MODEM"]
+            return self.values[prop]
+    for lock, retries, blocked, ready in (
+        (1, 3, False, False), (2, 3, False, True), (3, 3, False, False),
+        (4, 3, False, False), (5, 3, False, False), (2, 0, False, False),
+        (2, 3, True, False), (0, 3, False, False),
+    ):
+        fake = FakeModem(lock, retries, blocked)
+        namespace["refresh"](fake)
+        assert fake.ready is ready and fake.button.sensitive is ready, (lock, retries, blocked)
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -313,6 +395,7 @@ def main():
     sensor_patch_provenance()
     original_boot_review()
     sim_trial_boundaries()
+    sim_registration_and_ui_review()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

@@ -1,0 +1,10 @@
+{
+  "package": "apollo-sim-unlock 0.1.3-1",
+  "source_sha256": "0673dd072dd5722bed9c4a3bab3f5f125048fc3b5a2f2e338a2fea12a7726828",
+  "arm64_gtk_with_synthetic_modem_passed": true,
+  "pin2_and_puk2_not_mistaken_for_access_pin": true,
+  "installed_in_pc_builder_with_normal_gpg_alpm": true,
+  "phone_tested": false,
+  "radio_pin_attempts_in_synthetic_test": 0,
+  "logs_pin_or_reads_subscriber_ids": false
+}

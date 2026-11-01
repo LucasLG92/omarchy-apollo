@@ -20,6 +20,7 @@ The current development track starts from a fresh ARM64 userspace and adapts the
 | libcamera base | `v0.7.2`, with the pinned mobile patch series retained |
 | HexagonRPC base | [`93f3467dcfe1601bb70547611866a069ae914de5`](https://github.com/linux-msm/hexagonrpc/tree/93f3467dcfe1601bb70547611866a069ae914de5), then the pinned Apollo `hexagonrpcd-apollo/apollo-sensor-fixes.patch`, then the R13 scratch-file patch |
 | Original boot / login V2 | Omarchy assets/design at [`5978d93ae7da0a325b7493501911e3f1266cadd3`](https://github.com/omacom/omarchy/tree/5978d93ae7da0a325b7493501911e3f1266cadd3); theme package `apollo-mobile-boot 0.2.0-1` verified in PC builder; target Qt `6.12.0-3` / SDDM `0.21.0-7` test-mode load |
+| Local SIM UI | R18 phone: `apollo-sim-unlock 0.1.2-1`, supervised root/RAM. Published source: `0.1.3-1` PIN2/PUK2 candidate, PC-signed/integrity-checked and synthetic ARM64 GTK-tested, **not phone-tested** |
 
 Version suffixes identify these local adaptations; they are not official upstream releases. Normal package signatures and package/file integrity checks were used. No private package-signing material is distributed.
 
@@ -33,6 +34,7 @@ Version suffixes identify these local adaptations; they are not official upstrea
 | Root `PKGBUILD`, `platform/`, `config/`, `lock/`, other recipes | Earlier 2026-10-30 integration; not a complete R11–R13 build recipe |
 | `hardware/apollo-base/` | Earlier imported hardware source archive and provenance |
 | `experiments/original-boot-v2/` | Original design, portrait/touch source and review records; not active theme configuration or a complete phone login installer |
+| `experiments/sim-unlock/` | MIT 0.1.3 candidate source and synthetic review; separate from the 0.1.2 used physically in R18 |
 
 The R11–R13 systems were built and tested privately with per-device calibration staged in RAM. This repository does not yet contain a validated end-to-end public builder for those systems. The patches do not contain calibration, are not firmware, and cannot be flashed. They target different source trees and are not one sequential patch series.
 
@@ -42,7 +44,9 @@ The R13 sensor RPC patch creates a missing scratch file only for an already perm
 
 R16 is a separate minimal RAM rescue test of Plymouth, with native DRM/VT and a reviewed KMS image. It did not boot this complete userspace stack or stage private calibration. Real ARM64 SDDM test-mode loading is also recorded, but phone PAM login and local credential setup remain untested. See [V2 sources and scope](../experiments/original-boot-v2/README.md).
 
-R17 is the latest full-desktop RAM trial, reporting Omarchy `4.5.0rc2`, kernel R6 and systemd as PID 1. It detected a PIN-locked SIM; a signed local dialog was installed/launched but completion, unlock and registration were unverified. No cellular calls, SMS or data were tested. Recovery required buttons/full bootloader, then original DTBO restoration and verified Android boot/readbacks. Automatic return is not reliable. This update publishes the [R17 summary](evidence/2026-11-01-r17.json), not SIM-development code, binaries or private device data.
+R17 reported a full-desktop RAM session with a PIN-locked SIM and no confirmed dialog completion. Recovery required buttons/full bootloader, then original DTBO restoration and verified Android/readbacks. The [R17 summary](evidence/2026-11-01-r17.json) retains those limits.
+
+R18 is the latest full-desktop RAM trial, reporting Omarchy `4.5.0rc2` and kernel R6. Local access-PIN entry led to home registration with LTE/NR5G and packet attachment reported. Voice/Messaging interfaces were present, but no incoming-call attempt was confirmed, and calls/audio/SMS/IP data/throughput remain unverified. It returned automatically to Android with original boot/DTBO readbacks matched; that does not establish general return reliability. The [R18 result](evidence/2026-11-01-r18.json) used UI 0.1.2-1; the [published 0.1.3 source](../experiments/sim-unlock/README.md) is a later PIN2/PUK2 correction with PC/synthetic tests only. No signed binaries, subscriber data or credentials are distributed.
 
 ## Next release gate
 

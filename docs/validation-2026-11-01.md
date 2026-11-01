@@ -80,6 +80,18 @@ This SIM-PIN path is separate from the Linux account/SDDM/PAM path. The experime
 
 Per-device calibration was used privately in RAM; calibration partitions were not written and no calibration contents, subscriber identifiers, operator/network data, PIN or raw logs are published. R13's Wi-Fi/sensor results and R16's actual splash capture retain their original scope. [R17 result](evidence/2026-11-01-r17.json).
 
+## R18 — local access PIN accepted and network registered
+
+The full native RAM desktop used Omarchy `4.5.0rc2`, kernel `7.1.0-apollo-native-r6` and **SIM UI 0.1.2-1**. The user entered the PIN only on the handset through the masked local numeric window; no entry screenshot was taken. The modem's ordinary access-PIN unlock was verified, followed by **home network registration**, reported LTE/NR5G access technologies and packet-service attachment. **Cellular IP Internet and actual 5G throughput were not tested.** No PIN2/PUK was entered or SIM protection changed.
+
+The remaining lock enum represented PIN2, a different SIM restriction from the access PIN. UI 0.1.2 showed a confusing message for that state. The [0.1.3-1 candidate source](../experiments/sim-unlock/README.md) now distinguishes PIN2/PUK2. It was signed/installed through normal GPG/ALPM in the PC builder (12 integrity entries, zero altered) and passed real ARM64 GTK/GIO tests with a **synthetic modem and zero radio PIN attempts**. **0.1.3 was not phone-tested in R18.** The published source/hash and synthetic result are separate from the physical 0.1.2 result.
+
+Voice and Messaging interfaces were present. An incoming-call check was requested, but there was no second phone available, so **no external call attempt was confirmed**. Two bounded 65-second observation windows saw zero call objects. This does not establish a failed call. Calls, call audio and SMS remain unverified; the agent placed no call or message. Physical/logical SIM slot mapping also remains unverified.
+
+The Linux account remained locked, so the PIN UI ran as root only in supervised RAM. General modem authorization policy, local credentials and PAM were not changed. GUI/modem core dumps and debug traces were disabled for entry; late journal collection was skipped after sensitive input. No PIN, subscriber identifiers, numbers, operator, APN or credential capture is distributed.
+
+This trial returned automatically without asking for buttons. Android completed boot and original boot/DTBO readbacks matched. R17's manual recovery remains a separate recorded result; general automatic-return reliability is **not proven**. No userdata formatting or permanent installation occurred. Phone PAM login and complete phone functionality remain pending. [R18 evidence](evidence/2026-11-01-r18.json).
+
 ## What is public
 
 The JSON files are manually reviewed summaries: versions, dimensions, counts, Boolean outcomes and limitations. They exclude device/radio identifiers, network names, credentials, calibration, partition images, raw logs and camera photographs. [The R11 home screenshot](../media/apollo-home-r11.png) contains only the generic desktop. No personal PIN was published.

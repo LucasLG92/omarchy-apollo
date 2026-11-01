@@ -8,7 +8,7 @@
 
 ## Estado actual: 4.5 RC2 en RAM
 
-La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. La última sesión de escritorio completo es **R17**: detectó una SIM bloqueada por PIN, sin desbloqueo ni registro de red verificados. Android no actúa como anfitrión. **La recuperación necesitó botones y el cargador completo; el retorno automático todavía no es fiable.** Android quedó restaurado y las lecturas originales de boot/DTBO coincidieron.
+La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. En la última sesión, **R18**, el usuario introdujo el PIN en el móvil y se verificaron el desbloqueo de acceso y el registro en red de origen, con LTE/NR5G anunciados. **Llamadas, SMS, Internet móvil y velocidad siguen sin verificar.** Android no actúa como anfitrión. R18 volvió automáticamente a Android con boot/DTBO originales comprobados; R17 necesitó botones, por lo que la fiabilidad general del retorno sigue pendiente.
 
 Se conservan como resultados históricos el Wi-Fi real de R13 y el arranque original R16 en rescate RAM mínimo. R16 no probó el escritorio completo ni autenticación PAM.
 
@@ -29,20 +29,22 @@ El tema carga con Qt/SDDM ARM64 real en modo de prueba, pero **el acceso PAM en 
 - Escritorio nativo con renderizado **Freedreno FD650**, entrada táctil, aplicaciones y teclado en pantalla.
 - Las cuatro cámaras entregan imágenes de 640×480. La principal capturó 24 imágenes RGB de **3000×2256** y la ultra gran angular otras 24 de **4200×3120**.
 - La reserva de memoria contigua pasó de 32 a **256 MiB**, resolviendo el fallo de asignación DMA de la principal.
-- En R11, la sesión normal consultó llamadas sin el aviso de autenticación del sistema al iniciar. Administración del servicio y cambios de firmware siguen requiriendo autenticación de administrador; el bloqueo SIM-PIN de R17 es un paso distinto todavía pendiente.
+- En R11, la sesión normal consultó llamadas sin el aviso de autenticación del sistema al iniciar. Administración del servicio y cambios de firmware siguen requiriendo autenticación de administrador. La UI PIN de R18 se ejecutó como root solo en la sesión RAM supervisada; la integración con la sesión normal sigue pendiente.
 - Se han comprobado el encendido/apagado de la linterna desde la sesión normal y el cierre/reinicio del servicio EFS del módem. Falta confirmar visualmente la luz y probar una transferencia EFS real.
 - En R12, el motor **AW8697** respondió a un pulso de **120 ms al 12,5 %**: el usuario confirmó una vibración **muy suave**. La sesión normal obtuvo acceso con `uaccess`, sin escritura para todos; feedbackd abrió el dispositivo después de reiniciarlo para detectar la regla añadida en RAM.
 - Infrarrojos aparece como dispositivo LIRC y anuncia capacidades `0x302`. Solo se consultaron: **no se emitió ninguna señal** ni se probó como mando.
 - En R13, el usuario conectó Wi-Fi desde la pantalla. Una petición HTTPS obligada a usar esa interfaz devolvió **200** desde `omarchy.org`. No se publican nombre, direcciones ni contraseña de la red.
 - Corregido un fallo concreto al crear el archivo temporal permitido de sensores: 26 comprobaciones ARM64 RPC/VFS y creación privada en RAM. No apareció ese error en el registro de arranque recogido ni durante **20,97 segundos de observación**. Acelerómetro y luz siguen disponibles; proximidad no. Ese tiempo no es una medida de arranque ni una mejora general de velocidad.
-- R17 detectó el objeto SIM y el bloqueo SIM-PIN. Se instaló y lanzó un diálogo local firmado en RAM; el uso por el usuario quedó sin confirmar. No se recibió ni publicó el PIN ni identificadores de la tarjeta.
-- En R17, el fastboot limitado rechazó una descarga antes de escribir. Tras volver con botones al cargador completo se restauró DTBO y se verificó Android con boot/DTBO originales. No se formateó `userdata`.
+- En R18, el usuario introdujo el PIN únicamente en el Apollo. Se verificaron acceso desbloqueado, registro en red de origen y LTE/NR5G anunciados. No se recibió ni publicó el PIN, números, operador o identificadores de la tarjeta.
+- R18 volvió automáticamente y verificó Android con boot/DTBO originales. R17 había requerido botones y cargador completo: se conserva ese resultado y todavía no se da por fiable el retorno automático. No se formateó `userdata`.
+
+La app probada en R18 fue **0.1.2-1**. Tras aceptar el PIN de acceso, el estado PIN2 restante produjo un mensaje confuso. La [fuente candidata 0.1.3-1](../../experiments/sim-unlock/README.md) distingue PIN2/PUK2, está verificada en el constructor del PC y pasó pruebas GTK/GIO ARM64 con módem simulado y **cero intentos de radio**. **Aún no se ha probado en el móvil.** No se introdujo PIN2/PUK ni se cambió la protección de la tarjeta.
 
 R12 necesitó añadir la regla del motor durante la sesión. En R13 se probó un arranque completo en RAM con kernel R6 y runtime **`20261101-6`**, que incluye esa regla: la sesión normal tiene acceso y feedbackd abrió el dispositivo **sin reinicio manual**. La intensidad física confirmada sigue siendo la muy suave de R12. [Detalle de R13](../validation-2026-11-01.md#r13--wifi-runtime-v6-and-sensor-scratch-files).
 
 ## Lo que falta
 
-En R17 ya había SIM, pero **no están verificados el desbloqueo, registro de red, llamadas reales, SMS, datos ni audio de llamada**. El mapeo entre ranura física y lógica tampoco se ha validado. El diálogo SIM-PIN es distinto de la credencial local del sistema: esa cuenta sigue sin contraseña configurada y la administración por Polkit sigue pendiente. Faltan reconexión y suspensión con Wi-Fi, además de emparejamiento y audio Bluetooth. La detección del adaptador NFC no demuestra todavía lectura de etiquetas.
+**No están verificadas llamadas, audio de llamada, SMS ni datos IP móviles.** No hubo intento de llamada entrante confirmado porque no había un segundo teléfono disponible; cero objetos de llamada en observaciones acotadas no prueban un fallo. Las interfaces Voice/Messaging y el registro LTE/NR5G no demuestran esos servicios ni velocidad 5G. El mapeo entre ranura física y lógica tampoco se ha validado. El diálogo SIM-PIN es distinto de la credencial Linux/PAM: la cuenta continúa bloqueada y la administración por Polkit sigue pendiente. Faltan reconexión/suspensión Wi-Fi, emparejamiento/audio Bluetooth y lectura de etiquetas NFC.
 
 Quedan GPS, huella, proximidad, emisión óptica y uso como mando IR; la intensidad del motor y su respuesta en aplicaciones necesitan más pruebas. También faltan suspensión, autonomía, primer PIN definitivo, arranque independiente de la nueva base y actualizaciones coherentes. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
 

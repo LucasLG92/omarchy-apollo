@@ -46,7 +46,10 @@ R16 no arrancó el escritorio completo. R13 conserva sus resultados de Wi-Fi,
 sensores y regla de vibración. La posterior R17 sí alcanzó el escritorio:
 SIM detectada y bloqueada por PIN, sin desbloqueo/registro/telefonía verificados.
 R17 necesitó botones y cargador completo para recuperar Android: el retorno
-automático no es fiable. La credencial local Linux/PAM sigue pendiente.
+automático no se dio por fiable. En R18 se verificaron PIN de acceso SIM y
+registro de red con LTE/NR5G anunciados, pero no llamadas/SMS/datos IP/velocidad.
+R18 volvió automáticamente; ese éxito no borra la recuperación manual R17.
+La credencial local Linux/PAM sigue pendiente y es distinta del PIN de la SIM.
 No hay instalación permanente ni verificación del 100 % del teléfono.
 La animación upstream de Plymouth no es un porcentaje medido de arranque.
 

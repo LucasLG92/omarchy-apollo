@@ -1,0 +1,18 @@
+{
+  "real_arm64_gtk_gio_loaded": true,
+  "synthetic_modem_only": true,
+  "leading_zero_preserved": true,
+  "masked_input": true,
+  "password_buffer_and_undo_disabled": true,
+  "close_while_pending_blocked": true,
+  "error_result_blocks_another_send": true,
+  "numeric_keypad_bounded": true,
+  "no_duplicate_or_automatic_pin_send": true,
+  "entry_cleared_before_send": true,
+  "successful_send_with_transient_read_failure_not_retried": true,
+  "puk_and_zero_attempts_block_sending": true,
+  "pin2_puk2_not_mistaken_for_access_pin": true,
+  "invalid_input_not_sent": true,
+  "subscriber_properties_queried": false,
+  "real_radio_pin_attempts": 0
+}
