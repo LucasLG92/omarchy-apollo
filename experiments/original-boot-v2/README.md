@@ -2,7 +2,7 @@
 
 The original **Omarchy 4.5 RC2** appearance, fitted to Apollo's portrait display. The official PNG assets are unchanged, the background is `#1a1b26`, and the initial 432×960 QML render matches the upstream reference pixel for pixel. Touch input appears when the credential field is tapped.
 
-**Status:** native Plymouth was exercised in **R16, a minimal RAM rescue session**. The SDDM theme loads with real ARM64 Qt/SDDM in test mode, but **PAM login on the phone is untested**. No OS password/PIN was configured, no active theme or autologin/PAM policy was changed, and this is not a permanent installation. **R18 is the latest full-desktop trial:** the separate SIM access PIN was entered locally and network registration succeeded. R18 returned automatically, while R17 needed buttons; general return reliability remains unproven. R13's Wi-Fi result retains its scope. See [current status](../../docs/status.md).
+**Status:** native Plymouth was exercised in **R16, a minimal RAM rescue session**. The SDDM theme loads with real ARM64 Qt/SDDM in test mode, but **PAM login on the phone is untested**. No OS password/PIN was configured by this theme, no active theme or autologin/PAM policy was changed, and this is not a permanent installation. **R19 is the latest full-desktop trial:** one manual outgoing voicemail call and audible downlink were verified. R18/R19 returned automatically while R17 needed buttons; general return reliability remains unproven. R13 Wi-Fi retains its scope. See [current status](../../docs/status.md).
 
 [Español / integración](INTEGRACION.txt) · [Current hardware status](../../docs/status.md) · [R16 evidence](../../docs/evidence/2026-11-01-r16.json)
 

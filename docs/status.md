@@ -1,6 +1,6 @@
 # Hardware status
 
-**Current track:** Omarchy 4.5 RC2 rebase. **R18 · 2026-11-01** verified local access-PIN unlock and home network registration, with LTE/NR5G flags reported. Calls, SMS, cellular IP Internet and throughput are unverified. R18 returned automatically; R17 needed buttons, so general recovery reliability is still unproven. Each row retains its actual trial; these are one-device observations, not independent certification.
+**Current track:** Omarchy 4.5 RC2 rebase. **R19 · 2026-11-01** verified one manually dialed outgoing voicemail call with ACTIVE/OUTGOING backend state and audible downlink confirmed by the user. Microphone/uplink, incoming calls, SMS, cellular IP data, throughput, AEC and VoLTE path remain unverified. R19 returned automatically; R17 needed buttons, so general recovery reliability is still unproven. These are one-device observations, not independent certification.
 
 The target is a complete, fast native Linux phone. That target is **not achieved**. The new track remains RAM-only; Android and original boot partitions were restored after the tests. No permanent 4.5 installation, complete public installer or working native updater is claimed.
 
@@ -17,10 +17,10 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | Camera app | Native Wayland preview observed in omacam | Capture/video UX across all lenses and orientations |
 | Torch | R9: normal-user one-second brightness 0 → 255 → 0 | Physical light not separately confirmed |
 | Modem / EFS | Modem discovered; EFS normal stop/restart succeeds after fix | Actual EFS transfer and cellular stability |
-| SIM / registration | R18: user entered access PIN on handset; unlock and home registration verified; LTE/NR5G and packet attachment reported | Physical/logical slot mapping, cellular IP Internet and throughput unverified |
-| SIM UI | R18 used 0.1.2-1 as root in supervised RAM; its PIN2 message was confusing. 0.1.3-1 candidate corrects PIN2/PUK2 and passed synthetic ARM64 GTK checks | Candidate 0.1.3 is not phone-tested; ordinary-user authorization integration pending; no general policy relaxation |
-| Voice / Messaging | R18: interfaces present; no confirmed external incoming-call attempt; bounded observations had zero call objects | Calls/audio/SMS unverified. Zero objects without a confirmed attempt do not establish failure |
-| Phone permissions | R11: active UID voice/messaging checks pass; read-only call list succeeds; no startup authentication job | Real calls/SMS/data/audio **untested**; no SIM was available in R11 |
+| SIM / registration | R19: registered with LTE/NR5G reported; primary access PIN not required, remaining lock is secondary PIN2 | Two slot entries / one occupied / one empty / one active are not a verified physical card count; current SIM proxy differs from slot array; mapping unresolved |
+| SIM UI | 0.1.3-1 loaded in R19 with normal GPG/ALPM integrity and native process/window verified; earlier synthetic checks retained | Notice origin and PIN2/SIM2 meaning were not confirmed by the user; UI-fix acceptance and access-PIN submission not revalidated |
+| Voice / Messaging | R19: user manually dialed voicemail in GNOME Calls 51.1; max one call, DIALING/ACTIVE and OUTGOING; user heard the service | Microphone/uplink, incoming calls and SMS unverified. R18's zero-object windows had no confirmed call attempt and remain inconclusive |
+| Phone permissions | R11: active UID voice/messaging checks passed and read-only call list succeeded | Broader ordinary-session authorization and administration; no SIM was available in that earlier trial |
 | Privileged administration | R11: service control and firmware still require `auth_admin` | First definitive PIN and complete permanent security profile |
 | Local credential / administration | R18: Linux account remained locked; root SIM UI was temporary and no credential/PAM or modem authorization policy changed | First local credential, phone PAM login and administrative Polkit readiness |
 | Wi-Fi | R13: user connected on screen; connection verified and an HTTPS request bound to Wi-Fi returned 200 from `omarchy.org` | Both bands, sustained transfer, reconnect and suspend/resume; no network identity or credentials exported |
@@ -33,9 +33,9 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | Feedback service | R13: rule present from boot, feedbackd opened the device without manual restart; button-event missing-feedback warning absent | Wider event/application coverage and repeated boots |
 | Infrared | R12: `ir-spi` LIRC device detected; `GET_FEATURES` reported `0x302` | No transmission occurred; optical emission, actual carrier/duty and remote control unverified |
 | GPS / fingerprint | Unverified | Fix/reliability; enrollment, verification and unlock |
-| Audio | Earlier-track results remain historical | Speaker, microphone, routing and call AEC in 4.5 |
+| Audio | R19: voicemail downlink heard by the user during the active outgoing call | Microphone/uplink, route coverage, call AEC and media audio; no audio file was recorded |
 | Power / alarms | USB-connected observation only | Real battery measurements, charge behavior, RTC alarms and suspend |
-| Return / recovery | R18 returned automatically without requesting buttons, with Android/original boot+DTBO readbacks verified. R17 required buttons/full bootloader | **General automatic-return reliability unproven**; repeat and diagnose before permanent or unattended boot |
+| Return / recovery | R18/R19 returned automatically without requesting buttons, with Android/original boot+DTBO readbacks verified. R17 required buttons/full bootloader | **General automatic-return reliability unproven**; repeat and diagnose before permanent or unattended boot |
 | Updates / Android apps | Earlier integration is archived; native 4.5 updater remains guarded/incomplete | Coherent upgrade/rollback and new-track Waydroid validation |
 
 ## How to read a result
@@ -48,7 +48,7 @@ R12 used kernel `7.1.0-apollo-native-r6` with runtime `20261101-4` and a haptic 
 
 Current evidence: [R9 cameras/torch/EFS](evidence/2026-11-01-r9.json), [R10 DMA comparison](evidence/2026-11-01-r10.json), [R11 permissions/recovery](evidence/2026-11-01-r11.json), [R12 haptics/IR/recovery](evidence/2026-11-01-r12.json), [R13 Wi-Fi/runtime/sensors](evidence/2026-11-01-r13.json). Raw diagnostics, camera images and per-device data remain private.
 
-Latest desktop evidence: [R18 PIN/registration/recovery](evidence/2026-11-01-r18.json). The phone used app 0.1.2-1; the published [0.1.3 candidate source/review](../experiments/sim-unlock/README.md) is a later PC/synthetic-tested correction, not a phone-tested replacement. No PIN, number, operator or subscriber identifier is published. The agent placed no call or message. The [R17 record](evidence/2026-11-01-r17.json) retains its manual recovery result; R18's successful return does not erase it.
+Latest desktop evidence: [R19 outgoing call/downlink](evidence/2026-11-01-r19.json). GNOME Calls was opened without a number/dial URI; the user dialed manually. The call probe queried only state, direction and state reason plus object listing; it did not read Number/Name or export subscriber/network identity. App 0.1.3 had a [verified native load](../experiments/sim-unlock/phone-load-r19.json), not full human UI acceptance. The [R18 PIN/registration record](evidence/2026-11-01-r18.json) and [R17 manual recovery](evidence/2026-11-01-r17.json) keep their original scope. No permanent installation was completed in R19.
 
 Separate splash evidence: [R16 minimal RAM rescue](evidence/2026-11-01-r16.json) and [original V2 theme sources/reviews](../experiments/original-boot-v2/README.md). R16 had no complete desktop or private calibration. Its single Plymouth RSS sample was 18,304 KiB; no speed/boot-time comparison is available. There were zero XKB errors in the collected rescue log and diagnostic tracing was disabled. No local password/PIN, PAM/autologin or permanent theme selection changed. SDDM's touch keyboard does not implement Plymouth touch-based LUKS unlocking.
 

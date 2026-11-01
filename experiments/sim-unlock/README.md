@@ -2,7 +2,9 @@
 
 An MIT GTK 4 / libadwaita source experiment for **local entry of the SIM access PIN** through ModemManager. The user enters it on the handset. There is no hardcoded PIN, credential file, PIN command-line option or credential logging. This is separate from the Linux account/SDDM/PAM login.
 
-**Version boundary:** R18 physically used **`apollo-sim-unlock 0.1.2-1`**, launched as root only in the supervised RAM session because the Linux account remained locked. The modem accepted the access PIN and registered, but that UI showed a confusing message when the remaining lock reason was PIN2. The source published here is the corrected **`0.1.3-1` candidate**. It passed synthetic ARM64 GTK/GIO tests and normal GPG/ALPM verification in the PC builder, with 12 checked entries / zero altered entries. **It has not been tested on the phone.** No general authorization policy or local account/PAM settings were relaxed in R18.
+**Version boundary:** R18 physically used **`apollo-sim-unlock 0.1.2-1`**, launched as root only in supervised RAM because the Linux account remained locked. The modem accepted the access PIN and registered, but the UI's remaining PIN2 message was confusing. The published source is **`0.1.3-1`**: it passed PC/synthetic checks, then **loaded as a native process/window in R19 with normal GPG/ALPM integrity verified**. The user closed a notice without confirming its origin or PIN2/SIM2 meaning. **Human UI-fix acceptance and a new access-PIN submission are not verified.** No later replacement-UI source is included here.
+
+The [candidate snapshot](candidate.json) preserves its historical **R18** `phone_tested: false` status. The later [R19 phone-load record](phone-load-r19.json) describes the limited physical test separately. This prevents the source/synthetic review from being mistaken for full phone acceptance.
 
 ## The correction
 
@@ -18,14 +20,22 @@ The candidate's `refresh()` enables the access-PIN form only for `SIM_PIN` (2), 
 - Only modem discovery, the current SIM object, lock reason and retry count are read. Subscriber identity, operator, numbers and APN properties are not queried by this source.
 - The program disables its own core dumps. R18 additionally disabled modem/GUI core dumps and debug tracing and skipped later journal collection after sensitive input. No credential screenshot is published.
 
-[Candidate/source hash](candidate.json) · [ARM64 synthetic GTK/GIO report](arm64-synthetic-review.json) · [R18 physical result](../../docs/evidence/2026-11-01-r18.json) · [Source](apollo-sim-unlock.py) · [MIT license](LICENSE).
+[Historical candidate/source hash](candidate.json) · [ARM64 synthetic GTK/GIO report](arm64-synthetic-review.json) · [R18 result](../../docs/evidence/2026-11-01-r18.json) · [R19 load/result](../../docs/evidence/2026-11-01-r19.json) · [Source](apollo-sim-unlock.py) · [MIT license](LICENSE).
 
-The ARM64 report used a **synthetic modem only, with zero radio PIN attempts**. It covers masked input, leading zeroes, keypad bounds, clearing, pending/error behavior and the PIN2/PUK2 distinction. The repository's offline check also exercises the source's `refresh()` method against fake lock/retry values without importing GTK or contacting a bus. These tests do not establish that 0.1.3 works on the phone.
+The ARM64 report used a **synthetic modem only, with zero radio PIN attempts**. It covers masked input, leading zeroes, keypad bounds, clearing, pending/error behavior and the PIN2/PUK2 distinction. The repository's offline check also exercises `refresh()` against fake lock/retry values without GTK or a bus. R19 adds physical loading, but these tests still do not establish complete phone UI acceptance.
 
 ## What R18 establishes
 
 The phone reported ordinary **home registration**, LTE and NR5G access-technology flags, and packet-service attachment. Voice and Messaging interfaces were present. **Cellular IP Internet, throughput, calls, call audio and SMS remain unverified.** There was no confirmed external incoming-call attempt; zero call objects in bounded observations do not establish a failed call. The agent placed no call or message and received no PIN.
 
 R18 returned automatically to Android and original boot/DTBO readbacks matched. R17's button-assisted recovery remains part of the record; general automatic-return reliability is unproven. No permanent installation, physical/logical slot mapping, ordinary-user authorization integration or phone PAM login is validated by this source release.
+
+## R19 physical load and call result
+
+R19 reported the modem registered with LTE/NR5G, access PIN not required and secondary lock 3 (PIN2). Two slot entries were reported: one occupied, one empty and one active SIM. The current SIM proxy did not match the slot array. These are interface observations, **not a verified physical card count or slot mapping**. In particular, PIN2 is not evidence of a second card.
+
+GNOME Calls 51.1 was opened without a number or dial URI. The user manually called voicemail and confirmed connection plus audible downlink; the backend observed one OUTGOING call reaching ACTIVE. This is a separate telephony result, not acceptance of the SIM UI message. Microphone/uplink, incoming calls, SMS, cellular IP data, speed, AEC and VoLTE path remain unverified. The agent placed no call or message and did not read Number/Name or export numbers, subscriber/operator/APN data, object paths, audio or screenshots.
+
+R19 returned automatically to Android with original boot/DTBO readbacks matched. General reliability and permanent installation remain unproven; R17's manual recovery is preserved. [R19 evidence](../../docs/evidence/2026-11-01-r19.json).
 
 This directory provides source and reviewed summaries, not a signed package, installer, policy override or root launcher. PyGObject, GTK 4, libadwaita and ModemManager are external dependencies. Further phone validation must retain local-only PIN entry and normal system authorization boundaries.

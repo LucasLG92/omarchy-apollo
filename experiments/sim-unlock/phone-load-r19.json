@@ -1,0 +1,12 @@
+{
+  "trial": "R19",
+  "package": "apollo-sim-unlock 0.1.3-1",
+  "native_phone_window_process_verified": true,
+  "normal_gpg_alpm_integrity_verified": true,
+  "phone_test_scope": "native process/window load only; access-PIN submission not retested",
+  "dismissed_notice_origin_confirmed": false,
+  "pin2_ui_fix_human_acceptance_verified": false,
+  "physical_to_logical_sim_slot_mapping_verified": false,
+  "full_phone_functionality_verified": false,
+  "historical_candidate_snapshot_trial": "R18"
+}

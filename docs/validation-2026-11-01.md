@@ -92,6 +92,18 @@ The Linux account remained locked, so the PIN UI ran as root only in supervised 
 
 This trial returned automatically without asking for buttons. Android completed boot and original boot/DTBO readbacks matched. R17's manual recovery remains a separate recorded result; general automatic-return reliability is **not proven**. No userdata formatting or permanent installation occurred. Phone PAM login and complete phone functionality remain pending. [R18 evidence](evidence/2026-11-01-r18.json).
 
+## R19 — manual outgoing voicemail call and audible downlink
+
+Omarchy 4.5 RC2, kernel R6 and runtime `20261101-6` reached the native RAM desktop. SIM UI **0.1.3-1** passed normal GPG/ALPM integrity checks and its native process/window was verified. The user closed a notice, but its origin and PIN2-versus-SIM2 meaning were not confirmed. This records **physical loading only**, not human acceptance of the UI fix or a repeated access-PIN submission. The original [R18 candidate snapshot](../experiments/sim-unlock/candidate.json) remains historical; [R19's separate load record](../experiments/sim-unlock/phone-load-r19.json) adds the narrower result.
+
+The modem was registered and reported LTE/NR5G. The primary access PIN was not required; lock enum 3 was secondary PIN2. Two slot entries, one occupied, one empty and one active SIM were reported, but the current SIM proxy did not match the slot array. **No physical card count or physical/logical slot mapping is established by those entries.**
+
+GNOME Calls **51.1** was opened without a number or dial URI. The user manually dialed voicemail and confirmed connection and hearing the service. Over **65 seconds of observation**, the backend saw at most **one call object**, states **1 DIALING / 4 ACTIVE**, direction **2 OUTGOING**, state-reason codes 0/1 and zero query errors. These are observation-window metrics, not a measured call duration or setup-time benchmark. This verifies that outgoing call and audible downlink. **Microphone/uplink, incoming calls, SMS, IP data, 5G throughput, AEC and the VoLTE path remain unverified.**
+
+The agent placed no call or message. Call-observation queries were restricted to state, direction, state reason and object listing; the probe did not read Number/Name or export subscriber/operator/APN data. No number, raw object path, audio file, screenshot, PIN, calibration or raw log is included. The human result is paraphrased without quoting unknown content or a dial target.
+
+The session returned automatically without asking for buttons; the recovery controller exited successfully. Android completed boot and original boot/DTBO readbacks matched. **General return reliability is unproven**, retaining R17's button-assisted recovery. No userdata format or permanent installation was completed in R19. [R19 evidence](evidence/2026-11-01-r19.json).
+
 ## What is public
 
 The JSON files are manually reviewed summaries: versions, dimensions, counts, Boolean outcomes and limitations. They exclude device/radio identifiers, network names, credentials, calibration, partition images, raw logs and camera photographs. [The R11 home screenshot](../media/apollo-home-r11.png) contains only the generic desktop. No personal PIN was published.

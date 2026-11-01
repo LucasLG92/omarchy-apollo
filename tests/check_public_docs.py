@@ -353,6 +353,47 @@ def sim_registration_and_ui_review():
         assert fake.ready is ready and fake.button.sensitive is ready, (lock, retries, blocked)
 
 
+def outgoing_call_trial_boundaries():
+    data = json.loads((ROOT / "docs/evidence/2026-11-01-r19.json").read_text(encoding="utf-8"))
+    assert data["trial"] == "R19" and data["runtime"] == "20261101-6"
+    for field in ("sim_ui_normal_gpg_alpm_integrity_verified", "native_sim_ui_window_process_verified",
+                  "modem_registered", "lte_access_technology_reported", "nr5g_access_technology_reported",
+                  "dialer_opened_without_number_or_dial_uri", "outgoing_call_manually_dialed_by_user",
+                  "user_confirmed_connection_and_audible_voicemail", "outgoing_call_active_verified",
+                  "downlink_audio_heard_by_user", "this_trial_returned_automatically_without_requesting_buttons",
+                  "android_boot_completed_verified", "original_boot_readback_verified",
+                  "original_dtbo_readback_verified"):
+        assert data[field] is True, ("R19", field)
+    for field in ("independent_reproduction", "device_identifiers_included", "raw_logs_included",
+                  "private_camera_images_included", "calibration_or_firmware_included",
+                  "dismissed_notice_origin_confirmed", "pin2_vs_sim2_message_identified",
+                  "pin2_ui_fix_human_acceptance_verified", "sim_access_pin_submission_retested_with_0_1_3",
+                  "sim_access_pin_required", "current_sim_proxy_matches_slot_array",
+                  "physical_sim_card_count_verified", "physical_to_logical_sim_slot_mapping_verified",
+                  "call_object_path_values_exported", "call_number_or_name_read",
+                  "subscriber_ids_numbers_operator_or_apn_exported", "screen_or_audio_files_exported",
+                  "pin_received_or_stored_by_agent", "call_placed_by_agent", "sms_sent_by_agent",
+                  "microphone_uplink_verified", "incoming_calls_verified", "sms_verified",
+                  "cellular_ip_internet_verified", "actual_5g_throughput_measured", "call_aec_verified",
+                  "volte_call_path_verified", "manual_fastboot_buttons_required_for_recovery",
+                  "automatic_return_reliability_proven", "userdata_formatted", "permanent_installation_complete",
+                  "sddm_pam_login_tested_on_phone", "full_phone_functionality_verified"):
+        assert data[field] is False, ("R19", field)
+    assert data["sim_ui_package_loaded"] == "apollo-sim-unlock 0.1.3-1"
+    assert data["unlock_required_enum"] == 3 and data["unlock_required_label"] == "SIM_PIN2"
+    assert [data[key] for key in ("reported_sim_slot_entries", "occupied_slot_entries", "empty_slot_entries", "active_sim_count_reported")] == [2, 1, 1, 1]
+    assert data["dialer"] == "GNOME Calls 51.1" and data["call_observation_seconds"] == 65
+    assert data["max_call_objects_observed"] == 1 and data["call_state_query_errors"] == 0
+    assert data["call_state_names_observed"] == ["DIALING", "ACTIVE"] and data["call_state_codes_observed"] == [1, 4]
+    assert data["call_direction_name"] == "OUTGOING" and data["call_direction_code"] == 2
+    assert data["queried_call_properties"] == ["State", "Direction", "StateReason"]
+    load = json.loads((ROOT / "experiments/sim-unlock/phone-load-r19.json").read_text(encoding="utf-8"))
+    assert load["trial"] == "R19" and load["historical_candidate_snapshot_trial"] == "R18"
+    assert load["native_phone_window_process_verified"] and load["normal_gpg_alpm_integrity_verified"]
+    assert not load["pin2_ui_fix_human_acceptance_verified"]
+    assert not load["physical_to_logical_sim_slot_mapping_verified"] and not load["full_phone_functionality_verified"]
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -396,6 +437,7 @@ def main():
     original_boot_review()
     sim_trial_boundaries()
     sim_registration_and_ui_review()
+    outgoing_call_trial_boundaries()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

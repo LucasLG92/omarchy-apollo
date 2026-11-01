@@ -3,6 +3,7 @@
 | File | Origin and scope |
 | --- | --- |
 | `hero.svg` | Original vector illustration made for this project. MIT licensed. It is not a screenshot or evidence of hardware functionality. |
+| `r19-call.svg` | Original MIT status badge summarizing one manually dialed outgoing call and audible downlink in R19. It does not mark all telephony as complete. |
 | `apollo-home-r11.png` | Actual home-screen capture from the supervised 2026-11-01 R11 RAM trial. Reviewed for identifiers, notifications and personal content; PNG contains no metadata fields. No entered PIN or camera photograph is shown. |
 | `omarchy-desktop.png`, `mobile-apps.png`, `touch-lock-preview.png` | Earlier already-published 2026-10-30 captures. Historical only; the empty lock preview does not contain an entered PIN. |
 

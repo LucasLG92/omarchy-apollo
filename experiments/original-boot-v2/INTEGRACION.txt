@@ -50,6 +50,11 @@ automático no se dio por fiable. En R18 se verificaron PIN de acceso SIM y
 registro de red con LTE/NR5G anunciados, pero no llamadas/SMS/datos IP/velocidad.
 R18 volvió automáticamente; ese éxito no borra la recuperación manual R17.
 La credencial local Linux/PAM sigue pendiente y es distinta del PIN de la SIM.
+R19 verificó una llamada saliente manual al buzón y audio descendente audible.
+Micrófono/uplink, entrantes, SMS, IP móvil, velocidad, AEC y ruta VoLTE siguen
+sin validar. La app SIM 0.1.3 cargó físicamente, sin aceptación humana completa
+de su mensaje PIN2. R19 volvió automáticamente con boot/DTBO comprobados;
+la recuperación manual R17 mantiene sin demostrar la fiabilidad general.
 No hay instalación permanente ni verificación del 100 % del teléfono.
 La animación upstream de Plymouth no es un porcentaje medido de arranque.
 

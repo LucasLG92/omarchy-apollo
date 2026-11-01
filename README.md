@@ -4,6 +4,7 @@
   <a href="docs/status.md"><img src="https://img.shields.io/badge/status-experimental-f3c46b?style=flat-square" alt="Experimental"></a>
   <a href="https://github.com/omacom/omarchy/releases/tag/v4.5.0-rc2"><img src="https://img.shields.io/badge/target-Omarchy%204.5%20RC2-87c8ff?style=flat-square" alt="Omarchy 4.5 RC2 target"></a>
   <a href="docs/validation-2026-11-01.md"><img src="https://img.shields.io/badge/evidence-physical%20device-8cf4ce?style=flat-square" alt="Physical-device evidence"></a>
+  <a href="docs/evidence/2026-11-01-r19.json"><img src="media/r19-call.svg" alt="One outgoing call and audible voicemail confirmed in R19"></a>
   <a href="LICENSES/README.md"><img src="https://img.shields.io/badge/licenses-MIT%20%2B%20upstream-c7b5ff?style=flat-square" alt="MIT and upstream licenses"></a>
 </p>
 
@@ -11,7 +12,7 @@
 
 **An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-> **Omarchy 4.5 RC2 rebase:** **R18** unlocked the SIM access PIN locally and reached **home network registration**, with LTE/NR5G flags reported. **Calls, SMS, cellular IP Internet and throughput remain unverified.** R18 returned automatically to Android with original boot/DTBO readbacks matched; R17 needed buttons, so reliable automatic recovery is still unproven. **No permanent installation, complete daily-driver phone or validated public installer is claimed.** R13 Wi-Fi and R16's original splash retain their recorded scope; the [earlier installation track](docs/history/README-2026-10-30.md) is separate.
+> **Omarchy 4.5 RC2 rebase:** **R19 verified one manually dialed outgoing call and audible voicemail downlink.** The backend reached ACTIVE/OUTGOING and the user confirmed hearing the service. **Microphone/uplink, incoming calls, SMS, cellular IP data, throughput, AEC and the VoLTE path remain unverified.** R19 returned automatically to Android with original readbacks matched; R17 needed buttons, so general recovery reliability is still unproven. **Permanent installation is not completed, and no complete daily-driver phone or validated public installer is claimed.** Earlier results retain their trial scope.
 
 ## On the device
 
@@ -24,6 +25,7 @@
 ## What is demonstrated
 
 - **Native desktop and touch.** ARM64, systemd, Hyprland and Quickshell on the internal display. Touch input, applications and the on-screen keyboard have been exercised.
+- **Outgoing voice and downlink (R19).** GNOME Calls 51.1 was opened without a dial target. The user manually called their voicemail, the backend observed DIALING→ACTIVE / OUTGOING, and the user confirmed audible voicemail. No number or audio recording is published; the agent placed no call.
 - **Adreno GPU processing.** Freedreno reports **FD650**. All four camera sensors delivered 640×480 images; the main and ultrawide also passed larger RGB captures.
 - **Ordinary phone permissions (R11).** The local user queried calls without the startup OS authentication prompt. Daemon administration and firmware changes still require administrator authentication. R18's PIN UI ran as root only in supervised RAM; ordinary-user integration is still pending.
 - **Measured changes.** Increasing CMA from 32 to **256 MiB** resolved the main-camera DMA allocation failure. Normal EFS service stop/restart and original boot/DTBO restoration were checked separately.
@@ -31,7 +33,7 @@
 - **Connected Wi-Fi.** In R13, the user connected on the phone screen and an HTTPS request bound to the Wi-Fi interface returned **200**. No network identity or credentials are published.
 - **Sensor scratch-file fix.** Runtime `20261101-6` completed a RAM boot, created the allowed private scratch file and exposed accelerometer/light. The specific missing-file error was absent in the collected boot log and a **20.97-second observation**; this is not a general speed benchmark.
 - **Original boot appearance.** R16 ran Plymouth through native DRM/active VT and produced the reviewed KMS capture above. V2 SDDM loads in actual ARM64 test mode and adds touch input to the original layout; **PAM login on the phone remains untested**.
-- **Network registration (R18).** The user entered the access PIN on the handset; no PIN was received or logged by the agent. The modem registered at home with LTE/NR5G reported. The [0.1.3 UI candidate](experiments/sim-unlock/README.md) corrects the remaining PIN2 message, but is not yet phone-tested; R18 used 0.1.2.
+- **Network and SIM UI.** R18 verified local access-PIN unlock and home registration; R19 reported registration and LTE/NR5G again. UI [0.1.3](experiments/sim-unlock/README.md) loaded on the phone in R19, but human acceptance of its PIN2 message remains unconfirmed. PIN2 is not evidence of a second SIM card; slot mapping remains unresolved.
 
 | Component | Latest observed result | Still needed |
 | --- | --- | --- |
@@ -39,7 +41,8 @@
 | Main camera | 24 RGB frames at **3000×2256**; GPU pipeline; autofocus reported focused in a separate illuminated sequence | Optical quality, color, video and full-resolution support; **108 MP is unavailable** in this driver |
 | Ultrawide / other cameras | Ultrawide: 24 RGB frames at **4200×3120**; all four sensors at 640×480 | Front high-resolution capture, macro focus, orientation and quality |
 | Torch | Normal-user one-second on/off control passed | Visible-light confirmation |
-| Modem / SIM | R18: access PIN accepted, home registration; LTE/NR5G and Voice/Messaging interfaces reported | Calls/audio/SMS, cellular IP data, throughput, slot mapping and phone validation of UI 0.1.3 |
+| Modem / SIM | R19: registered, LTE/NR5G reported, access PIN not required; secondary PIN2 remains | Physical/logical slot mapping and human acceptance of UI 0.1.3; two slot entries do not establish two physical cards |
+| Voice / cellular data | R19: one manual outgoing call ACTIVE, user heard voicemail | Microphone/uplink, incoming calls, SMS, cellular IP Internet, throughput, AEC and VoLTE path |
 | Wi-Fi | R13: connected on screen; Wi-Fi-bound HTTPS request returned 200 | Reconnection, both bands, sustained transfer and suspend/resume |
 | Bluetooth | Service active | Pairing and audio |
 | Sensors / NFC | R13: accelerometer/light available after scratch-file fix; R11: NFC adapter registered | Proximity, NFC tag read and broader sensor acceptance |
@@ -47,7 +50,7 @@
 | Infrared | R12: LIRC detected, capabilities `0x302` queried | **No signal transmitted:** optical emission and remote control untested |
 | GPS / fingerprint | Unverified | Native end-to-end support and physical tests |
 | Original boot / V2 login | R16: native Plymouth in minimal RAM rescue; ARM64 SDDM test-mode load | Full-desktop handoff, physical greeter interaction, first local credential and PAM login; no touch LUKS unlock |
-| Boot / updates / battery | R18 returned automatically; R17 needed buttons; Android/original readbacks verified in both | **Reliable repeated return**, permanent installation, first local credential/admin setup, standalone boot, updates, suspend and battery life |
+| Boot / updates / battery | R18/R19 returned automatically; R17 needed buttons; Android/original readbacks verified | **Reliable repeated return**, permanent installation, first local credential/admin setup, standalone boot, updates, suspend and battery life |
 
 See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.
 

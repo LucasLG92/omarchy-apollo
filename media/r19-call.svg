@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="292" height="22" viewBox="0 0 292 22" role="img" aria-labelledby="title desc">
+  <title id="title">R19: outgoing call and audible downlink</title>
+  <desc id="desc">One manual outgoing voicemail call and downlink confirmed. Microphone/uplink, incoming calls, SMS and cellular IP data remain unverified.</desc>
+  <rect width="292" height="22" fill="#a8cd76"/>
+  <rect width="43" height="22" fill="#253246"/>
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">
+    <text x="21.5" y="14.5" fill="#edf5ff" font-weight="600">R19</text>
+    <text x="167.5" y="14.5" fill="#1a1b26">outgoing call + audible downlink</text>
+  </g>
+</svg>
