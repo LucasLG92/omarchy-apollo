@@ -1,6 +1,6 @@
 # Hardware investigation
 
-These notes distinguish driver leads from the bounded physical results in [R12 status](status.md). Android driver names and a patch tested on another phone do not prove complete Apollo functionality.
+These notes distinguish driver leads from the bounded physical results in [R13 status](status.md). Android driver names and a patch tested on another phone do not prove complete Apollo functionality.
 
 ## Infrared
 
@@ -8,11 +8,13 @@ A read-only inspection of the development phone's Android environment confirmed 
 
 ## Haptics
 
-Android exposes the `aw8697_haptic` driver family. A subsequent Android chip-ID readback returned `0x97`, confirming AW8697 on the development device; no per-unit calibration is published. An [AW8697 v3 driver submission](https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12414.html), dated 2026-10-13, adds force-feedback support and probe-time resonance calibration; its author reports testing on a POCO F3. R12 integrated that unmodified driver and physically exercised FF_RUMBLE for 120 ms at about 12.5% magnitude. The user confirmed a very soft vibration. Active local access and feedbackd opening were checked after adding a rule in RAM and restarting the service. Strength, app coverage and a complete boot with the prepared runtime v5 remain open. The original author and copyright notices are preserved in the [public patch and provenance](../patches/rebase-4.5/README.md).
+Android exposes the `aw8697_haptic` driver family. A subsequent Android chip-ID readback returned `0x97`, confirming AW8697 on the development device; no per-unit calibration is published. An [AW8697 v3 driver submission](https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12414.html), dated 2026-10-13, adds force-feedback support and probe-time resonance calibration; its author reports testing on a POCO F3. R12 integrated that unmodified driver and physically exercised FF_RUMBLE for 120 ms at about 12.5% magnitude. The user confirmed a very soft vibration. R12 needed a rule added in RAM and a service restart; R13 completed a new runtime v6 RAM boot with local access and feedbackd opening without manual restart. Strength and app coverage remain open. The original author and copyright notices are preserved in the [public patch and provenance](../patches/rebase-4.5/README.md).
 
 ## Motion, light and proximity
 
 Android's sensor descriptors name an ST LSM6DSO accelerometer/gyroscope, ROHM BU27030 ambient light and a `Xiaomi Proximity` interface. In native R11, sensor proxy reported accelerometer and light available, but proximity unavailable. SAR ADUX registry entries alone do not establish which component implements ear proximity; alternative-device entries are not proof of fitted hardware. Gyroscope access for applications and proximity integration require their own native tests.
+
+R13 addressed a separate HexagonRPC scratch-file creation failure. A synthetic ARM64 RPC/VFS harness reproduced the earlier failure; the candidate passed 26 checks. On the phone it generated a private 0600 scratch file in RAM, and the collected boot log plus a 20.97-second observation contained no matching missing-file errors. Accelerometer/light remained available and proximity unavailable. There is no general before/after speed comparison. See the [R13 patch provenance](../patches/rebase-4.5/README.md) and [lab record](validation-2026-11-01.md#r13--wifi-runtime-v6-and-sensor-scratch-files).
 
 ## Publication boundary
 

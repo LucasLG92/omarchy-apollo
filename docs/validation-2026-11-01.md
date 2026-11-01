@@ -38,11 +38,23 @@ Kernel **`7.1.0-apollo-native-r6`** added the AW8697 v3 review driver and a sepa
 
 The AW8697 input interface accepted **FF_RUMBLE start, stop and removal** for a **120 ms** effect at **8192/65535 magnitude** (approximately 12.5%). The user confirmed a **very low-strength physical vibration**. Active local access was verified through `uaccess`, without making the device world-writable. The service initially missed the device after the rule change; after restarting feedbackd, it opened the input device and the button-event check no longer reported missing feedback. This does not establish the strength range or broad application integration.
 
-R12 booted runtime **`20261101-4`** and added that access rule during the RAM session. A prepared **`20261101-5`** runtime includes the rule, but a complete boot with it is **not yet tested**. Runtime packaging and fresh-boot discovery therefore remain an acceptance gap.
+R12 booted runtime **`20261101-4`** and added that access rule during the RAM session. At that point a prepared **`20261101-5`** runtime included the rule but had not completed a boot test. R13 below later tests a complete RAM boot of v6, including that rule; the intermediate v5 package is not retroactively counted as tested.
 
 The `ir-spi` LIRC device appeared and **`GET_FEATURES` returned `0x302`**, advertising pulse, carrier and duty-cycle capabilities. **No IR transmission was requested.** Optical emission and remote-control behavior remain unverified. The source-provenance record also describes an offline ARM64/QEMU tail-sample fixture; that was not a hardware transmission test.
 
 The portrait display was 1080×2400, CMA was 256 MiB, all 122 observed UFS nodes were read-only, and the system and user checks found no failed units. Graphics stopped and the supervised return reached Android without a request for buttons; original boot/DTBO readbacks matched. No userdata formatting or permanent installation occurred. [R12 result](evidence/2026-11-01-r12.json).
+
+## R13 — WiFi, runtime v6 and sensor scratch files
+
+R13 completed a new RAM boot with kernel `7.1.0-apollo-native-r6` and runtime **`20261101-6`**. The user connected Wi-Fi from the phone screen. Connection state was checked, then an HTTPS request explicitly bound to the Wi-Fi interface returned **200** from `https://omarchy.org/`. SSID, addresses and password are excluded. This establishes that connection and request, not both-band coverage, sustained transfer or suspend/reconnect reliability.
+
+The earlier HexagonRPC path allowed a sensor scratch file to be written, but a missing file failed the virtual read-only open before the first write could create it. The [R13 patch](../patches/rebase-4.5/README.md) creates it in the already restricted writable mapping with mode **0600**, without following a symlink or prematurely truncating existing data. It applies after the pinned Apollo sensor patch. The original file's Sensor Shell Contributors notice and **GPL-3.0-or-later** terms are retained; the recipe's different package-level license label is not used to relicense it.
+
+An actual ARM64 RPC/VFS harness with synthetic data reproduced the baseline failure. The candidate passed **26 checks**, including creation/write, append, truncation and reading, plus rejection of outside mappings, read-only missing files and symlinks. This fixture is distinct from the phone observation. On the phone, the service generated the private scratch file in RAM. No matching missing-scratch errors appeared in the collected boot log or a **20.97-second observation**. The daemon remained the same process with no restarts during the check. Accelerometer/light remained available; proximity did not. **20.97 seconds is an observation interval, not boot time or a general speed improvement.** No before/after performance comparison is available.
+
+Runtime v6 included the earlier haptic access rule from the start. The active local user had read/write access, feedbackd opened the device **without manual restart**, and the button-event check had no missing-feedback warning. The only confirmed physical strength remains R12's very soft pulse; it was not increased or remeasured here. This records a v6 RAM boot, not a retroactive test of the intermediate v5 package or standalone permanent boot.
+
+CMA remained 256 MiB, all 122 observed UFS nodes were read-only, and there were no failed system units at the check. Graphics stopped, Android returned without a request for buttons, and original boot/DTBO readbacks matched. No userdata formatting, call or SMS occurred. [R13 result](evidence/2026-11-01-r13.json).
 
 ## What is public
 

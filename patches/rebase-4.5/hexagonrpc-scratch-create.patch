@@ -1,0 +1,26 @@
+--- a/hexagonrpcd/apps_std.c
++++ b/hexagonrpcd/apps_std.c
+@@ -458,6 +458,23 @@
+ 		return AEE_EFAILED;
+ 	}
+ 
++
++	/* A writable registry scratch file may not exist on the first DSP boot.
++	 * Create it in the already-resolved, restricted host mapping before the
++	 * read-only virtual descriptor is opened. Do not truncate an existing file;
++	 * the first fwrite retains the existing mode-dependent truncation logic.
++	 */
++	if (write_path != NULL) {
++		int host_fd = open(write_path, O_WRONLY | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
++		if (host_fd < 0) {
++			fprintf(stderr, "Could not create writable registry file: %s\n", strerror(errno));
++			free(owned_path);
++			free(write_path);
++			return AEE_EFAILED;
++		}
++		close(host_fd);
++	}
++
+ 	fd = hexagonfs_openat(ctx->fds, ctx->rootfd, dirfd, path);
+ 	if (fd < 0) {
+ 		fprintf(stderr, "Could not open %s: %s\n",

@@ -59,7 +59,7 @@ def svg_assets(files):
 
 def evidence_boundaries():
     records = {}
-    for trial in ("r9", "r10", "r11", "r12"):
+    for trial in ("r9", "r10", "r11", "r12", "r13"):
         data = json.loads((ROOT / f"docs/evidence/2026-11-01-{trial}.json").read_text(encoding="utf-8"))
         assert data["evidence_type"] == "sanitized supervised-device result summary"
         for field in (
@@ -106,6 +106,21 @@ def evidence_boundaries():
                   "infrared_remote_control_verified", "calls_placed", "messages_sent"):
         assert haptics[field] is False, field
     assert "userspace_image_sha256" not in haptics and "boot_image_sha256" not in haptics
+    sensors = records["r13"]
+    assert sensors["runtime"] == "20261101-6" and sensors["whole_runtime_v6_boot_tested"]
+    assert sensors["wifi_connection_verified"] and sensors["https_bound_to_wifi_interface_succeeded"]
+    assert sensors["https_test_url"] == "https://omarchy.org/" and sensors["https_test_status"] == 200
+    for field in ("network_ssid_recorded_in_export", "network_addresses_recorded_in_export",
+                  "network_password_recorded_in_export", "before_after_performance_comparison_available",
+                  "proximity_available", "button_event_missing_feedback_warning", "calls_placed", "messages_sent"):
+        assert sensors[field] is False, field
+    assert sensors["missing_allowed_scratch_write_failure_reproduced_with_actual_arm64_rpc_vfs"]
+    assert sensors["synthetic_candidate_assertions_passed"] == 26
+    assert sensors["scratch_file_generated_in_phone_ram"] and sensors["scratch_file_private_mode"] == "0600"
+    assert sensors["missing_scratch_errors_in_collected_boot_log"] == 0
+    assert sensors["observation_seconds"] == 20.97 and sensors["missing_scratch_errors_in_observation"] == 0
+    assert sensors["feedbackd_opened_haptic_device_without_manual_restart"]
+    assert sensors["haptic_udev_rule_present_on_cold_start"] and sensors["active_local_user_rw_haptic_access"]
 
 
 def input_patch_provenance():
@@ -128,6 +143,23 @@ def input_patch_provenance():
     assert origin["kernel_driver_is_review_patch_v3_not_upstream_merged_claim"]
     assert not origin["private_android_tree_in_patch"] and not origin["private_unit_calibration_in_patch"]
     assert not origin["ir_inactive_tail_tests_on_hardware"]
+
+
+def sensor_patch_provenance():
+    directory = ROOT / "patches/rebase-4.5"
+    origin = json.loads((directory / "hexagonrpc-scratch-origin.json").read_text(encoding="utf-8"))
+    patch = (directory / origin["patch_file"]).read_bytes()
+    assert hashlib.sha256(patch).hexdigest() == origin["patch_sha256"]
+    assert origin["modified_file"] == "hexagonrpcd/apps_std.c"
+    assert origin["file_copyright"] == "2023 The Sensor Shell Contributors"
+    assert origin["file_license"] == "GPL-3.0-or-later"
+    assert origin["upstream_commit"] == "93f3467dcfe1601bb70547611866a069ae914de5"
+    assert origin["board_patch_commit"] == "4c52c8bc8f8bd23a0e31dcd944a15f838777c3e2"
+    assert origin["patch_application_to_pinned_source_verified"]
+    assert origin["source_copyright_and_license_header_unchanged"]
+    assert not origin["device_calibration_in_patch"] and not origin["private_network_data_in_patch"]
+    license_text = (ROOT / "LICENSES/GPL-3.0-or-later.txt").read_bytes()
+    assert hashlib.sha256(license_text).hexdigest() == origin["copying_sha256"]
 
 
 def privacy_tripwires(files):
@@ -169,6 +201,7 @@ def main():
     svg_assets(files)
     evidence_boundaries()
     input_patch_provenance()
+    sensor_patch_provenance()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

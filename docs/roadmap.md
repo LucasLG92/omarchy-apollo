@@ -13,9 +13,9 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 
 - **Cameras:** front high-resolution/stride failure, macro focus, rotation, video, optical focus and color. The current main driver has no 108 MP mode.
 - **Phone/audio:** real calls, SMS, data and call AEC with a test SIM; media speaker/microphone and routing in the new base.
-- **Connectivity:** actual Wi-Fi connection, both bands, reconnect/suspend and Bluetooth pairing/audio.
-- **Sensors/NFC:** proximity, sensor integration and NFC tag operations. GPS needs a reliable fix; fingerprint needs enrollment/verification/unlock.
-- **Haptics:** R12 confirmed a very soft AW8697 rumble. Test the strength range, application feedback and a complete boot with the newly packaged access rule.
+- **Connectivity:** R13 connected Wi-Fi and completed a Wi-Fi-bound HTTPS request. Test both bands, sustained transfer, reconnect/suspend and Bluetooth pairing/audio.
+- **Sensors/NFC:** R13 fixed one missing scratch-file creation failure and retained accelerometer/light availability. Test longer operation, sensor integration, proximity and NFC tags. GPS needs a reliable fix; fingerprint needs enrollment/verification/unlock.
+- **Haptics:** R12 confirmed a very soft AW8697 rumble; R13 booted runtime v6 with local access and feedbackd discovery without manual restart. Test strength, application feedback and repeated boots.
 - **IR:** R12 detected the LIRC interface and queried capabilities without transmitting. Optical emission, real carrier/duty behavior and remote-control use still need physical tests.
 
 ## 3. Make it comfortable all day
