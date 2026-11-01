@@ -8,7 +8,7 @@ A read-only inspection of the development phone's Android environment confirmed 
 
 ## Haptics
 
-Android exposes the `aw8697_haptic` driver family. The exact fitted chip still needs confirmation before selecting a native driver. An [AW8697 v3 driver submission](https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12414.html), dated 2026-10-13, adds force-feedback support and probe-time resonance calibration; its author reports testing on a POCO F3. That is a potential backport, not Apollo test evidence. The native R11 inventory had no haptics input device, and this investigation did not activate the motor.
+Android exposes the `aw8697_haptic` driver family. A subsequent Android chip-ID readback returned `0x97`, confirming AW8697 on the development device; no per-unit calibration is published. An [AW8697 v3 driver submission](https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12414.html), dated 2026-10-13, adds force-feedback support and probe-time resonance calibration; its author reports testing on a POCO F3. Native Apollo integration is in development, without a completed physical test. The native R11 inventory had no haptics input device, and this investigation did not activate the motor.
 
 ## Motion, light and proximity
 
