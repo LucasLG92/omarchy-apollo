@@ -13,6 +13,7 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 
 ## 2. Finish the hardware acceptance
 
+- **Variant coverage:** validate the regular Mi 10T 5G separately, including its main camera, memory/storage profile and per-unit calibration. Pro evidence does not establish non-Pro compatibility; follow the [model matrix](compatibility.md).
 - **Cameras:** front high-resolution/stride failure, macro focus, rotation, video, optical focus and color. The current main driver has no 108 MP mode.
 - **Phone/audio:** R19 verified one manual outgoing voicemail call and audible downlink. Validate microphone/uplink, incoming calls, SMS, IP data, AEC, VoLTE path and broader routing. The SIM UI 0.1.3 loaded physically, but notice origin/PIN2 meaning and human UI-fix acceptance remain pending. Resolve physical/logical slot mapping without treating slot-entry count as card count; complete local account/Polkit setup without changing SIM protection or general authorization policy.
 - **Connectivity:** R13 connected Wi-Fi and completed a Wi-Fi-bound HTTPS request. Test both bands, sustained transfer, reconnect/suspend and Bluetooth pairing/audio.

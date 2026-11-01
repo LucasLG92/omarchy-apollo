@@ -49,6 +49,10 @@ R12 necesitó añadir la regla del motor durante la sesión. En R13 se probó un
 
 Quedan GPS, huella, proximidad, emisión óptica y uso como mando IR; la intensidad del motor y su respuesta en aplicaciones necesitan más pruebas. También faltan suspensión, autonomía, primer PIN definitivo, arranque independiente de la nueva base y actualizaciones coherentes. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
 
+## ¿Sirve para el Mi 10T 5G normal?
+
+La base es aprovechable, pero **este port solo está probado en la unidad Pro del proyecto**. El normal necesita validar/adaptar su cámara principal, configuración de RAM/almacenamiento y calibración propia. La imagen privada actual no es genérica ni se debe flashear directamente en otro móvil, tampoco en otro Pro. [Tabla y FAQ de compatibilidad](../compatibility.md).
+
 ## Revisar o colaborar
 
 El [registro 4.5](../rebase-4.5.md) identifica versiones, fuentes y alcance. Los [parches públicos](../../patches/rebase-4.5/README.md) están separados por componente y conservan sus licencias. Aún no forman un procedimiento completo de reconstrucción o instalación. No deben flashearse como una imagen ni usarse con un instalador de PC.

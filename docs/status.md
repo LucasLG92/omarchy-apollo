@@ -54,6 +54,10 @@ Separate splash evidence: [R16 minimal RAM rescue](evidence/2026-11-01-r16.json)
 
 The [hardware investigation notes](hardware-investigation.md) keep newly identified Android paths and upstream driver candidates separate from native acceptance.
 
+## Device-variant coverage
+
+All physical results above are from the **Mi 10T Pro development unit**. The regular Mi 10T 5G shares a useful platform base, but has **no acceptance result from this project**. Its main camera, RAM/storage profile and own private calibration need separate validation. Current private artifacts are tied to the development unit and are not redistributable/direct-flash images. See the [compatibility matrix and FAQ](compatibility.md).
+
 ## Earlier track
 
 The [2026-10-30 documentation](history/README-2026-10-30.md) records a different installation with permanent boot, PIN and Waydroid tests. It is retained for provenance and reusable engineering work. Those results have **not** been repeated wholesale in the new 4.5 environment and must not be added to this table as current acceptance.

@@ -68,6 +68,10 @@ python3 tests/check_public_docs.py
 
 [Rebase and source pins](docs/rebase-4.5.md) · [How results are recorded](docs/validation-2026-11-01.md) · [Architecture and boundaries](docs/architecture.md) · [Historical recipes](docs/build.md)
 
+## Does it work on the regular Mi 10T 5G?
+
+The base is reusable, but **this adaptation is tested only on the Pro development unit**. The regular model needs its main-camera path, RAM/storage provisioning and own calibration validated. The private development image is not a generic direct-flash image, even for another Pro. See the [model matrix and compatibility FAQ](docs/compatibility.md).
+
 ## Help move it forward
 
 The most useful contributions are small and reproducible: camera quality/orientation, sensor and device-driver work, phone UI/translation, audio and power measurements, and a reliable native update/recovery path. See the [roadmap](docs/roadmap.md) and [contribution guide](CONTRIBUTING.md) before testing on hardware.
