@@ -32,10 +32,22 @@ The test harness initially expanded `$$` before it reached the inner shell and s
 
 The NFC adapter was registered but off; sensor proxy reported accelerometer/light and no proximity. Wi-Fi remained disconnected in captured samples, and Bluetooth service startup did not establish pairing. The supervised session ended, graphics stopped, Android returned and original boot/DTBO readbacks matched. [R11 result](evidence/2026-11-01-r11.json).
 
+## R12 — physical rumble and infrared detection
+
+Kernel **`7.1.0-apollo-native-r6`** added the AW8697 v3 review driver and a separate Apollo input DTS, plus the SPI IR inactive-tail change. The original 760-line haptics driver and its authorship are retained in the [public source patch](../patches/rebase-4.5/README.md). This is a backport of a review submission, not a claim of upstream merger or a complete installation recipe.
+
+The AW8697 input interface accepted **FF_RUMBLE start, stop and removal** for a **120 ms** effect at **8192/65535 magnitude** (approximately 12.5%). The user confirmed a **very low-strength physical vibration**. Active local access was verified through `uaccess`, without making the device world-writable. The service initially missed the device after the rule change; after restarting feedbackd, it opened the input device and the button-event check no longer reported missing feedback. This does not establish the strength range or broad application integration.
+
+R12 booted runtime **`20261101-4`** and added that access rule during the RAM session. A prepared **`20261101-5`** runtime includes the rule, but a complete boot with it is **not yet tested**. Runtime packaging and fresh-boot discovery therefore remain an acceptance gap.
+
+The `ir-spi` LIRC device appeared and **`GET_FEATURES` returned `0x302`**, advertising pulse, carrier and duty-cycle capabilities. **No IR transmission was requested.** Optical emission and remote-control behavior remain unverified. The source-provenance record also describes an offline ARM64/QEMU tail-sample fixture; that was not a hardware transmission test.
+
+The portrait display was 1080×2400, CMA was 256 MiB, all 122 observed UFS nodes were read-only, and the system and user checks found no failed units. Graphics stopped and the supervised return reached Android without a request for buttons; original boot/DTBO readbacks matched. No userdata formatting or permanent installation occurred. [R12 result](evidence/2026-11-01-r12.json).
+
 ## What is public
 
 The JSON files are manually reviewed summaries: versions, dimensions, counts, Boolean outcomes and limitations. They exclude device/radio identifiers, network names, credentials, calibration, partition images, raw logs and camera photographs. [The R11 home screenshot](../media/apollo-home-r11.png) contains only the generic desktop. No personal PIN was published.
 
 ## Repeatability boundary
 
-The source pins and [three component patches](../patches/rebase-4.5/README.md) support code review. A complete clean-room rebuild and stock-device installation procedure for the new image is **not public or validated yet**. The earlier tests and recipes are not a substitute. Future reports should name the sensor by stable hardware identity, distinguish detection from use, keep failures, verify recovery, and record what was deliberately not tested.
+The source pins and [component patches](../patches/rebase-4.5/README.md) support code review. A complete clean-room rebuild and stock-device installation procedure for the new image is **not public or validated yet**. The earlier tests and recipes are not a substitute. Future reports should name the sensor by stable hardware identity, distinguish detection from use, keep failures, verify recovery, and record what was deliberately not tested.

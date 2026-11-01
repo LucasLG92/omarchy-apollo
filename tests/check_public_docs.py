@@ -59,7 +59,7 @@ def svg_assets(files):
 
 def evidence_boundaries():
     records = {}
-    for trial in ("r9", "r10", "r11"):
+    for trial in ("r9", "r10", "r11", "r12"):
         data = json.loads((ROOT / f"docs/evidence/2026-11-01-{trial}.json").read_text(encoding="utf-8"))
         assert data["evidence_type"] == "sanitized supervised-device result summary"
         for field in (
@@ -88,6 +88,46 @@ def evidence_boundaries():
     assert latest["pending_authentication_jobs"] == 0
     assert not latest["calls_placed"] and not latest["messages_sent"]
     assert not latest["wifi_connection_confirmed"] and not latest["bluetooth_pairing_tested"]
+    haptics = records["r12"]
+    assert haptics["kernel_release"] == "7.1.0-apollo-native-r6"
+    assert haptics["user_confirmed_physical_vibration"]
+    assert haptics["user_reported_strength"] == "very low"
+    assert haptics["active_local_user_haptic_device_access_verified"]
+    assert not haptics["haptic_device_world_writable"]
+    assert haptics["feedbackd_initially_missed_device_after_rule_change"]
+    assert haptics["feedbackd_after_restart_opened_haptic_device"]
+    assert haptics["runtime_in_test_image"] == "20261101-4"
+    assert haptics["ram_only_haptic_rule_added_during_test"]
+    assert not haptics["whole_runtime_v5_boot_tested"]
+    assert haptics["infrared_lirc_device_detected"]
+    assert haptics["infrared_feature_mask_hex"] == "0x302"
+    assert haptics["infrared_test_operation"] == "GET_FEATURES only"
+    for field in ("infrared_signal_transmitted", "infrared_optical_emission_verified",
+                  "infrared_remote_control_verified", "calls_placed", "messages_sent"):
+        assert haptics[field] is False, field
+    assert "userspace_image_sha256" not in haptics and "boot_image_sha256" not in haptics
+
+
+def input_patch_provenance():
+    directory = ROOT / "patches/rebase-4.5"
+    origin = json.loads((directory / "linux-apollo-input-origin.json").read_text(encoding="utf-8"))
+    patch = (directory / origin["patch_file"]).read_bytes()
+    assert hashlib.sha256(patch).hexdigest() == origin["patch_sha256"]
+    lines = patch.splitlines(keepends=True)
+    start = next(i for i, line in enumerate(lines) if line.startswith(b"@@ -0,0 +1,760 @@")) + 1
+    driver_lines = lines[start:start + 760]
+    assert len(driver_lines) == 760 and all(line.startswith(b"+") for line in driver_lines)
+    driver = b"".join(line[1:] for line in driver_lines)
+    blob_header = b"blob " + str(len(driver)).encode() + b"\0"
+    assert hashlib.sha1(blob_header + driver).hexdigest() == origin["aw8697_driver_git_blob"]
+    assert b"SPDX-License-Identifier: GPL-2.0-only" in driver
+    for author in (b"Armandas Kvietkus", b"Griffin Kroah-Hartman", b"AWINIC Technology"):
+        assert author in driver, "Retain the original driver copyright notices"
+    assert origin["aw8697_driver_license"] == "GPL-2.0-only"
+    assert origin["apollo_board_license"] == "GPL-2.0-only OR BSD-2-Clause"
+    assert origin["kernel_driver_is_review_patch_v3_not_upstream_merged_claim"]
+    assert not origin["private_android_tree_in_patch"] and not origin["private_unit_calibration_in_patch"]
+    assert not origin["ir_inactive_tail_tests_on_hardware"]
 
 
 def privacy_tripwires(files):
@@ -128,6 +168,7 @@ def main():
             document_links(ROOT / name)
     svg_assets(files)
     evidence_boundaries()
+    input_patch_provenance()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

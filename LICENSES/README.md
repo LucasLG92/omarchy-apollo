@@ -11,8 +11,13 @@ The root [MIT license](../LICENSE) covers original Omarchy Apollo integration an
 | libcamera sensor helper/properties C++, new sensor-gain C++ test | [LGPL-2.1-or-later](LGPL-2.1-or-later.txt) |
 | libcamera Meson changes and four sensor YAML files | [CC0-1.0](CC0-1.0.txt); Apollo tuning/matrices from royka1's hardware packages |
 | `mhi_efs_sync.c` normal-stop change | [GPL-2.0](GPL-2.0.txt), retaining the original source identifier |
+| R12 `drivers/input/misc/aw8697.c` and input Kconfig | [GPL-2.0-only](GPL-2.0.txt); original v3 driver by Armandas Kvietkus, with Griffin Kroah-Hartman and AWINIC copyright notices retained |
+| R12 input/QCOM Makefiles and `drivers/media/rc/ir-spi.c` | [GPL-2.0](GPL-2.0.txt), exact original identifiers; IR source retains Samsung Electronics / Andi Shyti attribution |
+| R12 AW86927 binding changes and new Apollo input DTS | [GPL-2.0-only](GPL-2.0.txt) **OR** [BSD-2-Clause](BSD-2-Clause.txt); existing binding header and new DTS identifier retained |
 
 Patch files preserve the upstream context and are distributed under the licenses of the code they modify. See [patch provenance](../patches/rebase-4.5/README.md). The existing hardware archive, Quickshell, libcamera and graphics packaging retain their own notices; consult those directories before redistributing builds.
+
+The R12 [file-by-file origin record](../patches/rebase-4.5/linux-apollo-input-origin.json) identifies the original review messages and driver blob. GPL-2.0-only and GPL-2.0 references use the included GNU GPL version 2 text; neither is relabeled “or later.” The BSD-2-Clause text is reproduced from [Linux v7.1's license file](https://github.com/torvalds/linux/blob/v7.1/LICENSES/preferred/BSD-2-Clause).
 
 ## Upstream projects
 

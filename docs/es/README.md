@@ -8,7 +8,7 @@
 
 ## Estado actual: 4.5 RC2 en RAM
 
-La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. Android no actúa como anfitrión. Son sesiones temporales en RAM: al terminar se restaura el DTBO original, se vuelve a Android y se comprueban los hashes de las particiones de arranque.
+La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. La última prueba registrada es **R12, del 1 de noviembre**. Android no actúa como anfitrión. Son sesiones temporales en RAM: al terminar se restaura el DTBO original, se vuelve a Android y se comprueban los hashes de las particiones de arranque.
 
 **La instalación permanente de esta nueva base sigue pendiente. No es todavía un móvil plenamente funcional ni existe un instalador público validado.** La instalación y las pruebas de Waydroid del 30 de octubre pertenecen a una [etapa anterior](../history/README-2026-10-30.md); no demuestran esas funciones en la nueva base.
 
@@ -21,13 +21,17 @@ La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono,
 - La reserva de memoria contigua pasó de 32 a **256 MiB**, resolviendo el fallo de asignación DMA de la principal.
 - La sesión local normal puede consultar llamadas sin el aviso de PIN al iniciar. Administración del servicio y cambios de firmware siguen requiriendo autenticación de administrador.
 - Se han comprobado el encendido/apagado de la linterna desde la sesión normal y el cierre/reinicio del servicio EFS del módem. Falta confirmar visualmente la luz y probar una transferencia EFS real.
+- En R12, el motor **AW8697** respondió a un pulso de **120 ms al 12,5 %**: el usuario confirmó una vibración **muy suave**. La sesión normal obtuvo acceso con `uaccess`, sin escritura para todos; feedbackd abrió el dispositivo después de reiniciarlo para detectar la regla añadida en RAM.
+- Infrarrojos aparece como dispositivo LIRC y anuncia capacidades `0x302`. Solo se consultaron: **no se emitió ninguna señal** ni se probó como mando.
 - Los últimos retornos a Android y las lecturas de `boot` y DTBO coinciden con las copias originales. No se ha formateado `userdata` en estas pruebas.
+
+R12 arrancó con kernel R6 y runtime `20261101-4`, añadiendo la regla del motor durante la sesión. El runtime `20261101-5` ya preparado incluye esa regla, pero falta probar un arranque completo con ese paquete. [Detalle de R12](../validation-2026-11-01.md#r12--physical-rumble-and-infrared-detection).
 
 ## Lo que falta
 
 No hay una SIM de pruebas: **no están verificadas las llamadas reales, SMS, datos ni audio de llamada**. La conexión Wi-Fi y el emparejamiento Bluetooth también siguen pendientes. La detección del adaptador NFC no demuestra todavía lectura de etiquetas.
 
-Quedan GPS, huella, proximidad, vibración e infrarrojos, además de suspensión, autonomía, primer PIN definitivo, arranque independiente de la nueva base y actualizaciones coherentes. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
+Quedan GPS, huella, proximidad, emisión óptica y uso como mando IR; la intensidad del motor y su respuesta en aplicaciones necesitan más pruebas. También faltan suspensión, autonomía, primer PIN definitivo, arranque independiente de la nueva base y actualizaciones coherentes. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
 
 ## Revisar o colaborar
 

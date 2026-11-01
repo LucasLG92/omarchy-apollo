@@ -1,0 +1,39 @@
+{
+  "aw8697_driver_source": "https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12414.html",
+  "aw8697_driver_author": "Armandas Kvietkus",
+  "aw8697_driver_git_blob": "9f703f81df2131700145d96e866e2d75b4d212f0",
+  "aw8697_driver_license": "GPL-2.0-only",
+  "aw8697_binding_source": "https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12284.html",
+  "apollo_board_license": "GPL-2.0-only OR BSD-2-Clause",
+  "ir_spi_original_source": "https://github.com/torvalds/linux/blob/master/drivers/media/rc/ir-spi.c",
+  "ir_spi_license_notice": "SPDX GPL-2.0; original module author attribution retained",
+  "kernel_base": "7.1.0 Apollo hardware recipe revision 12",
+  "kernel_driver_is_review_patch_v3_not_upstream_merged_claim": true,
+  "private_android_tree_in_patch": false,
+  "private_unit_calibration_in_patch": false,
+  "patch_sha256": "575a8ab50d03cd08f4cd6918fe2d4b2cc0db53daea95d85b611f6a5d833431d5",
+  "ir_inactive_tail_test_cases": 12,
+  "ir_inactive_tail_tests_on_hardware": false,
+  "ir_inactive_tail_test_note": "Actual TX/duty functions compiled for ARM64 under QEMU; no physical IR transmission.",
+  "patch_file": "linux-apollo-input-support.patch",
+  "aw8697_driver_copyright_holders": [
+    "Armandas Kvietkus",
+    "Griffin Kroah-Hartman",
+    "AWINIC Technology CO., LTD"
+  ],
+  "ir_spi_original_copyright_holders": [
+    "Samsung Electronics Co., Ltd.",
+    "Andi Shyti"
+  ],
+  "ir_spi_versioned_reference": "https://github.com/torvalds/linux/blob/v7.1/drivers/media/rc/ir-spi.c",
+  "binding_versioned_reference": "https://github.com/torvalds/linux/blob/v7.1/Documentation/devicetree/bindings/input/awinic,aw86927.yaml",
+  "licenses_by_file": {
+    "drivers/input/misc/aw8697.c": "GPL-2.0-only",
+    "drivers/input/misc/Kconfig": "GPL-2.0-only",
+    "drivers/input/misc/Makefile": "GPL-2.0",
+    "Documentation/devicetree/bindings/input/awinic,aw86927.yaml": "GPL-2.0-only OR BSD-2-Clause",
+    "arch/arm64/boot/dts/qcom/Makefile": "GPL-2.0",
+    "arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo-input.dts": "GPL-2.0-only OR BSD-2-Clause",
+    "drivers/media/rc/ir-spi.c": "GPL-2.0"
+  }
+}

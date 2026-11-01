@@ -1,6 +1,6 @@
 # Hardware status
 
-**Current track:** Omarchy 4.5 RC2 rebase, last recorded trial **R11 · 2026-11-01**. Results are from one Apollo development device. They are not independent certification or a claim that every Mi 10T variant behaves identically.
+**Current track:** Omarchy 4.5 RC2 rebase, last recorded trial **R12 · 2026-11-01**. Results are from one Apollo development device. They are not independent certification or a claim that every Mi 10T variant behaves identically. Each row retains the trial that actually tested it; R12 did not repeat every earlier test.
 
 The target is a complete, fast native Linux phone. That target is **not achieved**. The new track remains RAM-only; Android and original boot partitions were restored after the tests. No permanent 4.5 installation, complete public installer or working native updater is claimed.
 
@@ -22,11 +22,13 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | Accelerometer / light | Sensor proxy reports both available | Broader motion/light acceptance and app integration |
 | Proximity | Sensor proxy reports unavailable | Driver / sensor-path investigation |
 | NFC | `nfc0` registered; powered off at observation | Tag read/write and app behavior; no payment support claimed |
-| Haptics / IR | No native haptic input or LIRC device in R11 | Driver/DT integration and physical validation |
+| Haptics — AW8697 | R12: FF_RUMBLE start/stop/remove, 120 ms at 8192/65535; user confirmed very low-strength vibration; active local access without world-write permissions | Strength range, application feedback and a complete boot with runtime v5 |
+| Feedback service | R12: feedbackd opened the haptic device and stopped reporting missing feedback for the button event after restart | Automatic discovery from a fresh boot; wider event/application coverage |
+| Infrared | R12: `ir-spi` LIRC device detected; `GET_FEATURES` reported `0x302` | No transmission occurred; optical emission, actual carrier/duty and remote control unverified |
 | GPS / fingerprint | Unverified | Fix/reliability; enrollment, verification and unlock |
 | Audio | Earlier-track results remain historical | Speaker, microphone, routing and call AEC in 4.5 |
 | Power / alarms | USB-connected observation only | Real battery measurements, charge behavior, RTC alarms and suspend |
-| Return / recovery | R10/R11 returned after graphical shutdown without a request for hardware buttons; original boot/DTBO readbacks matched | General reboot reliability and standalone recovery |
+| Return / recovery | R10/R11/R12 returned after graphical shutdown without a request for hardware buttons; original boot/DTBO readbacks matched | General reboot reliability and standalone recovery |
 | Updates / Android apps | Earlier integration is archived; native 4.5 updater remains guarded/incomplete | Coherent upgrade/rollback and new-track Waydroid validation |
 
 ## How to read a result
@@ -35,7 +37,9 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 
 R9 had a DMA allocation failure. R10 resolved that failure for the main camera by adding `cma=256M`, with the same kernel, DTB and initramfs. A separate high-resolution attempt selected the front camera because enumeration order changed; subsequent diagnostic captures use stable hardware IDs. Failures stay in the [lab record](validation-2026-11-01.md).
 
-Current evidence: [R9 cameras/torch/EFS](evidence/2026-11-01-r9.json), [R10 DMA comparison](evidence/2026-11-01-r10.json), [R11 permissions/recovery](evidence/2026-11-01-r11.json). Raw diagnostics, camera images and per-device data remain private.
+R12 used kernel `7.1.0-apollo-native-r6` with runtime `20261101-4`; the haptic access rule was added during that RAM session. Runtime `20261101-5` includes the rule in a newly prepared package, but its complete boot has **not** been tested. Detection and a service restart in R12 do not establish that future boot result.
+
+Current evidence: [R9 cameras/torch/EFS](evidence/2026-11-01-r9.json), [R10 DMA comparison](evidence/2026-11-01-r10.json), [R11 permissions/recovery](evidence/2026-11-01-r11.json), [R12 haptics/IR/recovery](evidence/2026-11-01-r12.json). Raw diagnostics, camera images and per-device data remain private.
 
 The [hardware investigation notes](hardware-investigation.md) keep newly identified Android paths and upstream driver candidates separate from native acceptance.
 

@@ -11,7 +11,7 @@
 
 **An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-> **Current track: Omarchy 4.5 RC2, tested in RAM on 2026-11-01.** These sessions boot native ARM64 Linux, without Android as the host. They returned to Android after each trial. **The new rebase is not permanently installed, is not a complete daily-driver phone, and has no validated public installer.** Earlier permanent-installation and Waydroid results belong to the [2026-10-30 historical track](docs/history/README-2026-10-30.md).
+> **Current track: Omarchy 4.5 RC2, latest RAM trial R12 on 2026-11-01.** These sessions boot native ARM64 Linux, without Android as the host. They returned to Android after each trial. **The new rebase is not permanently installed, is not a complete daily-driver phone, and has no validated public installer.** Earlier permanent-installation and Waydroid results belong to the [2026-10-30 historical track](docs/history/README-2026-10-30.md).
 
 ## On the device
 
@@ -25,6 +25,7 @@
 - **Adreno GPU processing.** Freedreno reports **FD650**. All four camera sensors delivered 640×480 images; the main and ultrawide also passed larger RGB captures.
 - **A usable phone session.** The ordinary local user can query calls without the startup PIN prompt. Daemon administration and firmware changes still require administrator authentication.
 - **Measured changes.** Increasing CMA from 32 to **256 MiB** resolved the main-camera DMA allocation failure. Normal EFS service stop/restart and original boot/DTBO restoration were checked separately.
+- **Physical haptics.** R12 exercised AW8697 rumble for **120 ms at 8192/65535 magnitude** (about 12.5%). The user confirmed a **very low-strength vibration**; normal-session access and feedbackd discovery were also checked.
 
 | Component | Latest observed result | Still needed |
 | --- | --- | --- |
@@ -35,7 +36,9 @@
 | Modem / phone permissions | Modem detected; read-only call list succeeds; EFS stop/restart passes | **No SIM available:** real calls, SMS, data and call audio untested |
 | Wi-Fi / Bluetooth | Wi-Fi device detected; Bluetooth service active | Actual Wi-Fi connection and Bluetooth pairing |
 | Sensors / NFC | Accelerometer and ambient light available; NFC adapter registered | Proximity, NFC tag read and broader sensor acceptance |
-| GPS / fingerprint / haptics / IR | Investigation in progress | Native end-to-end support and physical tests |
+| Haptics | R12: very soft physical AW8697 rumble; local-user access; feedbackd opens the device after restart | Strength, app feedback and a full boot of the newly packaged runtime |
+| Infrared | R12: LIRC detected, capabilities `0x302` queried | **No signal transmitted:** optical emission and remote control untested |
+| GPS / fingerprint | Unverified | Native end-to-end support and physical tests |
 | Boot / updates / battery | Supervised RAM return and original partition readbacks checked | Permanent 4.5 installation, first PIN, standalone boot, coherent updates, suspend and battery life |
 
 See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.

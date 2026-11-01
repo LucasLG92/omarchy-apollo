@@ -15,7 +15,8 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 - **Phone/audio:** real calls, SMS, data and call AEC with a test SIM; media speaker/microphone and routing in the new base.
 - **Connectivity:** actual Wi-Fi connection, both bands, reconnect/suspend and Bluetooth pairing/audio.
 - **Sensors/NFC:** proximity, sensor integration and NFC tag operations. GPS needs a reliable fix; fingerprint needs enrollment/verification/unlock.
-- **Haptics/IR:** integrate and test the device-specific paths. Investigation or a driver tested on another handset is not Apollo acceptance.
+- **Haptics:** R12 confirmed a very soft AW8697 rumble. Test the strength range, application feedback and a complete boot with the newly packaged access rule.
+- **IR:** R12 detected the LIRC interface and queried capabilities without transmitting. Optical emission, real carrier/duty behavior and remote-control use still need physical tests.
 
 ## 3. Make it comfortable all day
 

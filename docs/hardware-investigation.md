@@ -1,14 +1,14 @@
 # Hardware investigation
 
-These notes record useful leads, **not completed native features**. The current acceptance table remains [R11 status](status.md). Android driver names and a patch tested on another phone do not prove that the Apollo port works.
+These notes distinguish driver leads from the bounded physical results in [R12 status](status.md). Android driver names and a patch tested on another phone do not prove complete Apollo functionality.
 
 ## Infrared
 
-A read-only inspection of the development phone's Android environment confirmed an SPI infrared device bound to `ir-spi`. Its selected hardware description uses `ir-spi-led`, a compatible supported by the existing Linux [SPI IR LED driver](https://github.com/torvalds/linux/blob/v7.1/drivers/media/rc/ir-spi.c). The current Apollo native device tree does not expose a working LIRC device. Native device-tree/power integration and physical transmission/receiver validation remain to be done. No IR signal has been emitted by this investigation.
+A read-only inspection of the development phone's Android environment confirmed an SPI infrared device bound to `ir-spi`. Its selected hardware description uses `ir-spi-led`, a compatible supported by the existing Linux [SPI IR LED driver](https://github.com/torvalds/linux/blob/v7.1/drivers/media/rc/ir-spi.c). In R12, a separate Apollo input DTS exposed the native LIRC device, and `GET_FEATURES` reported `0x302`. The [kernel patch](../patches/rebase-4.5/README.md) also appends an inactive SPI sample; its offline ARM64/QEMU fixture is separate from the phone test. No IR signal was transmitted. Optical emission, actual carrier/duty and operation as a remote remain unverified.
 
 ## Haptics
 
-Android exposes the `aw8697_haptic` driver family. A subsequent Android chip-ID readback returned `0x97`, confirming AW8697 on the development device; no per-unit calibration is published. An [AW8697 v3 driver submission](https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12414.html), dated 2026-10-13, adds force-feedback support and probe-time resonance calibration; its author reports testing on a POCO F3. Native Apollo integration is in development, without a completed physical test. The native R11 inventory had no haptics input device, and this investigation did not activate the motor.
+Android exposes the `aw8697_haptic` driver family. A subsequent Android chip-ID readback returned `0x97`, confirming AW8697 on the development device; no per-unit calibration is published. An [AW8697 v3 driver submission](https://lkml.iu.edu/hypermail/linux/kernel/2610.1/12414.html), dated 2026-10-13, adds force-feedback support and probe-time resonance calibration; its author reports testing on a POCO F3. R12 integrated that unmodified driver and physically exercised FF_RUMBLE for 120 ms at about 12.5% magnitude. The user confirmed a very soft vibration. Active local access and feedbackd opening were checked after adding a rule in RAM and restarting the service. Strength, app coverage and a complete boot with the prepared runtime v5 remain open. The original author and copyright notices are preserved in the [public patch and provenance](../patches/rebase-4.5/README.md).
 
 ## Motion, light and proximity
 
