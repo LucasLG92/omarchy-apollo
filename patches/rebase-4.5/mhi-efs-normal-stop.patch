@@ -1,0 +1,11 @@
+--- a/mhi_efs_sync.c
++++ b/mhi_efs_sync.c
+@@ -683,5 +683,6 @@
+ 	}
+ 
+ 	close(fd);
+-	return ret ? 1 : 0;
+-}
++	/* SIGTERM cancels a blocking read during an ordinary service stop. */
++	return stop_requested ? 0 : (ret ? 1 : 0);
++}

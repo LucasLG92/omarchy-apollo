@@ -1,5 +1,8 @@
 # Build status and recipes
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 These are integration packages for an already provisioned Apollo Linux base. This repository does not yet provide a validated installer from stock Android. Do not use a generic Omarchy ISO or format phone partitions with PC installation instructions.
 
 Build as an ordinary user in a clean checkout on aarch64 with the matching, signature-verified Omarchy ARM edge and Arch Linux ARM repositories. The runtime recipe is the root `PKGBUILD`. It fetches a pinned upstream git commit and applies `patches/`. The Apollo kernel, camera and firmware packages remain separate components of the reviewed device stack.

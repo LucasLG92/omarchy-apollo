@@ -1,5 +1,8 @@
 # Clean Omarchy installation
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 The clean installation is **permanently installed and cold-boot accepted**. The owner shut down completely, disconnected the PC, powered on the Xiaomi and unlocked the native Omarchy desktop with the local numeric PIN. Maintenance USB reconnected afterward. The [permanent-boot evidence](evidence/clean-permanent-boot-2026-10-30.json) distinguishes this from the earlier temporary trial.
 
 The root was built from a newly extracted, signature-verified official Arch Linux ARM bootstrap and signed repository packages, with pinned native Omarchy and reviewed Apollo components. No previous system, home, passwords, saved Wi-Fi profiles or Android userdata was imported. KDE/Plasma and CachyOS packages are absent.

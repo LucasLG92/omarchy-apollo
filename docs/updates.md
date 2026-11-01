@@ -1,5 +1,8 @@
 # Development update boundaries
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 Apollo uses an Android boot image and a persistent ext4 overlay. It has no PC EFI boot partition. A successful package upgrade alone cannot establish that a replacement kernel, initramfs, device tree, firmware or camera stack will boot and retain the hardware work.
 
 The current port therefore stops the generic Omarchy full-system update and package-upgrade entrypoints before authorization, downloads, package changes or migrations. Its update-availability command identifies the reviewed-port-release model rather than claiming that this independent package is current with upstream Omarchy. A fully validated Apollo system-update workflow remains unfinished; this boundary is an interim protection, not that workflow.

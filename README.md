@@ -1,71 +1,67 @@
-# Omarchy Apollo
+<p align="center"><img src="media/hero.svg" alt="Omarchy Apollo — native Linux, made for a phone" width="100%"></p>
 
-**Omarchy on a Snapdragon phone. Native Linux, touch-first controls, Android apps when you need them.**
+<p align="center">
+  <a href="docs/status.md"><img src="https://img.shields.io/badge/status-experimental-f3c46b?style=flat-square" alt="Experimental"></a>
+  <a href="https://github.com/omacom/omarchy/releases/tag/v4.5.0-rc2"><img src="https://img.shields.io/badge/target-Omarchy%204.5%20RC2-87c8ff?style=flat-square" alt="Omarchy 4.5 RC2 target"></a>
+  <a href="docs/validation-2026-11-01.md"><img src="https://img.shields.io/badge/evidence-physical%20device-8cf4ce?style=flat-square" alt="Physical-device evidence"></a>
+  <a href="LICENSES/README.md"><img src="https://img.shields.io/badge/licenses-MIT%20%2B%20upstream-c7b5ff?style=flat-square" alt="MIT and upstream licenses"></a>
+</p>
 
-<p><img src="media/omarchy-desktop.png" width="30%" alt="Clean native Omarchy Apollo desktop with its applications button"> <img src="media/mobile-apps.png" width="30%" alt="Application grid on the Xiaomi internal display"> <img src="media/touch-lock-preview.png" width="30%" alt="Empty, disabled preview of the Apollo touch PIN keypad"></p>
+<p align="center"><a href="docs/es/README.md">Español</a> · <a href="docs/status.md">Hardware status</a> · <a href="docs/validation-2026-11-01.md">Lab notes</a> · <a href="docs/roadmap.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
 
-Actual device captures, reviewed for personal data. The lock image is an empty preview with input disabled; it contains no entered PIN. The desktop and app grid come from the clean installation.
+**An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-Omarchy Apollo is an independent project bringing the normal Omarchy workflow to the **Xiaomi Mi 10T Pro** (`apollo`, M2007J3SG). Its mobile integration is developed here: a reachable app launcher, touch keyboard, screen controls, numeric authentication and phone-style power-button behavior, on native Arch Linux ARM.
+> **Current track: Omarchy 4.5 RC2, tested in RAM on 2026-11-01.** These sessions boot native ARM64 Linux, without Android as the host. They returned to Android after each trial. **The new rebase is not permanently installed, is not a complete daily-driver phone, and has no validated public installer.** Earlier permanent-installation and Waydroid results belong to the [2026-10-30 historical track](docs/history/README-2026-10-30.md).
 
-The clean installation is now **permanent**. The owner powered the phone off, disconnected the PC, booted with the power button and unlocked with the local PIN. The same PIN also authorizes administration through a touch keypad. New Android installations offer **without Google** or **with Google Play and services**; the tested phone uses the lighter VANILLA profile.
+## On the device
 
-This is a working development port with important hardware gaps. It is not an official Omarchy image or a finished daily-driver release. Full phone functionality is the target; the evidence below defines the current result.
+<p align="center"><a href="media/apollo-home-r11.png"><img src="media/apollo-home-r11.png" width="245" alt="Actual R11 RAM-session home screen: portrait app grid and search, without the startup PIN prompt"></a></p>
 
-## What makes it a phone
+<p align="center"><em>Actual R11 device capture. The header artwork is an illustration; this is the tested interface. No camera photos, credentials or personal notifications are published.</em></p>
 
-- **Start independently.** Native desktop on internal storage, with accepted unplugged cold boot and a preserved recovery route.
-- **Use a numeric PIN.** Create it on the phone, unlock the trusted session lock and use it for administration if selected. No mandatory long-password step in this profile.
-- **Press the power key naturally.** Screen-off hides the keypad before blanking; waking requires the PIN. The owner confirmed this cycle.
-- **Reach apps by touch.** A dedicated button opens the responsive application grid. The on-screen keyboard and display controls accompany the normal desktop workflow.
-- **Run Android on demand.** Fresh ARM Android uses the Adreno GPU. The APK installer confirms Android's actual result; F-Droid persists across container restarts.
-- **Keep development recoverable.** Reviewed packages, matching boot artifacts, private backups and an explicit boundary around the device stack.
+## What is demonstrated
 
-## Current status
+- **Native desktop and touch.** ARM64, systemd, Hyprland and Quickshell on the internal display. Touch input, applications and the on-screen keyboard have been exercised.
+- **Adreno GPU processing.** Freedreno reports **FD650**. All four camera sensors delivered 640×480 images; the main and ultrawide also passed larger RGB captures.
+- **A usable phone session.** The ordinary local user can query calls without the startup PIN prompt. Daemon administration and firmware changes still require administrator authentication.
+- **Measured changes.** Increasing CMA from 32 to **256 MiB** resolved the main-camera DMA allocation failure. Normal EFS service stop/restart and original boot/DTBO restoration were checked separately.
 
-| Area | Demonstrated result | Remaining acceptance |
+| Component | Latest observed result | Still needed |
 | --- | --- | --- |
-| Clean installation | Signed Arch Linux ARM base; no old home, credentials, saved networks or Android data imported; no KDE/Plasma or CachyOS | Public installer from stock Android |
-| Permanent boot | Boot image read-back checksum matches; owner-confirmed cold boot without PC and PIN unlock | Repeated power cycles and long-duration reliability |
-| Desktop and GPU | Native Hyprland/Quickshell on 1080 × 2400; FD650 in Linux and fresh Android; clean configuration diagnostics | Broader application and suspend stress |
-| Lock and administration | Physical PIN unlock, accepted numeric authorization popup and clean power-key cycle; corrected automatic lock protects the real session and turns the display off after two minutes | Physical wake/PIN acceptance for the automatic cycle; broader failure/suspend scenarios; fingerprint unlock |
-| Touch interface | Dedicated apps button and actual native grid; keyboard candidate and installed binaries each pass 19 checks | Finger typing across toolkits, navigation polish and accessibility |
-| Display controls | Orientation, automatic rotation, position lock and refresh; 23 isolated checks include the real accelerometer | Physical motion, touch mapping and power measurements |
-| Wi-Fi | Both bands scanned; shell model receives all three 5 GHz-only networks in the comparison, none missing | Physical selector and connection acceptance in this clean base |
-| Android / APK | Fresh VANILLA passes 31 install/lifecycle checks; F-Droid persistence and FD650; later running in a native window after host cold boot | Stopped-state icon launch, touch, notifications, camera and microphone |
-| Google choice | VANILLA/GAPPS chooser and 27 isolated initializer checks; VANILLA boots | Actual GAPPS initialization and Google Play |
-| Cameras | Earlier Omarchy build streams all four; EGL fix passes 40 candidate opens / 1,200 frames and 12 installed opens | Repeat preview, photos, video and orientation in the clean base |
-| Audio | Owner heard native tones in the preceding Omarchy build; Android stereo transport verified with an isolated sink | Fresh-base speaker/microphone and Android physical audio |
-| Clock | Calibrated read-only PMIC restoration installed; actual restore service and 12 fixture cases pass | Counter continuity after the next complete power-off |
-| Fingerprint | Earlier contact detection | Enrollment, verification and unlock are not implemented |
-| Cellular | Modem integration retained | No SIM available for calls, SMS or mobile-data tests |
-| GPS | Service integration retained | Outdoor fix, accuracy and reliability |
-| USB-C video | Direct cable test produced no image | Display output is unsupported by this port today |
+| Display / GPU / touch | Native desktop, FD650, touch and keyboard | Wider app, accessibility and power testing |
+| Main camera | 24 RGB frames at **3000×2256**; GPU pipeline; autofocus reported focused in a separate illuminated sequence | Optical quality, color, video and full-resolution support; **108 MP is unavailable** in this driver |
+| Ultrawide / other cameras | Ultrawide: 24 RGB frames at **4200×3120**; all four sensors at 640×480 | Front high-resolution capture, macro focus, orientation and quality |
+| Torch | Normal-user one-second on/off control passed | Visible-light confirmation |
+| Modem / phone permissions | Modem detected; read-only call list succeeds; EFS stop/restart passes | **No SIM available:** real calls, SMS, data and call audio untested |
+| Wi-Fi / Bluetooth | Wi-Fi device detected; Bluetooth service active | Actual Wi-Fi connection and Bluetooth pairing |
+| Sensors / NFC | Accelerometer and ambient light available; NFC adapter registered | Proximity, NFC tag read and broader sensor acceptance |
+| GPS / fingerprint / haptics / IR | Investigation in progress | Native end-to-end support and physical tests |
+| Boot / updates / battery | Supervised RAM return and original partition readbacks checked | Permanent 4.5 installation, first PIN, standalone boot, coherent updates, suspend and battery life |
 
-The [clean-install record](docs/clean-install.md) separates physical acceptance, automated checks and inherited hardware results. Test counts describe their actual scope; a rendered screen or passing fixture does not establish every phone function.
+See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.
 
-## Recent engineering work
+## Start here
 
-An automatic-lock failure was reproduced and corrected in Quickshell's idle notification lifetime. A replacement notification could reuse the old address, leaving the shell bound to a deleted object even though the compositor sent the idle event. The original reproduction fails and the corrected packaged production binary passes. All nine selected graphical unit targets pass; the real two-minute idle cycle now securely locks the session and turns the internal display off. Physical wake/PIN acceptance for this cycle is still pending. See the [focused patch and recipe](packaging/quickshell) and [device evidence](docs/evidence/idle-notification-lifetime-2026-10-30.json).
+This repository contains the earlier integration, a [clearly separated 4.5 rebase record](docs/rebase-4.5.md), and [reviewable source patches](patches/rebase-4.5/README.md). The public build and recovery path for the new track is incomplete. **Do not flash these files or run a PC Omarchy installer on the phone.**
 
-Runtime revision 12 packages reviewed upstream Omarchy commit `717175d4a8c5a12f6c0fff10dcc3c1c08ef3a0d1`. All seven Apollo patches apply without fuzz. Three changed upstream test suites and installed package-integrity checks pass. The update preserved open applications, the kernel, the PIN policies and the accepted power-key helper.
+You can review the source and run the publication checks without connecting a phone:
 
-A production authentication bug is fixed: sudo/polkit can call PAM with a real root UID, whereas screen locking calls it from the desktop user's context. The verifier resolves the target from `PAM_USER` only for a real root caller, preserving unprivileged identity restrictions. A negative control reproduces the old failure; the fixed helper passes real root-PAM and sudo cases. The owner separately confirmed popup acceptance.
+```sh
+git clone https://github.com/LucasLG92/omarchy-apollo.git
+cd omarchy-apollo
+python3 tests/check_public_docs.py
+```
 
-A desktop stall was traced to a lost wakeup in the graphics resource gatherer. Corrected `hyprgraphics` completes 512 resources in the candidate and another 512 after installation. It is active in the compositor after restart and cold boot; long-duration stability remains open.
+[Rebase and source pins](docs/rebase-4.5.md) · [How results are recorded](docs/validation-2026-11-01.md) · [Architecture and boundaries](docs/architecture.md) · [Historical recipes](docs/build.md)
 
-The clock helper pairs trusted UTC with the existing PMIC counter to restore time offline. Automatic recalibration requires synchronized network time. It does not enable hardware RTC writes or change firmware storage. See [clock behavior](docs/clock.md) and [update evidence](docs/evidence/upstream-and-clock-update-2026-10-30.json).
+## Help move it forward
 
-## Explore the project
+The most useful contributions are small and reproducible: camera quality/orientation, sensor and device-driver work, phone UI/translation, audio and power measurements, and a reliable native update/recovery path. See the [roadmap](docs/roadmap.md) and [contribution guide](CONTRIBUTING.md) before testing on hardware.
 
-[Clean installation](docs/clean-install.md) · [Android](docs/android.md) · [Keyboard](docs/keyboard.md) · [Display](docs/display.md) · [Cameras](docs/cameras.md) · [Validation](docs/validation.md) · [Architecture](docs/architecture.md) · [Updates](docs/updates.md) · [Roadmap](docs/roadmap.md)
+If you want to follow the port, **star the repository**. Bug reports, careful reviews and real device evidence are especially welcome.
 
-`platform/`, `config/` and `lock/` contain the mobile integration. `patches/` adapts pinned Omarchy. `packaging/` contains component recipes and `tests/` reproducible checks. `hardware/apollo-base/` preserves the earlier kernel patches, services and recovery work with their original provenance.
+## Built on other people's work
 
-Firmware binaries, personalized images, partition backups, private diagnostics, network names and credentials are excluded. This is source and evidence for one device port, not a generic flashable ARM ISO.
+This port depends on [Omarchy](https://github.com/omacom/omarchy), [Omarchy Mobile](https://github.com/derekross/omarchy-mobile), [Arch Linux ARM](https://archlinuxarm.org/), [Hyprland](https://github.com/hyprwm/Hyprland), [Quickshell](https://github.com/quickshell-mirror/quickshell), [libcamera](https://libcamera.org/) and the [Apollo hardware packages by royka1](https://github.com/royka1/Xiaomi-Apollo-pmOS-packages). Earlier Android-container work uses [Waydroid](https://github.com/waydroid/waydroid). This is an independent community project, not an official Xiaomi or Omarchy release.
 
-[Español](docs/es/README.md) · [Contributing](CONTRIBUTING.md) · [Security and privacy](SECURITY.md)
-
-## Upstream software and licensing
-
-Apollo's mobile integration is developed in this project. Its underlying software retains its own authorship and licenses: [Omarchy](https://github.com/omacom/omarchy), [Omarchy packages](https://github.com/omacom/omarchy-pkgs), [Arch Linux ARM](https://archlinuxarm.org/), [Hyprland](https://github.com/hyprwm/Hyprland), [Quickshell](https://github.com/quickshell-mirror/quickshell), [Waydroid](https://github.com/waydroid/waydroid), Linux and the Apollo device-port contributors. Omarchy and the original Apollo integration are MIT licensed; Linux and individual dependencies retain their respective licenses. Proprietary Xiaomi firmware is not redistributed.
+Project integration is MIT licensed; imported components and patches retain their own licenses. See [license and attribution details](LICENSES/README.md) and [media provenance](media/README.md). Proprietary firmware, partition images, per-device calibration and credentials are not distributed. [Security and privacy](SECURITY.md).

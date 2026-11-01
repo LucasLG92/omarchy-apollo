@@ -1,23 +1,48 @@
 # Omarchy Apollo
 
-**Omarchy nativo en un Xiaomi, adaptado para usarlo como móvil.** El proyecto desarrolla aquí su integración táctil, conservando el escritorio y las aplicaciones normales de Omarchy. Android es opcional para instalar APK, con elección sin Google o con Google Play y servicios.
+**Omarchy nativo en el Xiaomi Mi 10T Pro (`apollo`), con interfaz táctil y resultados verificables.** Un escritorio Linux en formato móvil, con Hyprland, Quickshell y la GPU Adreno 650.
 
-La instalación limpia ya es permanente. El propietario ha apagado el teléfono, desconectado el PC, arrancado con el botón y desbloqueado con el PIN. La base procede de Arch Linux ARM firmado y Omarchy, sin copiar el sistema, la carpeta personal, contraseñas, redes guardadas ni datos Android anteriores. No contiene KDE/Plasma ni CachyOS.
+[English / portada](../../README.md) · [Estado completo](../status.md) · [Pruebas recientes](../validation-2026-11-01.md) · [Hoja de ruta](../roadmap.md)
 
-El PIN numérico se crea y escribe únicamente en el móvil. Sirve para bloquear y, por elección del propietario, para autorizar cambios del sistema. Se ha confirmado el desbloqueo, el aviso numérico de autorización y el botón lateral: apaga sin el destello del teclado y pide el PIN al encender. La corrección de administración pasa 13 pruebas PAM/sudo con una cuenta temporal; el flujo de bloqueo pasa otras 19 pruebas controladas.
+<p align="center"><img src="../../media/hero.svg" width="100%" alt="Omarchy Apollo: Linux nativo adaptado a un teléfono"></p>
 
-La barra tiene un botón para abrir las aplicaciones. La cuadrícula se ha renderizado en la pantalla real y sus capturas se han revisado. El teclado y los ajustes de giro/frecuencia están integrados; la escritura con el dedo en distintos programas, los gestos y otros detalles de manejo siguen en pruebas.
+## Estado actual: 4.5 RC2 en RAM
 
-El bloqueo automático ya protege la sesión y apaga la pantalla tras dos minutos sin uso. Se ha encontrado y corregido un fallo de notificaciones de Quickshell: la prueba reproduce el error original y pasa con el ejecutable corregido del paquete. También pasan nueve pruebas gráficas aisladas. Falta la confirmación física del PIN al despertar de este ciclo automático; el botón lateral y el arranque en frío tienen su aceptación anterior separada.
+La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. Android no actúa como anfitrión. Son sesiones temporales en RAM: al terminar se restaura el DTBO original, se vuelve a Android y se comprueban los hashes de las particiones de arranque.
 
-Linux y Android usan la Adreno 650. Android sin Google pasa 31 pruebas de APK y ciclo de arranque, incluida instalación confirmada, conservación de F-Droid y renderizado FD650. Tras el arranque en frío de Linux se ha observado Android en una ventana nativa, conservando la aplicación abierta. El inicializador con elección de Google pasa 27 pruebas aisladas; estas sustituyen la descarga y no demuestran todavía Google Play.
+**La instalación permanente de esta nueva base sigue pendiente. No es todavía un móvil plenamente funcional ni existe un instalador público validado.** La instalación y las pruebas de Waydroid del 30 de octubre pertenecen a una [etapa anterior](../history/README-2026-10-30.md); no demuestran esas funciones en la nueva base.
 
-El selector Wi-Fi de la base limpia recibe las tres redes de solo 5 GHz detectadas en la comparación, sin ninguna ausente y sin publicar nombres ni direcciones. Falta confirmar físicamente selección y conexión. Los resultados de la base antigua permanecen separados.
+<p align="center"><a href="../../media/apollo-home-r11.png"><img src="../../media/apollo-home-r11.png" width="245" alt="Captura real del inicio de la sesión R11, sin el aviso de PIN"></a></p>
 
-Omarchy se ha actualizado al código revisado del 30 de octubre sin cambiar kernel, políticas del PIN ni botón de apagado. Pasan las tres pruebas de upstream relacionadas y las comprobaciones de los paquetes. Se ha añadido una calibración del reloj de solo lectura: recupera la hora sin escribir en el firmware y pasa 12 pruebas. Falta su propia comprobación después de apagar completamente.
+## Avances comprobados
 
-La base anterior de Omarchy entregó vídeo desde las cuatro cámaras y confirmó tonos por el altavoz. La corrección de cámara pasó 40 aperturas con la candidata y otras 12 con la biblioteca instalada. Falta repetir la aceptación gráfica y física de fotos, vídeo y audio en esta base limpia. Android tiene comprobado el transporte estéreo a una salida virtual, no todos sus dispositivos físicos.
+- Escritorio nativo con renderizado **Freedreno FD650**, entrada táctil, aplicaciones y teclado en pantalla.
+- Las cuatro cámaras entregan imágenes de 640×480. La principal capturó 24 imágenes RGB de **3000×2256** y la ultra gran angular otras 24 de **4200×3120**.
+- La reserva de memoria contigua pasó de 32 a **256 MiB**, resolviendo el fallo de asignación DMA de la principal.
+- La sesión local normal puede consultar llamadas sin el aviso de PIN al iniciar. Administración del servicio y cambios de firmware siguen requiriendo autenticación de administrador.
+- Se han comprobado el encendido/apagado de la linterna desde la sesión normal y el cierre/reinicio del servicio EFS del módem. Falta confirmar visualmente la luz y probar una transferencia EFS real.
+- Los últimos retornos a Android y las lecturas de `boot` y DTBO coinciden con las copias originales. No se ha formateado `userdata` en estas pruebas.
 
-Las huellas no permiten aún registrar ni desbloquear. Las llamadas, SMS y datos necesitan una SIM de pruebas. El GPS necesita posicionamiento fiable en exterior. El USB-C directo no dio imagen y sigue sin estar soportado. Quedan también batería, suspensión y estabilidad prolongada.
+## Lo que falta
 
-Es un port de desarrollo con avances reales y límites visibles. «100 % funcional» es el objetivo, no el estado actual. La [tabla principal](../../README.md) y el [registro de instalación](../clean-install.md) distinguen lo comprobado, lo heredado y lo pendiente. Se mantienen los créditos y licencias del software utilizado. Se excluyen firmware propietario, imágenes personalizadas, copias de particiones, diagnósticos privados y credenciales.
+No hay una SIM de pruebas: **no están verificadas las llamadas reales, SMS, datos ni audio de llamada**. La conexión Wi-Fi y el emparejamiento Bluetooth también siguen pendientes. La detección del adaptador NFC no demuestra todavía lectura de etiquetas.
+
+Quedan GPS, huella, proximidad, vibración e infrarrojos, además de suspensión, autonomía, primer PIN definitivo, arranque independiente de la nueva base y actualizaciones coherentes. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
+
+## Revisar o colaborar
+
+El [registro 4.5](../rebase-4.5.md) identifica versiones, fuentes y alcance. Los [parches públicos](../../patches/rebase-4.5/README.md) están separados por componente y conservan sus licencias. Aún no forman un procedimiento completo de reconstrucción o instalación. No deben flashearse como una imagen ni usarse con un instalador de PC.
+
+Se puede revisar el proyecto y comprobar los documentos sin conectar un teléfono:
+
+```sh
+git clone https://github.com/LucasLG92/omarchy-apollo.git
+cd omarchy-apollo
+python3 tests/check_public_docs.py
+```
+
+Son útiles los cambios pequeños con una prueba clara: controladores, cámara, audio, consumo, interfaz táctil, traducción y recuperación. [Cómo contribuir](../../CONTRIBUTING.md).
+
+Si quieres seguir el avance, puedes dar una **estrella** al repositorio. La prioridad es que cada función anunciada tenga una prueba que la respalde.
+
+El proyecto se apoya en Omarchy, Omarchy Mobile y los [paquetes de hardware de Apollo](https://github.com/royka1/Xiaomi-Apollo-pmOS-packages), entre otros. Se mantienen sus créditos y licencias. No se publican firmware propietario, calibración, copias de particiones, identificadores, credenciales, fotos de cámara ni registros privados. [Seguridad y privacidad](../../SECURITY.md).

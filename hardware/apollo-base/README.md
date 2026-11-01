@@ -14,8 +14,8 @@ Apollo Linux brings a desktop Linux environment to a phone you can hold in one h
 
 <table>
 <tr>
-<td align="center"><img src="media/installed-desktop.png" width="270" alt="Real r5 desktop on Apollo with WiFi and keyboard controls"><br><b>KDE on the installed phone</b></td>
-<td align="center"><img src="media/installed-status.png" width="270" alt="Real terminal showing installed r5, ARM64, kernel 23 and WiFi band without network identifiers"><br><b>Real system, verified state</b></td>
+<td align="center"><em>Historical image omitted from this public archive.</em><br><b>KDE on the installed phone</b></td>
+<td align="center"><em>Historical image omitted from this public archive.</em><br><b>Real system, verified state</b></td>
 </tr>
 </table>
 

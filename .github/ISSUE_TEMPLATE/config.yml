@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Current hardware status
+    url: https://github.com/LucasLG92/omarchy-apollo/blob/main/docs/status.md
+    about: Check demonstrated results and known gaps before opening a report.
+  - name: Security and privacy
+    url: https://github.com/LucasLG92/omarchy-apollo/blob/main/SECURITY.md
+    about: Do not publish secrets or personal device diagnostics in issues.

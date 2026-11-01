@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-01",
+  "evidence_type": "sanitized supervised-device result summary",
+  "device_model": "Xiaomi Mi 10T Pro",
+  "device_codename": "apollo",
+  "track": "Omarchy 4.5 RC2 RAM rebase",
+  "independent_reproduction": false,
+  "permanent_installation_complete": false,
+  "userdata_formatted": false,
+  "full_phone_functionality_verified": false,
+  "device_identifiers_included": false,
+  "raw_logs_included": false,
+  "private_camera_images_included": false,
+  "calibration_or_firmware_included": false,
+  "trial": "R10",
+  "omarchy": "4.5.0rc2-1",
+  "mobile_shell": "0.2.62.apollo45-5",
+  "kernel_and_dtb_and_initramfs_unchanged": true,
+  "boot_argument_added": "cma=256M",
+  "physical_cma_mebibytes": 256,
+  "ufs_nodes_read_only": 122,
+  "native_rgb_captures": [
+    {
+      "sensor": "s5khmx",
+      "actual_rgb_dimensions": [
+        3000,
+        2256
+      ],
+      "frames": 24,
+      "gpu": "FD650"
+    },
+    {
+      "sensor": "ov13b10",
+      "actual_rgb_dimensions": [
+        4200,
+        3120
+      ],
+      "frames": 24,
+      "gpu": "FD650"
+    }
+  ],
+  "r9_cma_allocation_failure_resolved_for_main_capture": true,
+  "full_108_megapixel_mode_available": false,
+  "photographic_color_quality_validated": false,
+  "initial_numeric_selector_was_unstable": true,
+  "diagnostic_selection_now_uses_stable_hardware_id": true,
+  "initial_front_high_resolution_attempt_returned_no_frames": true,
+  "graphical_session_stop_passed": true,
+  "return_to_android_observed_without_requesting_buttons": true,
+  "seconds_finish_request_to_dtbo_restored_and_android_reboot_request": 20.5,
+  "previous_return_failure_cause_confirmed": false,
+  "standalone_reboot_reliability_proven": false,
+  "modemmanager_tested_on_phone": "1.24.2-3",
+  "original_dtbo_restored": true,
+  "original_boot_readback_verified": true,
+  "original_dtbo_readback_verified": true,
+  "android_boot_completed_verified": true,
+  "sim_available": false
+}

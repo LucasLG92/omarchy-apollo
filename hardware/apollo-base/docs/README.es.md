@@ -4,17 +4,17 @@ Linux de escritorio **nativo** para **Xiaomi Mi 10T Pro, M2007J3SG (Apollo)**: A
 
 El objetivo es poder usar el móvil como un ordenador y continuar el desarrollo desde el propio dispositivo. Es una **base experimental de pruebas**, con fallos conocidos. No es una edición oficial de CachyOS ni una ROM apta todavía para sustituir un teléfono de uso diario. No habilita automáticamente cualquier sistema operativo.
 
-![KDE Wayland real en el móvil](../media/kde-desktop.png)
+*Historical image omitted from this public archive.*
 
-![Paquetes y arquitectura reales en Konsole](../media/kde-console.png)
+*Historical image omitted from this public archive.*
 
 Estas dos capturas se tomaron en el propio móvil durante el arranque temporal de la candidata. Son capturas reales, sin montaje.
 
-![Escritorio de la instalación interna](../media/installed-desktop.png)
+*Historical image omitted from this public archive.*
 
 La tercera captura muestra el escritorio de la **base instalada r5**, con selector WiFi y teclado accesibles desde el panel. Se revisaron su contenido visible y sus metadatos antes de publicarla.
 
-![Estado de la instalación r5 en Konsole](../media/installed-status.png)
+*Historical image omitted from this public archive.*
 
 La cuarta captura es una ventana real maximizada en la pantalla del móvil. Muestra la versión y la banda WiFi, sin nombres de redes ni credenciales. El tema y el fondo fueron elegidos por el propietario.
 

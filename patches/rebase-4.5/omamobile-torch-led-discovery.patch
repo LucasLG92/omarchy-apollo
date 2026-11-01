@@ -1,0 +1,86 @@
+--- a/plugins/omamobile.quicksettings/QuickSettings.qml
++++ b/plugins/omamobile.quicksettings/QuickSettings.qml
+@@ -13,6 +13,7 @@
+ import "TilesModel.js" as TilesModel
+ import "NotificationsModel.js" as NotificationsModel
+ import "Readable.js" as Readable
++import "TorchModel.js" as TorchModel
+ 
+ // Pull-down quick settings for the phone. The sheet drops from the top edge
+ // over the status bar, collapsed as on Android: a clock header, the first
+@@ -1174,7 +1175,7 @@
+     onExited: function(exitCode) { if (exitCode !== 0) keyboard.available = false }
+   }
+ 
+-  // The rear flash LED in torch mode (leds-lm3644, white:torch). "100%" is
++  // The rear flash LED in torch mode (Pixel or Apollo). "100%" is
+   // the device tree's torch cap, not the chip's maximum. brightnessctl goes
+   // through logind's SetBrightness when it can't write sysfs itself, which
+   // the active session may do for leds devices.
+@@ -1183,6 +1184,7 @@
+ 
+     property bool available: false
+     property bool enabled: false
++    property string device: ""
+     readonly property string icon: "󰉄"
+     readonly property string status: !available ? "No flash LED" : enabled ? "On" : "Off"
+ 
+@@ -1192,25 +1194,25 @@
+ 
+     function toggle() {
+       if (!available || torchWrite.running) return
+-      torchWrite.command = ["brightnessctl", "--device=white:torch", "--quiet", "set", enabled ? "0" : "100%"]
++      torchWrite.command = TorchModel.writeCommand(device, enabled)
++      if (torchWrite.command.length === 0) return
+       torchWrite.running = true
+     }
+   }
+ 
+   Process {
+     id: torchRead
+-    command: ["brightnessctl", "--device=white:torch", "--machine-readable", "info"]
++    command: TorchModel.statusCommand()
+     stdout: StdioCollector {
+       waitForEnd: true
+       onStreamFinished: {
+-        // device,class,current,percent%,max
+-        var parts = String(text || "").trim().split(",")
+-        var current = parts.length >= 3 ? parseInt(parts[2], 10) : NaN
+-        torch.available = isFinite(current)
+-        torch.enabled = isFinite(current) && current > 0
++        var state = TorchModel.parseStatus(text)
++        torch.available = state.available
++        torch.enabled = state.enabled
++        torch.device = state.device
+       }
+     }
+-    onExited: function(exitCode) { if (exitCode !== 0) torch.available = false }
++    onExited: function(exitCode) { if (exitCode !== 0) { torch.available = false; torch.enabled = false; torch.device = "" } }
+   }
+ 
+   Process {
+--- /dev/null
++++ b/plugins/omamobile.quicksettings/TorchModel.js
+@@ -0,0 +1,22 @@
++// SPDX-License-Identifier: MIT
++.pragma library
++
++function statusCommand() {
++  return ["sh", "-c", 'for device in white:torch white:flash; do if brightnessctl --class=leds --device="$device" --machine-readable info 2>/dev/null; then exit 0; fi; done; exit 1']
++}
++
++function parseStatus(text) {
++  var unavailable = { available: false, enabled: false, device: "" }
++  var fields = String(text || "").trim().split(",")
++  if (fields.length !== 5 || fields[1] !== "leds") return unavailable
++  if (fields[0] !== "white:torch" && fields[0] !== "white:flash") return unavailable
++  if (!/^[0-9]+$/.test(fields[2]) || !/^[0-9]+$/.test(fields[4])) return unavailable
++  var current = Number(fields[2]), maximum = Number(fields[4])
++  if (!isFinite(current) || !isFinite(maximum) || maximum <= 0 || current > maximum) return unavailable
++  return { available: true, enabled: current > 0, device: fields[0] }
++}
++
++function writeCommand(device, enabled) {
++  if (device !== "white:torch" && device !== "white:flash") return []
++  return ["brightnessctl", "--class=leds", "--device=" + device, "--quiet", "set", enabled ? "0" : "100%"]
++}

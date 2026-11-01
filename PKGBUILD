@@ -1,3 +1,5 @@
+# Historical 2026-10-30 integration; not the current 4.5 RC2 RAM rebase.
+# Read docs/rebase-4.5.md before building or using this recipe.
 # Build from the repository root: makepkg
 pkgname=omarchy-apollo
 pkgver=0.1.0

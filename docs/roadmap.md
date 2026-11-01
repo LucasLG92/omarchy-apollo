@@ -1,13 +1,33 @@
 # Roadmap
 
-1. Preserve the accepted clean native installation, independent cold boot, numeric PIN administration and phone-style power-key cycle. Extend recovery and repeated power-cycle acceptance.
-2. Refine the portrait touch interface: home/app navigation, readable app labels, reachable controls, application switching and keyboard behavior across toolkits.
-3. Extend trusted locking with failure, crash and suspend/resume coverage. The owner has accepted enrollment, unlocking, numeric administration and the normal power-key cycle. Automatic idle now securely locks and turns the display off after two minutes; accept its physical wake/PIN cycle separately.
-4. Extend the 31 passing Waydroid APK/lifecycle checks with physical file-manager activation, notifications, input, application navigation, sound/camera access and cold-boot persistence. Confirmed installation, stop/start, F-Droid persistence and GPU rendering have device evidence.
-5. Extend the native four-camera stream and EGL lifecycle checks with physical GNOME Camera permission, preview, photo/video, orientation and optical focus acceptance. Repeat audio, Wi-Fi, Bluetooth, GPS and power checks from Omarchy. Track Android hardware support separately.
-6. Continue unresolved fingerprint, cellular, external display and long-duration battery/thermal testing with the required accessories and SIM.
-7. Implement and validate coherent Apollo system updates, rollback and matching replacement boot images; preserve the device-stack guard until that procedure is demonstrated.
-8. Validate read-only RTC calibration across full power-off and continue rebasing newer kernel/device sources in an isolated build before temporary hardware tests.
-9. Publish a tested installation/recovery procedure and release artifacts after repeatable device validation; a single accepted cold boot is not a generic stock-device installer.
+The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 status](status.md) is RAM-only and does not meet that goal yet. The earlier installation remains a [historical reference](history/README-2026-10-30.md).
 
-“100% functional” is the target, not a claim about the current build. Hardware limits and failed tests stay visible.
+## 1. Reproducible, recoverable native installation
+
+- Publish a complete builder with source pins, licenses and verified package provenance.
+- Implement the Apollo-specific permanent storage/boot/recovery procedure and local first-PIN setup.
+- Validate repeated unplugged boot, recovery and an update/rollback path that retains the device stack.
+- Keep generic PC reset/installer/updater paths guarded until their Apollo equivalents are proven.
+
+## 2. Finish the hardware acceptance
+
+- **Cameras:** front high-resolution/stride failure, macro focus, rotation, video, optical focus and color. The current main driver has no 108 MP mode.
+- **Phone/audio:** real calls, SMS, data and call AEC with a test SIM; media speaker/microphone and routing in the new base.
+- **Connectivity:** actual Wi-Fi connection, both bands, reconnect/suspend and Bluetooth pairing/audio.
+- **Sensors/NFC:** proximity, sensor integration and NFC tag operations. GPS needs a reliable fix; fingerprint needs enrollment/verification/unlock.
+- **Haptics/IR:** integrate and test the device-specific paths. Investigation or a driver tested on another handset is not Apollo acceptance.
+
+## 3. Make it comfortable all day
+
+- Touch targets, navigation, app switching, toolkit keyboard behavior and accessible controls.
+- Translation coverage and readable device/lens names.
+- Safe screen-off/wake, suspend, alarms, charging, thermal and battery measurements on real storage.
+- Performance profiles measured against latency and power, not guessed from service startup.
+
+## 4. Revalidate optional Android compatibility
+
+The earlier Waydroid/VANILLA, APK and GPU checks remain useful history. Repeat them on the new profile before announcing support for Android apps, Google services or Android access to camera/microphone.
+
+## What moves an item to complete
+
+A source change, a reproducible test, the precise tested configuration and a successful physical result. Record regressions and recovery. Keep live-device findings separate from fixtures and earlier releases. Publish only reviewed summaries, never raw calibration, firmware dumps or personal diagnostics.

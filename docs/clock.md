@@ -1,5 +1,8 @@
 # Read-only PMIC clock calibration
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 The phone's `rtc-pm8xxx` counter can be read, but the running device tree supplies neither permission for direct host writes nor a persistent kernel offset provider. RTC set requests return `ENODEV`. The port does not enable a firmware property merely to suppress this error.
 
 `platform/omarchy-apollo-clock` pairs that counter with trusted UTC and stores a root-only calibration in `/var/lib/omarchy-apollo/clock/`. At boot it predicts UTC from the elapsed counter. It writes no RTC register, modem time store, UEFI variable or firmware partition.

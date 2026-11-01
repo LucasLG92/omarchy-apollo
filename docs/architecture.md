@@ -1,5 +1,8 @@
 # Architecture
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 The installed Apollo base uses an Android boot image, a device-specific mainline kernel, a SquashFS lower layer and a persistent ext4 overlay on internal userdata. It does not use the generic Omarchy UEFI/Limine/LUKS/Btrfs image layout.
 
 The desktop package pins upstream Omarchy commit `717175d4a8c5a12f6c0fff10dcc3c1c08ef3a0d1`. Its integration identifies the exact `xiaomi,apollo` device-tree token before the broad Qualcomm laptop family. Authentication remains in the trusted lock component; ordinary shell plugins never receive authentication services. The dedicated applications button invokes only the fixed app-grid route.

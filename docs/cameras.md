@@ -1,5 +1,8 @@
 # Native cameras in Omarchy
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 All four Apollo sensors deliver camera buffers through the native PipeWire/libcamera stack in the current Omarchy session. The mobile profile includes [GNOME Camera / Snapshot](https://apps.gnome.org/Snapshot/), its GTK4 video sink and the PipeWire GStreamer plugin. The application is designed for computers, tablets and phones; its physical acceptance on Apollo is still pending.
 
 ## Choosing a camera

@@ -1,5 +1,8 @@
 # Display controls for a phone
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 Open **Pantalla Apollo** from the application launcher. The installed mobile profile adds manual orientation, automatic rotation, a rotation lock and refresh-rate selections. The current panel advertises 60, 90, 120 and 144 Hz. The physical display remains at its previous 144 Hz setting until the owner chooses a change after PIN enrollment.
 
 While the trusted PIN-creation surface is active, display changes return `APOLLO_PIN_SETUP_ACTIVE`. This guard was exercised against the installed service: the panel geometry, refresh, touch configuration and PIN process were preserved. Complete enrollment on the phone before trying the controls; do not share the PIN.

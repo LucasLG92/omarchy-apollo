@@ -1,5 +1,8 @@
 # Validation record
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 ## Current clean-image milestone — 2026-10-30
 
 The clean installation is permanent. The owner completed an unplugged cold boot and PIN unlock, and separately accepted the numeric administration popup and the clean power-key screen-off/wake cycle. These results supersede the corresponding pending items in the chronological records below; they do not retroactively repeat older hardware tests in the new root.

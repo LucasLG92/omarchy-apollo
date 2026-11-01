@@ -1,5 +1,8 @@
 # Android applications, with or without Google
 
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+
+
 Omarchy remains the native Linux desktop. An optional ARM Waydroid environment supplies Android applications. A new installation can choose **Android without Google (VANILLA)** or **Android with Google Play and Google services (GAPPS)**. Without Google is the default. Android starts on demand; it is not a required boot-time desktop service.
 
 ## Choose during a fresh Android installation

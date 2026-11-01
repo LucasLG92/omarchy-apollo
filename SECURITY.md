@@ -1,6 +1,6 @@
 # Security and privacy
 
-This is a development port with authorized maintenance access. It is not a hardened consumer phone release. A graphical lock is not disk encryption, and the inherited ext4 development installation is not encrypted.
+This is a development port, not a hardened consumer phone release. The current 4.5 RC2 track is a supervised RAM system, not a permanent installation. Earlier ext4/PIN results are historical. A graphical lock is not disk encryption; a final encrypted installation and first-PIN profile remain unvalidated. See [current status](docs/status.md).
 
 Do not report a vulnerability by publishing credentials, a PIN, password hashes, SSH keys, biometrics, modem identifiers or private logs in an issue. Describe the component and reproduction using disposable data. Use GitHub's private vulnerability reporting when it is available for this repository.
 
