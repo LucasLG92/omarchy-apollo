@@ -1,6 +1,6 @@
 # Architecture
 
-> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
 
 
 The installed Apollo base uses an Android boot image, a device-specific mainline kernel, a SquashFS lower layer and a persistent ext4 overlay on internal userdata. It does not use the generic Omarchy UEFI/Limine/LUKS/Btrfs image layout.

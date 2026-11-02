@@ -17,6 +17,7 @@ The root [MIT license](../LICENSE) covers original Omarchy Apollo integration an
 | R13 `hexagonrpcd/apps_std.c` scratch-file change | [GPL-3.0-or-later](GPL-3.0-or-later.txt); **Copyright (C) 2023 The Sensor Shell Contributors**, original notice retained |
 | Original V2 Omarchy PNG assets and upstream theme composition | MIT — **David Heinemeier Hansson**; original notices retained in both [native theme directories](../experiments/original-boot-v2/native/) |
 | V2 portrait/touch adaptation, local keyboard, staging and KMS capture helper | [MIT](../experiments/original-boot-v2/LICENSE) — Omarchy Apollo contributors; no redistributed Qt/SDDM/Plymouth toolchains |
+| Owner setup r5, scoped CSS and isolated synthetic harness | [MIT](../experiments/owner-setup/LICENSE) — original Omarchy Apollo source; reuses the unchanged DHH logo with its [original MIT notice](../experiments/owner-setup/assets/LICENSE-Omarchy) |
 | SIM access-PIN UI 0.1.3 candidate | [MIT](../experiments/sim-unlock/LICENSE) — 2026 Apollo contributors; source only, GTK/GIO dependencies not redistributed |
 
 Patch files preserve the upstream context and are distributed under the licenses of the code they modify. See [patch provenance](../patches/rebase-4.5/README.md). The existing hardware archive, Quickshell, libcamera and graphics packaging retain their own notices; consult those directories before redistributing builds.

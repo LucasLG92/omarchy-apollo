@@ -1,0 +1,43 @@
+/* SPDX-License-Identifier: MIT
+ * Original Omarchy palette; selectors scoped to this application's window.
+ * Logo/lock PNGs are unmodified upstream MIT assets, see LICENSE-Omarchy.
+ */
+window.apollo-omarchy {
+  background: #1a1b26;
+  color: #c0caf5;
+  font-family: monospace;
+  font-size: 14px;
+}
+.apollo-omarchy .omarchy-title { font-size: 20px; font-weight: 600; }
+.apollo-omarchy .omarchy-inventory { color: #a8cd76; font-size: 14px; }
+.apollo-omarchy .omarchy-status { color: #c0caf5; line-height: 1.35; }
+.apollo-omarchy entry {
+  background: #1a1b26;
+  color: #a8cd76;
+  border: 2px solid #a8cd76;
+  border-radius: 4px;
+  box-shadow: none;
+  font-size: 20px;
+  caret-color: #a8cd76;
+}
+.apollo-omarchy entry placeholder { font-size: 12px; color: #a9b1d6; }
+.apollo-omarchy button {
+  background: #24283b;
+  color: #c0caf5;
+  border: 1px solid #414868;
+  border-radius: 4px;
+  box-shadow: none;
+  padding: 8px;
+  min-height: 28px;
+  transition: none;
+}
+.apollo-omarchy .omarchy-key { font-size: 19px; }
+.apollo-omarchy button:hover { background: #303650; }
+.apollo-omarchy button:active { background: #414868; }
+.apollo-omarchy button:focus-visible { outline: 2px solid #a8cd76; outline-offset: 2px; }
+.apollo-omarchy button.omarchy-primary { background: #a8cd76; border-color: #a8cd76; color: #1a1b26; font-weight: 600; }
+.apollo-omarchy button.omarchy-primary:hover { background: #b9db8c; }
+.apollo-omarchy button:disabled { opacity: 0.55; }
+.apollo-omarchy spinner { color: #a8cd76; }
+.apollo-omarchy button.omarchy-pin-field { font-size: 14px; }
+.apollo-omarchy button.omarchy-pin-selected { border: 2px solid #a8cd76; color: #a8cd76; background: #1a1b26; }

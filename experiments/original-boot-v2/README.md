@@ -2,7 +2,7 @@
 
 The original **Omarchy 4.5 RC2** appearance, fitted to Apollo's portrait display. The official PNG assets are unchanged, the background is `#1a1b26`, and the initial 432×960 QML render matches the upstream reference pixel for pixel. Touch input appears when the credential field is tapped.
 
-**Status:** native Plymouth was exercised in **R16, a minimal RAM rescue session**. The SDDM theme loads with real ARM64 Qt/SDDM in test mode, but **PAM login on the phone is untested**. No OS password/PIN was configured by this theme, no active theme or autologin/PAM policy was changed, and this is not a permanent installation. **R19 is the latest full-desktop trial:** one manual outgoing voicemail call and audible downlink were verified. R18/R19 returned automatically while R17 needed buttons; general return reliability remains unproven. R13 Wi-Fi retains its scope. See [current status](../../docs/status.md).
+**Status:** R16 exercised native Plymouth in minimal RAM rescue; its capture and test-mode greeter records retain that scope. **Later R20 completed native installation and repeated normal boot/login** on the Pro unit: the user entered the local credential and reached the desktop, with original-theme, empty-autologin and user-session checks. The credential came from the [separate owner form](../owner-setup/README.md). **Latest splash appearance is not human-confirmed:** visual6 showed white text/skipped logo; the user missed boot7’s logo. This source tree is still the reviewed V2 theme, not newly published boot7 implementation. Polkit and complete phone acceptance remain pending. See [current status](../../docs/status.md).
 
 [Español / integración](INTEGRACION.txt) · [Current hardware status](../../docs/status.md) · [R16 evidence](../../docs/evidence/2026-11-01-r16.json)
 
@@ -46,7 +46,7 @@ The small [review records](review/README.md) retain their original test scopes. 
 python3 stage.py --output /path/to/a/new/apollo-original-stage
 ```
 
-It refuses an existing destination and does not write active configuration under `/etc`, select a theme, change accounts or regenerate boot files. The repository does not provide a validated end-to-end installer for the new phone profile. Integrating the splash, greeter and first local credential with the full desktop still needs a supervised test and recovery validation.
+It refuses an existing destination and does not write active configuration under `/etc`, select a theme, change accounts or regenerate boot files. The repository does not provide a validated end-to-end installer for the new phone profile. The R20 owner form separately saved a credential and later normal native boot/login passed. Latest splash visual acceptance and broader native recovery still require validation; this staging tool does not activate or test them.
 
 The MIT [capture helper source](tools/capture_splash.c) is included for review, without a binary. It requires an explicit RAM-splash marker and the Apollo device-tree compatible string. It queries KMS and maps the buffer with `PROT_READ`; it does not request DRM master or perform modesetting. The DRM device descriptor is opened read/write for those queries. Every image still requires a privacy review before publication.
 

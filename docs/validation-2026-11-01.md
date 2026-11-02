@@ -1,6 +1,6 @@
 # Device lab notes — 2026-11-01
 
-This is a sanitized account of supervised native ARM64 RAM trials on a Xiaomi Mi 10T Pro. It reports observations from the development device, not a published flashable image or independent reproduction. See the [current status](status.md) for acceptance gaps.
+This is a sanitized account of supervised native ARM64 RAM trials on a Xiaomi Mi 10T Pro. It reports observations from the development device, not a published flashable image or independent reproduction. See the [current status](status.md) for acceptance gaps and [the later R20 internal-root record](validation-2026-11-02.md) for the subsequent storage, local credential and IPv4 developments. The statements below retain their dated trial scope.
 
 ## R9 — cameras, torch and EFS
 

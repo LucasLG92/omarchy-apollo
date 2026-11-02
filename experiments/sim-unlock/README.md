@@ -1,8 +1,10 @@
-# Local SIM access-PIN UI — 0.1.3 candidate
+# Historical SIM access-PIN UI source — 0.1.3
 
 An MIT GTK 4 / libadwaita source experiment for **local entry of the SIM access PIN** through ModemManager. The user enters it on the handset. There is no hardcoded PIN, credential file, PIN command-line option or credential logging. This is separate from the Linux account/SDDM/PAM login.
 
-**Version boundary:** R18 physically used **`apollo-sim-unlock 0.1.2-1`**, launched as root only in supervised RAM because the Linux account remained locked. The modem accepted the access PIN and registered, but the UI's remaining PIN2 message was confusing. The published source is **`0.1.3-1`**: it passed PC/synthetic checks, then **loaded as a native process/window in R19 with normal GPG/ALPM integrity verified**. The user closed a notice without confirming its origin or PIN2/SIM2 meaning. **Human UI-fix acceptance and a new access-PIN submission are not verified.** No later replacement-UI source is included here.
+**Current installed version is `0.2.1-1`, not the source in this directory.** It has a compact masked-button/password-buffer keypad without a Gtk.Editable/OSK surface. The controller reports a byte-identical radio core and 13 AST-identical flow methods, 18 classification tests and 17 ARM64 GTK synthetic checks. Human cold-boot PIN entry is **not confirmed**; latest primary access lock is enum2 and a user Wayland session has not yet started. No new UI source is published here. See [the latest reviewed scope](../../docs/evidence/2026-11-02-native-boot-v7.json).
+
+**Historical version boundary:** R18 physically used **`apollo-sim-unlock 0.1.2-1`**, launched as root only in supervised RAM because the Linux account remained locked. The modem accepted the access PIN and registered, but the UI's remaining PIN2 message was confusing. The published source is **`0.1.3-1`**: it passed PC/synthetic checks, then **loaded as a native process/window in R19 with normal GPG/ALPM integrity verified**. The user closed a notice without confirming its origin or PIN2/SIM2 meaning. **Human UI-fix acceptance and a new access-PIN submission are not verified.** No later replacement-UI source is included here.
 
 The [candidate snapshot](candidate.json) preserves its historical **R18** `phone_tested: false` status. The later [R19 phone-load record](phone-load-r19.json) describes the limited physical test separately. This prevents the source/synthetic review from being mistaken for full phone acceptance.
 

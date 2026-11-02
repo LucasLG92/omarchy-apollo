@@ -1,0 +1,20 @@
+{
+  "source_revision": "native profile 20261101-5 (r5)",
+  "review_date": "2026-11-02",
+  "evidence_source": "approved R20 input and later reviewed project-controller updates",
+  "synthetic_actual_arm64_gtk_pass_reported_by_project_controller": true,
+  "synthetic_gtk_rerun_by_publication_agent": false,
+  "synthetic_test_overrides_real_credential_sink": true,
+  "real_pam_operations_in_synthetic_test": 0,
+  "radio_or_subscriber_queries_in_synthetic_test": 0,
+  "r5_autoclose_after_success_reported_passed": true,
+  "r5_autoclose_delay_ms": 600,
+  "r5_human_autoclose_acceptance_verified": false,
+  "source_and_test_files_are_original_project_mit": true,
+  "logo_source": "already-public original Omarchy V2 logo in this repository",
+  "source_sha256": {
+    "owner-setup.py": "dfa3e4a3a991c33ff11f20566508ff6181813841df63d82256c48d2af213f0d8",
+    "omarchy.css": "bb33af3d456e31c6f1bb7a4cb4f76ffdad11011912be0595466261a709eece5a",
+    "test_owner_setup_synthetic.py": "666ccef6b1196c74619638e3ceebd6ce1ffd4a92befb281d436fbc998d911178"
+  }
+}

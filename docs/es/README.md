@@ -2,17 +2,19 @@
 
 **Omarchy nativo en el Xiaomi Mi 10T Pro (`apollo`), con interfaz táctil y resultados verificables.** Un escritorio Linux en formato móvil, con Hyprland, Quickshell y la GPU Adreno 650.
 
-[English / portada](../../README.md) · [Estado completo](../status.md) · [Pruebas recientes](../validation-2026-11-01.md) · [Hoja de ruta](../roadmap.md)
+[English / portada](../../README.md) · [Estado completo](../status.md) · [Pruebas recientes](../validation-2026-11-02.md) · [Hoja de ruta](../roadmap.md)
 
 <p align="center"><img src="../../media/hero.svg" width="100%" alt="Omarchy Apollo: Linux nativo adaptado a un teléfono"></p>
 
-## Estado actual: 4.5 RC2 en RAM
+## Estado actual: instalación nativa y arranque normal verificados
 
-La nueva base **Omarchy 4.5 RC2** se ha probado de forma nativa en el teléfono, con Linux ARM64 y systemd como PID 1. En **R19**, el usuario marcó manualmente su buzón: **la llamada saliente conectó y pudo escucharlo**. El backend confirmó ACTIVE/OUTGOING. **Micrófono/uplink, entrantes, SMS, datos IP, velocidad, AEC y ruta VoLTE siguen sin verificar.** Android no actúa como anfitrión. R19 volvió automáticamente a Android con boot/DTBO originales comprobados; la recuperación manual de R17 mantiene pendiente la fiabilidad general.
+**Omarchy 4.5 RC2 ya está instalado nativamente en la unidad Mi 10T Pro del proyecto.** El arranque nativo grabado y la raíz ext4 interna superaron varios inicios normales, también después de limpiar Android, sin lanzar una imagen mediante `fastboot boot`. El usuario introdujo su credencial local y llegó al escritorio. Se comprobaron el tema original, autologin vacío y la sesión Wayland; no se leyó el código ni su hash.
 
-Se conservan como resultados históricos el Wi-Fi real de R13 y el arranque original R16 en rescate RAM mínimo. R16 no probó el escritorio completo ni autenticación PAM.
+El usuario confirmó HOME y mantener pulsado para recientes. La creación automática de un perfil celular r2 tras arranque normal obtuvo **HTTPS 204 por IPv4, con Wi-Fi apagado, en una sola red**. Faltan otras SIM/redes, IPv6 y reconexión sostenida; el último arranque en frío esperaba el PIN local de la SIM.
 
-**La instalación permanente de esta nueva base sigue pendiente. No es todavía un móvil plenamente funcional ni existe un instalador público validado.** La instalación y las pruebas de Waydroid del 30 de octubre pertenecen a una [etapa anterior](../history/README-2026-10-30.md); no demuestran esas funciones en la nueva base.
+**No se ha verificado un móvil completo para uso diario.** Polkit, micrófono/uplink, entrantes, SMS, velocidad, AEC, ruta VoLTE, batería/suspensión y otros dispositivos siguen pendientes. Falta confirmar visualmente el último logo de arranque y afinar gestos/teclado. Tampoco existe un instalador público completo validado. [Evidencia y límites](../validation-2026-11-02.md).
+
+La llamada saliente con audio de R19, el Wi-Fi R13 y el rescate Plymouth R16 conservan su alcance histórico; las pruebas de Waydroid del 30 de octubre no se han repetido íntegramente en esta base.
 
 <p align="center"><a href="../../media/apollo-home-r11.png"><img src="../../media/apollo-home-r11.png" width="245" alt="Captura real del inicio de la sesión R11, sin el aviso de PIN"></a></p>
 
@@ -22,10 +24,14 @@ Se conservan como resultados históricos el Wi-Fi real de R13 y el arranque orig
 
 Izquierda: **captura real** del arranque nativo R16, solo logo y fondo. Derecha: **render Qt** del acceso SDDM con ayuda táctil. Se conservan los PNG oficiales MIT de Omarchy y el fondo `#1a1b26`; el estado inicial a 432×960 coincide píxel a píxel con la referencia original.
 
-El tema carga con Qt/SDDM ARM64 real en modo de prueba, pero **el acceso PAM en el móvil no se ha probado**. No se ha configurado contraseña/PIN ni cambiado PAM, autologin o selección permanente del tema. El teclado aparece al tocar el campo, no tiene PIN fijo y no necesita QtVirtualKeyboard. El desbloqueo táctil LUKS sigue pendiente. [Fuentes y límites](../../experiments/original-boot-v2/README.md) · [Integración en español](../../experiments/original-boot-v2/INTEGRACION.txt).
+R16 cargó el tema con Qt/SDDM ARM64 en modo de prueba; **R20 verificó después un acceso real con la credencial local, también tras arranque normal**. En la prueba R16 no se configuró contraseña/PIN ni se cambió PAM, autologin o selección permanente del tema. La configuración local y el acceso SDDM/PAM posterior de R20 se documentan por separado. El logo del nuevo arranque sigue sin confirmación visual humana. El teclado aparece al tocar el campo, no tiene PIN fijo y no necesita QtVirtualKeyboard. El desbloqueo táctil LUKS sigue pendiente. [Fuentes y límites](../../experiments/original-boot-v2/README.md) · [Integración en español](../../experiments/original-boot-v2/INTEGRACION.txt).
 
 ## Avances comprobados
 
+- R20: raíz ext4 interna arrancada, escritorio confirmado y sistema de archivos ampliado a su partición. La transferencia inicial se verificó por lectura física completa antes del primer arranque nativo con escritura; no se publican imágenes ni datos de esa unidad.
+- Arranque nativo grabado y repetido, con guardas de firmware/calibración y prefijos de imágenes esperadas de boot/recovery comprobados. `userdata` se usa para la raíz; `super`, `metadata` y `cache` de Android fueron limpiados y el siguiente arranque normal funcionó.
+- Formulario local [r5 y prueba sintética](../../experiments/owner-setup/README.md): credencial guardada y acceso real posterior comprobado. El cierre automático solo tiene aceptación sintética; Polkit queda pendiente.
+- HOME y mantener pulsado para recientes confirmados por el usuario; continúan los ajustes de gestos y teclado.
 - Escritorio nativo con renderizado **Freedreno FD650**, entrada táctil, aplicaciones y teclado en pantalla.
 - R19: GNOME Calls 51.1 abierto sin número ni URI de marcado. El usuario llamó a su buzón; 65 segundos de observación vieron como máximo una llamada DIALING→ACTIVE, dirección OUTGOING y cero errores de consulta. Confirmó conexión y audio del buzón. El agente no marcó ni recibió/publicó el número y no se grabó audio.
 - Las cuatro cámaras entregan imágenes de 640×480. La principal capturó 24 imágenes RGB de **3000×2256** y la ultra gran angular otras 24 de **4200×3120**.
@@ -34,20 +40,23 @@ El tema carga con Qt/SDDM ARM64 real en modo de prueba, pero **el acceso PAM en 
 - Se han comprobado el encendido/apagado de la linterna desde la sesión normal y el cierre/reinicio del servicio EFS del módem. Falta confirmar visualmente la luz y probar una transferencia EFS real.
 - En R12, el motor **AW8697** respondió a un pulso de **120 ms al 12,5 %**: el usuario confirmó una vibración **muy suave**. La sesión normal obtuvo acceso con `uaccess`, sin escritura para todos; feedbackd abrió el dispositivo después de reiniciarlo para detectar la regla añadida en RAM.
 - Infrarrojos aparece como dispositivo LIRC y anuncia capacidades `0x302`. Solo se consultaron: **no se emitió ninguna señal** ni se probó como mando.
+- R20: perfil celular automático r2 creado desde cero tras arranque normal, ruta activa y HTTPS **204** por IPv4 con **Wi-Fi apagado**, en una red. No demuestra IPv6, velocidad ni autoconfiguración para cualquier SIM. En el último arranque en frío faltaba introducir el PIN local de la SIM. No se publican operador, APN, direcciones ni capturas.
 - En R13, el usuario conectó Wi-Fi desde la pantalla. Una petición HTTPS obligada a usar esa interfaz devolvió **200** desde `omarchy.org`. No se publican nombre, direcciones ni contraseña de la red.
 - Corregido un fallo concreto al crear el archivo temporal permitido de sensores: 26 comprobaciones ARM64 RPC/VFS y creación privada en RAM. No apareció ese error en el registro de arranque recogido ni durante **20,97 segundos de observación**. Acelerómetro y luz siguen disponibles; proximidad no. Ese tiempo no es una medida de arranque ni una mejora general de velocidad.
 - En R18, el usuario introdujo el PIN únicamente en el Apollo. Se verificaron acceso desbloqueado, registro en red de origen y LTE/NR5G anunciados. No se recibió ni publicó el PIN, números, operador o identificadores de la tarjeta.
 - R18/R19 volvieron automáticamente y verificaron Android con boot/DTBO originales. R17 había requerido botones y cargador completo: se conserva ese resultado y todavía no se da por fiable el retorno automático. No se formateó `userdata` ni se completó la instalación permanente en R19.
 
-La app de R18 fue **0.1.2-1**, con un mensaje confuso para PIN2. La [fuente 0.1.3-1](../../experiments/sim-unlock/README.md), revisada antes con GTK/GIO ARM64 sintético, **se cargó físicamente en R19 y se comprobó su proceso/ventana**. El usuario cerró un aviso pero no quedó identificado su origen ni si hablaba de PIN2 o SIM2; la aceptación humana del arreglo sigue pendiente y no se repitió un envío del PIN de acceso. El módem ya estaba registrado y no lo requería. Dos slots informados, uno ocupado y otro vacío, no demuestran dos tarjetas físicas; el proxy actual no coincidía con el array de slots, así que el mapeo sigue sin validar.
+La versión instalada actual es **0.2.1-1**: compacta, sin el candado grande, con campos `Gtk.Button`/`PasswordEntryBuffer` y teclado propio sin `Gtk.Editable` ni superficie OSK. El controlador del proyecto informa de núcleo de radio idéntico, 13 métodos de flujo con AST idéntico, 18 pruebas de clasificación y 17 GTK ARM64 sintéticas correctas. **No se ha confirmado entrada PIN humana con 0.2.1 tras el arranque en frío**: el último estado requiere PIN primario, enum2, y todavía no tiene sesión Wayland de usuario. Esto es distinto del login/escritorio normal ya probado antes. No se publican fuentes nuevas de la app.
+
+Como registro histórico, la app de R18 fue **0.1.2-1**, con un mensaje confuso para PIN2. La [fuente 0.1.3-1](../../experiments/sim-unlock/README.md), revisada antes con GTK/GIO ARM64 sintético, **se cargó físicamente en R19 y se comprobó su proceso/ventana**. El usuario cerró un aviso pero no quedó identificado su origen ni si hablaba de PIN2 o SIM2; la aceptación humana del arreglo sigue pendiente y no se repitió un envío del PIN de acceso. El módem ya estaba registrado y no lo requería. Dos slots informados, uno ocupado y otro vacío, no demuestran dos tarjetas físicas; el proxy actual no coincidía con el array de slots, así que el mapeo sigue sin validar.
 
 R12 necesitó añadir la regla del motor durante la sesión. En R13 se probó un arranque completo en RAM con kernel R6 y runtime **`20261101-6`**, que incluye esa regla: la sesión normal tiene acceso y feedbackd abrió el dispositivo **sin reinicio manual**. La intensidad física confirmada sigue siendo la muy suave de R12. [Detalle de R13](../validation-2026-11-01.md#r13--wifi-runtime-v6-and-sensor-scratch-files).
 
 ## Lo que falta
 
-**La llamada saliente y el audio descendente de R19 no verifican micrófono/uplink, llamadas entrantes, SMS, datos IP, velocidad 5G, AEC ni ruta VoLTE.** R18 no tuvo intento entrante confirmado; sus cero objetos observados no fueron prueba de fallo. El mapeo entre ranura física y lógica sigue pendiente. El diálogo SIM-PIN es distinto de la credencial Linux/PAM; esa integración y la administración por Polkit no se han validado. Faltan reconexión/suspensión Wi-Fi, emparejamiento/audio Bluetooth y lectura de etiquetas NFC.
+**La llamada saliente y el audio descendente de R19 no verifican micrófono/uplink, llamadas entrantes, SMS, velocidad 5G, AEC ni ruta VoLTE.** La prueba IPv4 posterior de R20 tiene alcance separado; faltan IPv6, otras SIM/redes y comportamiento sostenido de la autoconfiguración r2. R18 no tuvo intento entrante confirmado; sus cero objetos observados no fueron prueba de fallo. El mapeo entre ranura física y lógica sigue pendiente. El diálogo SIM-PIN es distinto de la credencial Linux/PAM guardada localmente en R20; el acceso SDDM/PAM posterior pasó, pero la administración por Polkit no se ha validado. Faltan reconexión/suspensión Wi-Fi, emparejamiento/audio Bluetooth y lectura de etiquetas NFC.
 
-Quedan GPS, huella, proximidad, emisión óptica y uso como mando IR; la intensidad del motor y su respuesta en aplicaciones necesitan más pruebas. También faltan suspensión, autonomía, primer PIN definitivo, arranque independiente de la nueva base y actualizaciones coherentes. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
+Quedan GPS, huella, proximidad, emisión óptica y uso como mando IR; la intensidad del motor y su respuesta en aplicaciones necesitan más pruebas. También faltan suspensión, autonomía, recuperación y actualizaciones coherentes. La instalación y el arranque normal persistente de la nueva base sí están verificados en esta unidad. El controlador de la principal **no ofrece 108 MP**. Las capturas prueban el transporte de imágenes; calidad, color, enfoque óptico, vídeo y giro necesitan más pruebas.
 
 ## ¿Sirve para el Mi 10T 5G normal?
 

@@ -1,15 +1,15 @@
 # Hardware status
 
-**Current track:** Omarchy 4.5 RC2 rebase. **R19 · 2026-11-01** verified one manually dialed outgoing voicemail call with ACTIVE/OUTGOING backend state and audible downlink confirmed by the user. Microphone/uplink, incoming calls, SMS, cellular IP data, throughput, AEC and VoLTE path remain unverified. R19 returned automatically; R17 needed buttons, so general recovery reliability is still unproven. These are one-device observations, not independent certification.
+**Current track: Omarchy 4.5 RC2, native installation completed on one Mi 10T Pro development unit.** R20 normal boot now uses the flashed native boot and internal ext4 root, without `fastboot boot`. Repeated boot passed after Android cleanup. The user entered the local credential and reached the desktop; autologin is empty and the original SDDM theme is selected. [Latest boot7 evidence](evidence/2026-11-02-native-boot-v7.json).
 
-The target is a complete, fast native Linux phone. That target is **not achieved**. The new track remains RAM-only; Android and original boot partitions were restored after the tests. No permanent 4.5 installation, complete public installer or working native updater is claimed.
+**A complete daily-driver phone is not verified.** HOME and hold-for-recents worked for the user, but gestures/keyboard need polish. Automatic cellular profile r2 created a fresh post-boot profile and returned IPv4 HTTPS 204 with Wi-Fi off on one network. Latest cold boot was waiting for local SIM-PIN entry. Polkit, uplink/incoming calls/SMS, IPv6, throughput, AEC, VoLTE path, battery/suspend and remaining hardware acceptance are still pending. No public end-to-end installer is validated.
 
 | Area | Evidence / latest result | Acceptance gap |
 | --- | --- | --- |
-| Native OS | Omarchy `4.5.0rc2-1`; systemd PID 1; Hyprland/Quickshell on ARM64 | Permanent installation and repeated standalone boot |
-| Display / touch | Internal portrait display and FD650 GPU; touch, app opening and keyboard exercised | App coverage, gesture polish, accessibility and sustained performance |
-| Original Plymouth splash | R16: native DRM, active VT and reviewed 1080×2400 KMS capture in minimal RAM rescue | Handoff to a full desktop, repeated boots and separate user confirmation of the final R16 screen |
-| Original SDDM V2 | Real ARM64 Qt 6.12.0-3 / SDDM 0.21.0-7 test-mode load; package 0.2.0-1 prepared/verified in PC builder | Phone PAM login, physical keyboard interaction and first local credential; active theme selection unchanged |
+| Native OS / root | R20: flashed native boot, internal ext4 root/systemd/hardware target and repeated normal boot verified, including after Android cleanup | Extended boot/recovery coverage, unplugged power tests and reproducible public installation |
+| Display / touch | Internal display/FD650; touch/apps/keyboard exercised; R20 HOME and hold-for-recents human-confirmed | Gesture thresholds, unwanted keyboard popup, accessibility and sustained performance |
+| Original Plymouth splash | R16 reviewed native KMS capture. Later visual6 failed human acceptance; boot7 retained graphics proof and booted the internal root | User did not observe the latest logo: physical logo/animation acceptance remains open |
+| Original SDDM V2 | R20: original theme selected, autologin User empty, ordinary-user Wayland socket and human credential→desktop login verified after normal boot | Broader greeter/error/session coverage; no touch LUKS unlock |
 | Main camera — S5KHMX | R9: illuminated 240-frame sequence with AF state “focused”; R10: 24 RGB frames, 3000×2256, FD650 | Optical focus quality, color, video, rotation; sensor driver exposes 3008×2256 RAW, **not 108 MP** |
 | Ultrawide — OV13B10 | R10: 24 RGB frames, 4200×3120, FD650 | Image quality and video; crop/delay driver warnings remain |
 | Front — S5K3T2 | R9: 640×480 captured | A high-resolution R10 attempt timed out; investigate stride/configuration |
@@ -17,12 +17,13 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | Camera app | Native Wayland preview observed in omacam | Capture/video UX across all lenses and orientations |
 | Torch | R9: normal-user one-second brightness 0 → 255 → 0 | Physical light not separately confirmed |
 | Modem / EFS | Modem discovered; EFS normal stop/restart succeeds after fix | Actual EFS transfer and cellular stability |
-| SIM / registration | R19: registered with LTE/NR5G reported; primary access PIN not required, remaining lock is secondary PIN2 | Two slot entries / one occupied / one empty / one active are not a verified physical card count; current SIM proxy differs from slot array; mapping unresolved |
-| SIM UI | 0.1.3-1 loaded in R19 with normal GPG/ALPM integrity and native process/window verified; earlier synthetic checks retained | Notice origin and PIN2/SIM2 meaning were not confirmed by the user; UI-fix acceptance and access-PIN submission not revalidated |
+| SIM / registration | R18/R19 registration remains historical. Latest cold boot: primary access PIN required, enum 2; no user Wayland session yet | Human local PIN completion/current registration. Prior slot-array/proxy observations do not verify physical card count or slot mapping; PIN2 is not a second SIM |
+| SIM UI | Installed **0.2.1-1**, compact without large lock; `Gtk.Button`/`PasswordEntryBuffer` and own keypad, no `Gtk.Editable`/OSK surface. Controller reports byte-identical radio core, 13 AST-identical flow methods, 18 classification + 17 ARM GTK synthetic checks | **Human PIN entry after cold boot not confirmed.** Profile 20261101-6 fixes a pre-login launcher timeout; human completion remains pending. Published 0.1.3 source/R19 load are historical; no new UI/launcher source is added |
 | Voice / Messaging | R19: user manually dialed voicemail in GNOME Calls 51.1; max one call, DIALING/ACTIVE and OUTGOING; user heard the service | Microphone/uplink, incoming calls and SMS unverified. R18's zero-object windows had no confirmed call attempt and remain inconclusive |
+| Cellular IP data | R20 automatic profile r2: fresh post-boot profile, active cellular route, IPv4 HTTPS 204 with Wi-Fi off; one network | Other SIMs/networks, IPv6, reconnect, sustained transfer and speed. Latest post-cleanup cold boot required local SIM PIN, still pending in this record |
 | Phone permissions | R11: active UID voice/messaging checks passed and read-only call list succeeded | Broader ordinary-session authorization and administration; no SIM was available in that earlier trial |
-| Privileged administration | R11: service control and firmware still require `auth_admin` | First definitive PIN and complete permanent security profile |
-| Local credential / administration | R18: Linux account remained locked; root SIM UI was temporary and no credential/PAM or modem authorization policy changed | First local credential, phone PAM login and administrative Polkit readiness |
+| Privileged administration | R11: service control and firmware still require `auth_admin` | End-to-end Polkit authentication with the newly saved credential and complete permanent security profile |
+| Local credential / owner UI | R20: setup layout accepted, credential saved; actual SDDM/PAM login and normal-boot desktop human-confirmed | Polkit authorization; r5 600 ms setup auto-close passed ARM64 synthetic checks but lacks separate human acceptance |
 | Wi-Fi | R13: user connected on screen; connection verified and an HTTPS request bound to Wi-Fi returned 200 from `omarchy.org` | Both bands, sustained transfer, reconnect and suspend/resume; no network identity or credentials exported |
 | Bluetooth | Service active | Pairing, audio and reconnection |
 | Accelerometer / light | R13: both available after sensor scratch-file fix | Broader motion/light acceptance, long-term behavior and app integration |
@@ -35,8 +36,18 @@ The target is a complete, fast native Linux phone. That target is **not achieved
 | GPS / fingerprint | Unverified | Fix/reliability; enrollment, verification and unlock |
 | Audio | R19: voicemail downlink heard by the user during the active outgoing call | Microphone/uplink, route coverage, call AEC and media audio; no audio file was recorded |
 | Power / alarms | USB-connected observation only | Real battery measurements, charge behavior, RTC alarms and suspend |
-| Return / recovery | R18/R19 returned automatically without requesting buttons, with Android/original boot+DTBO readbacks verified. R17 required buttons/full bootloader | **General automatic-return reliability unproven**; repeat and diagnose before permanent or unattended boot |
+| Storage / recovery | R20: userdata repurposed for native root; super/metadata/cache cleared, subsequent normal native boot passed; expected boot/recovery image-prefix readback matched | Extended native recovery/rollback and repeated power-cycle testing. Earlier Android-return results are historical, not a current fallback claim |
 | Updates / Android apps | Earlier integration is archived; native 4.5 updater remains guarded/incomplete | Coherent upgrade/rollback and new-track Waydroid validation |
+
+## Latest native installation record
+
+[Boot7 and normal-boot evidence](evidence/2026-11-02-native-boot-v7.json) supersede the pending-installation state in the [initial R20 snapshot](evidence/2026-11-02-r20.json) and [earlier login-v6 record](evidence/2026-11-02-login-v6.json). The initial 16 GiB transfer passed full physical readback before first writable native boot; later boot/recovery checks verified the expected image prefixes, not claimed hashes of entire partitions. [Lab notes](validation-2026-11-02.md) · [transfer lesson](internal-root-transfer.md).
+
+A black desktop occurred after a live gesture upgrade and recovered through the official Quickshell restart. The next normal boot reached the desktop with human confirmation and no shell restart; the record does not establish a persistent startup failure. The user confirmed HOME and hold-for-recents, with refinement and keyboard-popup work pending.
+
+The [owner form r5](../experiments/owner-setup/README.md) saved the normal local account credential. Actual login was then verified, including after normal native boot, without reading the secret or verifier. Polkit and separate human auto-close acceptance remain pending. Visual6 showed white text and skipped the expected logo; boot7’s logo was missed by the user, so its visual acceptance remains unconfirmed. No boot-speed benchmark is claimed.
+
+Automatic profile r2 worked on one network after normal boot. A prior transition included a modem restart while two project-created profiles were eligible; restarting the service and disabling the older temporary profile’s autoconnect restored connectivity. The following normal boot connected. This is not universal SIM/APN validation; the latest cold-boot primary SIM-PIN enum2 was still pending, with no user Wayland session yet, while Wi-Fi function was reported. This current state is separate from the earlier successful normal-boot login/desktop.
 
 ## How to read a result
 
@@ -48,7 +59,7 @@ R12 used kernel `7.1.0-apollo-native-r6` with runtime `20261101-4` and a haptic 
 
 Current evidence: [R9 cameras/torch/EFS](evidence/2026-11-01-r9.json), [R10 DMA comparison](evidence/2026-11-01-r10.json), [R11 permissions/recovery](evidence/2026-11-01-r11.json), [R12 haptics/IR/recovery](evidence/2026-11-01-r12.json), [R13 Wi-Fi/runtime/sensors](evidence/2026-11-01-r13.json). Raw diagnostics, camera images and per-device data remain private.
 
-Latest desktop evidence: [R19 outgoing call/downlink](evidence/2026-11-01-r19.json). GNOME Calls was opened without a number/dial URI; the user dialed manually. The call probe queried only state, direction and state reason plus object listing; it did not read Number/Name or export subscriber/network identity. App 0.1.3 had a [verified native load](../experiments/sim-unlock/phone-load-r19.json), not full human UI acceptance. The [R18 PIN/registration record](evidence/2026-11-01-r18.json) and [R17 manual recovery](evidence/2026-11-01-r17.json) keep their original scope. No permanent installation was completed in R19.
+Earlier full-desktop RAM evidence: [R19 outgoing call/downlink](evidence/2026-11-01-r19.json). GNOME Calls was opened without a number/dial URI; the user dialed manually. The call probe queried only state, direction and state reason plus object listing; it did not read Number/Name or export subscriber/network identity. App 0.1.3 had a [verified native load](../experiments/sim-unlock/phone-load-r19.json), not full human UI acceptance. The [R18 PIN/registration record](evidence/2026-11-01-r18.json) and [R17 manual recovery](evidence/2026-11-01-r17.json) keep their original scope. No permanent installation was completed in R19.
 
 Separate splash evidence: [R16 minimal RAM rescue](evidence/2026-11-01-r16.json) and [original V2 theme sources/reviews](../experiments/original-boot-v2/README.md). R16 had no complete desktop or private calibration. Its single Plymouth RSS sample was 18,304 KiB; no speed/boot-time comparison is available. There were zero XKB errors in the collected rescue log and diagnostic tracing was disabled. No local password/PIN, PAM/autologin or permanent theme selection changed. SDDM's touch keyboard does not implement Plymouth touch-based LUKS unlocking.
 

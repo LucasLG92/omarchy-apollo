@@ -4,7 +4,7 @@ Help turn a promising port into a dependable phone. Small, reviewable changes wi
 
 ## Choose the right track
 
-Read [current hardware status](docs/status.md) first. The **4.5 RC2 rebase is RAM-only**. Root packaging and older documentation describe the **2026-10-30 integration**; do not assume those recipes or acceptance results apply to the new track.
+Read [current hardware status](docs/status.md) first. The **4.5 RC2 rebase has a completed native installation and repeated normal-boot/login result on one Pro unit (R20), with broader phone acceptance and a public installer still incomplete**. Root packaging and older documentation describe the **2026-10-30 integration**; do not assume those recipes or acceptance results apply to the new track.
 
 Useful areas: camera quality/rotation and the front high-resolution failure; audio and power measurements; drivers/sensors; touch and translation; reproducible builds; coherent native updates and recovery. [Roadmap](docs/roadmap.md).
 

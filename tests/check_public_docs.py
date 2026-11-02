@@ -394,6 +394,176 @@ def outgoing_call_trial_boundaries():
     assert not load["physical_to_logical_sim_slot_mapping_verified"] and not load["full_phone_functionality_verified"]
 
 
+def internal_root_and_owner_setup_review():
+    data = json.loads((ROOT / "docs/evidence/2026-11-02-r20.json").read_text(encoding="utf-8"))
+    assert data["trial"] == "R20" and data["review_date"] == "2026-11-02"
+    assert data["evidence_type"] == "sanitized supervised-device result summary"
+    for field in ("internal_ext4_root_boot_verified", "systemd_and_native_hardware_target_verified",
+                  "native_desktop_human_confirmed", "initial_16_gib_image_verified_complete_before_write",
+                  "full_post_transfer_readback_match_verified_before_first_rw_boot",
+                  "root_filesystem_expanded_to_its_partition", "protected_firmware_and_calibration_partitions_verified",
+                  "own_private_calibration_provisioned", "android_userdata_reformatted_for_native_root",
+                  "owner_layout_no_duplicate_osk_and_second_field_human_accepted", "local_owner_credential_saved",
+                  "owner_ready_marker_verified_as_boolean", "passwd_status_p_verified_as_boolean",
+                  "r5_profile_installed_via_normal_gpg_alpm",
+                  "r5_autoclose_only_after_success_arm64_synthetic_pass_reported", "kernel_still_started_from_ram",
+                  "later_reviewed_internal_root_cellular_ipv4_https_test", "wifi_off_during_cellular_https_test",
+                  "https_request_bound_to_cellular_interface"):
+        assert data[field] is True, ("R20", field)
+    for field in ("independent_reproduction", "device_identifiers_included", "raw_logs_included",
+                  "unit_image_or_credential_hashes_included", "private_calibration_or_firmware_included",
+                  "credential_value_or_password_hash_read_by_agent", "r5_autoclose_human_acceptance_verified",
+                  "next_sddm_login_with_new_credential_verified", "administrative_polkit_auth_with_new_credential_verified",
+                  "native_boot_committed_to_boot_partition", "standalone_persistent_boot_verified",
+                  "next_boot_visual_validation_complete", "android_super_cleanup_complete",
+                  "permanent_installation_complete", "all_hardware_functionality_verified",
+                  "regular_mi10t_variant_validated", "cellular_ipv6_verified",
+                  "generic_sim_apn_autoprovisioning_validated", "cellular_throughput_or_5g_speed_measured",
+                  "subscriber_operator_apn_ip_or_network_identity_exported", "browser_screenshot_exported"):
+        assert data[field] is False, ("R20", field)
+    assert data["native_profile_revision"] == "20261101-5"
+    assert data["r5_autoclose_delay_ms"] == 600 and data["cellular_ipv4_https_status"] == 204
+    directory = ROOT / "experiments/owner-setup"
+    review = json.loads((directory / "review.json").read_text(encoding="utf-8"))
+    assert review["source_revision"] == "native profile 20261101-5 (r5)"
+    assert review["synthetic_actual_arm64_gtk_pass_reported_by_project_controller"]
+    assert not review["synthetic_gtk_rerun_by_publication_agent"]
+    assert review["synthetic_test_overrides_real_credential_sink"]
+    assert review["real_pam_operations_in_synthetic_test"] == review["radio_or_subscriber_queries_in_synthetic_test"] == 0
+    assert not review["r5_human_autoclose_acceptance_verified"]
+    for name, checksum in review["source_sha256"].items():
+        assert name in {"owner-setup.py", "omarchy.css", "test_owner_setup_synthetic.py"}
+        assert hashlib.sha256((directory / name).read_bytes()).hexdigest() == checksum, name
+    assert set(review["source_sha256"]) == {"owner-setup.py", "omarchy.css", "test_owner_setup_synthetic.py"}
+    assert (directory / "assets/logo.png").read_bytes() == (ROOT / "experiments/original-boot-v2/native/sddm/omarchy-apollo-original/logo.png").read_bytes()
+    assert "Copyright (c) David Heinemeier Hansson" in (directory / "assets/LICENSE-Omarchy").read_text(encoding="utf-8")
+    assert (directory / "LICENSE").read_bytes() == (ROOT / "LICENSE").read_bytes()
+    tree = ast.parse((directory / "owner-setup.py").read_text(encoding="utf-8"))
+    harness = ast.parse((directory / "test_owner_setup_synthetic.py").read_text(encoding="utf-8"))
+    app = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "OwnerSetup")
+    synthetic = next(node for node in harness.body if isinstance(node, ast.ClassDef) and node.name == "SyntheticOwner")
+    assert any(isinstance(node, ast.FunctionDef) and node.name == "set_credential" for node in synthetic.body)
+    assert not any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                   and node.func.id in {"OwnerSetup", "eval", "exec"} for node in ast.walk(harness))
+    # Exercise completion callbacks only: no GTK import, real app execution,
+    # account command, privileged sink, D-Bus connection or radio exists here.
+    methods = [node for node in app.body if isinstance(node, ast.FunctionDef)
+               and node.name in {"finished", "close_after_success"}]
+    assert len(methods) == 2
+    class FakeGLib:
+        SOURCE_REMOVE = False
+        def __init__(self):
+            self.timers = []
+        def timeout_add(self, delay, callback):
+            self.timers.append((delay, callback))
+    timer = FakeGLib()
+    namespace = {"GLib": timer, "__builtins__": {}}
+    exec(compile(ast.Module(body=methods, type_ignores=[]), "<owner completion callbacks>", "exec"), namespace)
+    class Control:
+        def set_sensitive(self, value):
+            self.sensitive = value
+        def set_visible(self, value):
+            self.visible = value
+        def set_text(self, value):
+            self.text = value
+        def close(self):
+            self.closed = True
+    class FakeApp:
+        def __init__(self):
+            self.busy, self.completed, self.quit_called = True, False, False
+            self.save, self.close, self.keypad, self.status, self.win = (Control() for _ in range(5))
+            self.entries = [Control(), Control()]
+            self.win.closed = False
+        def close_after_success(self):
+            return namespace["close_after_success"](self)
+        def quit(self):
+            self.quit_called = True
+    failure = FakeApp()
+    assert namespace["finished"](failure, False) is timer.SOURCE_REMOVE
+    assert not failure.busy and not failure.completed and not timer.timers
+    assert failure.save.sensitive and failure.keypad.sensitive and all(e.sensitive for e in failure.entries)
+    assert namespace["close_after_success"](failure) is timer.SOURCE_REMOVE
+    assert not failure.win.closed and not failure.quit_called
+    success = FakeApp()
+    assert namespace["finished"](success, True) is timer.SOURCE_REMOVE
+    assert success.completed and not success.busy and len(timer.timers) == 1
+    assert not success.save.visible and not success.close.visible
+    assert not success.win.closed and not success.quit_called
+    delay, callback = timer.timers[0]
+    assert delay == 600 and callback() is timer.SOURCE_REMOVE
+    assert success.win.closed and success.quit_called
+
+
+def installed_native_boot_boundaries():
+    directory = ROOT / "docs/evidence"
+    login = json.loads((directory / "2026-11-02-login-v6.json").read_text(encoding="utf-8"))
+    assert login["actual_sddm_pam_login_verified"] and login["user_entered_new_local_credential_on_handset"]
+    assert login["sddm_autologin_user_empty_verified"] and login["ordinary_user_wayland_socket_verified"]
+    assert not login["administrative_polkit_auth_with_new_credential_verified"]
+    assert not login["boot_visual_revision_6_human_accepted"]
+    assert not login["standalone_persistent_boot_verified"], "Earlier snapshot retains its scope"
+    assert not login["credential_value_or_account_hash_read_or_exported"]
+    data = json.loads((directory / "2026-11-02-native-boot-v7.json").read_text(encoding="utf-8"))
+    assert data["review_date"] == "2026-11-02" and data["boot_visual_revision"] == 7
+    assert data["evidence_type"] == "sanitized supervised-device result summary"
+    assert data["supersedes_installation_state_in"] == ["2026-11-02-r20.json", "2026-11-02-login-v6.json"]
+    for field in ("native_os_installation_completed_on_development_unit", "native_boot_written_to_boot_partition",
+                  "normal_boot_without_fastboot_boot_verified", "repeated_normal_native_boot_verified",
+                  "third_reported_normal_boot_after_android_cleanup_verified",
+                  "systemd_internal_ext4_root_verified_after_normal_boot", "firmware_calibration_guard_verified",
+                  "boot_and_recovery_expected_image_prefix_readback_verified",
+                  "android_userdata_reformatted_for_native_root", "android_super_cleared",
+                  "android_metadata_cleared", "android_cache_cleared",
+                  "user_entered_local_credential_after_normal_boot", "actual_sddm_pam_login_after_normal_boot_verified",
+                  "sddm_autologin_user_empty_verified", "original_sddm_theme_selected_verified",
+                  "ordinary_user_wayland_socket_verified", "normal_boot_desktop_human_confirmed_without_shell_restart",
+                  "black_desktop_after_live_gesture_upgrade_observed",
+                  "live_upgrade_black_desktop_resolved_by_official_quickshell_restart",
+                  "gesture_home_human_verified", "gesture_hold_recents_human_verified",
+                  "boot_graphics_proof_marker_retained_and_checked", "fresh_profile_creation_after_normal_boot_verified",
+                  "cellular_auto_profile_active_route_verified", "https_request_bound_to_cellular_with_wifi_off",
+                  "earlier_modem_restart_while_two_project_profiles_eligible_observed",
+                  "older_temporary_profile_autoconnect_disabled", "following_normal_boot_cellular_connection_verified",
+                  "latest_post_cleanup_cold_boot_sim_access_pin_required", "wifi_function_after_cleanup_reported",
+                  "standalone_persistent_boot_verified", "permanent_installation_complete"):
+        assert data[field] is True, ("native boot7", field)
+    for field in ("independent_reproduction", "entire_boot_recovery_partition_hashes_claimed",
+                  "administrative_polkit_auth_with_new_credential_verified", "persistent_desktop_startup_failure_established",
+                  "gesture_finetuning_complete", "unwanted_keyboard_popup_fully_resolved",
+                  "boot_visual_logo_human_confirmed", "generic_any_sim_or_operator_autoprovisioning_validated",
+                  "latest_cold_boot_sim_pin_unlock_confirmed", "cellular_data_retested_after_latest_cold_pin_boot",
+                  "cellular_ipv6_verified", "cellular_throughput_or_5g_speed_measured",
+                  "complete_daily_driver_or_all_hardware_verified", "public_end_to_end_installer_validated",
+                  "regular_mi10t_variant_validated", "device_identifiers_included", "raw_logs_included",
+                  "credential_value_or_account_hash_read_or_exported", "operator_apn_ip_or_network_identity_exported",
+                  "phone_screenshots_exported", "private_calibration_firmware_or_unit_images_included"):
+        assert data[field] is False, ("native boot7", field)
+    assert data["automatic_cellular_profile_candidate_revision"] == "r2"
+    assert data["operator_count_tested"] == 1 and data["cellular_ipv4_https_status"] == 204
+    assert data["latest_installed_sim_ui_package"] == "apollo-sim-unlock 0.2.1-1"
+    assert data["latest_sim_ui_compact_without_large_lock"]
+    assert data["latest_sim_ui_uses_gtk_button_password_entry_buffer_and_own_keypad"]
+    assert not data["latest_sim_ui_has_gtk_editable_or_osk_surface"]
+    assert data["sim_state_core_byte_identical_to_controller_reviewed_baseline"]
+    assert data["classification_preflight_send_close_methods_ast_identical_count"] == 13
+    assert data["classification_synthetic_checks_passed"] == 18
+    assert data["arm64_gtk_synthetic_checks_passed"] == 17
+    assert not data["new_sim_ui_source_included"]
+    assert not data["new_sim_ui_human_pin_entry_after_cold_boot_verified"]
+    assert data["latest_cold_boot_primary_access_pin_enum"] == 2
+    assert not data["latest_cold_boot_user_wayland_session_verified"]
+    assert data["latest_native_profile_package"] == "apollo-native-profile 20261101-6"
+    assert data["sim_launcher_wait_180_seconds_timeout_before_login_observed"]
+    assert data["sim_launcher_wait_fix_installed_via_normal_gpg_alpm"]
+    assert data["sim_launcher_waits_for_user_session_then_checks_unlock"]
+    assert data["sim_launcher_wait_offline_checks_passed"] == 7
+    assert data["owner_launcher_wait_unchanged_seconds"] == 180
+    assert data["sim_pin_service_resumed_after_failed_state_only"]
+    assert not data["live_sim_form_replaced_for_launcher_fix"]
+    assert not data["human_pin_entry_after_launcher_wait_fix_verified"]
+    assert not data["new_launcher_source_included"]
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -438,6 +608,8 @@ def main():
     sim_trial_boundaries()
     sim_registration_and_ui_review()
     outgoing_call_trial_boundaries()
+    internal_root_and_owner_setup_review()
+    installed_native_boot_boundaries()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

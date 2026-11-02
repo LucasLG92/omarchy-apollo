@@ -6,7 +6,7 @@
 
 | Model | Official SoC / modem | Official main camera | Official RAM / storage | This project's evidence |
 | --- | --- | --- | --- | --- |
-| Mi 10T Pro 5G | Snapdragon 865 / X55 | Samsung HMX, 108 MP | 8 GB / 128 or 256 GB | One Pro unit, with the bounded [R9–R19 results](status.md); incomplete phone acceptance |
+| Mi 10T Pro 5G | Snapdragon 865 / X55 | Samsung HMX, 108 MP | 8 GB / 128 or 256 GB | One Pro unit, with the bounded [R9–R20 results](status.md); incomplete phone acceptance |
 | Mi 10T 5G, regular model | Snapdragon 865 / X55 | Sony IMX682, 64 MP | 6 or 8 GB / 128 GB | **Not tested by this project**; variant integration and its own hardware acceptance still required |
 
 Hardware specifications in the middle columns are from [Xiaomi's official comparison](https://www.mi.com/uk/mi-10t/specs/). Megapixels identify the hardware; they do not promise native Linux capture at that resolution. The tested Pro driver currently has no 108 MP mode.
@@ -28,7 +28,7 @@ The same per-unit restrictions apply to moving an artifact between two Pro phone
 
 A future public builder must parameterize the device variant and storage, establish fresh local filesystem/boot references and signing configuration, stage only the receiving phone's own private data, and verify recovery before installation. The current source patches and theme staging tools are not that complete installer.
 
-As of the latest published R19 result, testing was in RAM and **permanent installation was not completed or validated by that trial**.
+R20 completed native installation on the Pro development unit: **flashed native boot and the internal ext4 root passed repeated normal boot and local login**, including after Android cleanup. This does not provide a portable image, full hardware acceptance or validation for another unit.
 
 ## Respuesta breve en español
 
