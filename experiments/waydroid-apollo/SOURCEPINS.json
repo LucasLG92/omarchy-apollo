@@ -1,0 +1,119 @@
+{
+  "profile_version": "1.0.0-6",
+  "waydroid_version": "1.6.3.apollo2-1",
+  "profile_license": "MIT",
+  "waydroid_patch_license": "GPL-3.0-or-later",
+  "files": {
+    "profile-1.0.0-6/etc/omamobile/waydroid.conf": {
+      "sha256": "9d64834c01a415ab96ac2e59143e1a418c9f677eae2cf9c8486e7df84f480c2d",
+      "installed_path": "etc/omamobile/waydroid.conf",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/bin/omamobile-waydroid": {
+      "sha256": "53d6452ff96822cb4ade7e7d2110331453b7fb8095f6fe1960c6c2cfaa249930",
+      "installed_path": "usr/bin/omamobile-waydroid",
+      "installed_mode": 493
+    },
+    "profile-1.0.0-6/usr/lib/omamobile-waydroid/apollo-apk-open.py": {
+      "sha256": "6da597fd1c75342584cc0a743101d12b1af65d6956c08c3141858f177c3bc74b",
+      "installed_path": "usr/lib/omamobile-waydroid/apollo-apk-open.py",
+      "installed_mode": 493
+    },
+    "profile-1.0.0-6/usr/lib/omamobile-waydroid/omamobile-waydroid-check": {
+      "sha256": "80660e05dfe37642c4d253bc6b719c68cc3e62062b4e966cbda613164309d668",
+      "installed_path": "usr/lib/omamobile-waydroid/omamobile-waydroid-check",
+      "installed_mode": 493
+    },
+    "profile-1.0.0-6/usr/lib/omamobile-waydroid/omamobile-waydroid-harden": {
+      "sha256": "82400a6a36d7467a4d0714560f5f188b09dbdfd8a703453687c9c6f809d77bc8",
+      "installed_path": "usr/lib/omamobile-waydroid/omamobile-waydroid-harden",
+      "installed_mode": 493
+    },
+    "profile-1.0.0-6/usr/lib/omamobile-waydroid/verify-local-images.py": {
+      "sha256": "8a34cacde5fc9786db8cd3c5538b0423eec60a1cdac0d8f52261f9051f5b99d0",
+      "installed_path": "usr/lib/omamobile-waydroid/verify-local-images.py",
+      "installed_mode": 493
+    },
+    "profile-1.0.0-6/usr/lib/systemd/system/waydroid-container.service.d/apollo.conf": {
+      "sha256": "635bbe35fe64cd7cff8e4ff4017f714926d9ba3a9dab250d316cc355359fab84",
+      "installed_path": "usr/lib/systemd/system/waydroid-container.service.d/apollo.conf",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/share/applications/apollo-waydroid-apk.desktop": {
+      "sha256": "7493ed27aacfaddc22a922580a673f1a299593da5de8a0bae2fedcc521c05e62",
+      "installed_path": "usr/share/applications/apollo-waydroid-apk.desktop",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/share/applications/omamobile-android-stop.desktop": {
+      "sha256": "3c391b64cfd2d62eba1f8b6cdb051cfd8217cd409ebd490a77ab48c4bbc757f8",
+      "installed_path": "usr/share/applications/omamobile-android-stop.desktop",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/share/licenses/omamobile-waydroid-apollo/LICENSE": {
+      "sha256": "396547546851bfdca96dff496378c55900f280c5ae2d2182095775c1d5b8fa02",
+      "installed_path": "usr/share/licenses/omamobile-waydroid-apollo/LICENSE",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/share/omamobile-waydroid/apollo-images.json": {
+      "sha256": "216ca10aa9f557afd2b4d71aaa19d93f1c9ca66a391a0f7d9accf27fd252470b",
+      "installed_path": "usr/share/omamobile-waydroid/apollo-images.json",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/share/omamobile-waydroid/lxc-omamobile.conf": {
+      "sha256": "2f8ae08e2e46d171bfc5c9cb284fa7973bf741417f9f7ca84c97cd531422726d",
+      "installed_path": "usr/share/omamobile-waydroid/lxc-omamobile.conf",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/lib/omamobile-waydroid/orientation-provider.py": {
+      "sha256": "9ebcbd14874c87d2bad70503d8a77f6060928d7774f53341e8698737837dd90f",
+      "installed_path": "usr/lib/omamobile-waydroid/orientation-provider.py",
+      "installed_mode": 420
+    },
+    "profile-1.0.0-6/usr/lib/systemd/system/apollo-waydroid-orientation.service": {
+      "sha256": "52b406804a7aa3a1c808284205488db734ec24913bc106eef4aa70585bbccede",
+      "installed_path": "usr/lib/systemd/system/apollo-waydroid-orientation.service",
+      "installed_mode": 420
+    },
+    "waydroid-1.6.3.apollo2-1/usr/lib/waydroid/tools/helpers/lxc.py": {
+      "sha256": "d41c4b76e6d4fc8c438efbc9d218361d512dfdfda0205ee1cb5a8e0cddbf2ea2",
+      "installed_path": "usr/lib/waydroid/tools/helpers/lxc.py",
+      "installed_mode": 420
+    },
+    "waydroid-1.6.3.apollo2-1/usr/lib/waydroid/tools/actions/container_manager.py": {
+      "sha256": "839c3002d82732a2f78863b0d2a47a85f6ddd1be651de4518766aec95dd65ff7",
+      "installed_path": "usr/lib/waydroid/tools/actions/container_manager.py",
+      "installed_mode": 420
+    },
+    "waydroid-1.6.3.apollo2-1/usr/lib/waydroid/tools/actions/app_manager.py": {
+      "sha256": "8701d0daa4c2732cd4336c4332998412c04fa6b312f68ab5eea730896d6b6b2a",
+      "installed_path": "usr/lib/waydroid/tools/actions/app_manager.py",
+      "installed_mode": 420
+    },
+    "waydroid-1.6.3.apollo2-1/usr/share/applications/Waydroid.desktop": {
+      "sha256": "87342b9e62ea5fb98fb1c816ea2f38dfbd1437d610ed7a3940b80dd8385e8730",
+      "installed_path": "usr/share/applications/Waydroid.desktop",
+      "installed_mode": 420
+    },
+    "LICENSE-Waydroid-GPL-3.0": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    "waydroid-1.6.3.apollo2-1.patch": {
+      "sha256": "2a36bb3f442d6341a9bdc3959e34f0d7eaad423e36920de2e513799f4bff414f"
+    }
+  },
+  "exact_profile_payloads": 14,
+  "upstream_release": "https://github.com/waydroid/waydroid/releases/tag/1.6.3",
+  "public_system_channel": "https://ota.waydro.id/system/lineage/waydroid_arm64/VANILLA.json",
+  "public_vendor_channel": "https://ota.waydro.id/vendor/waydroid_arm64/MAINLINE.json",
+  "generated_live_policies_included": false,
+  "packages_images_APKs_keys_logs_or_device_data_included": false,
+  "exact_modified_Waydroid_payloads": 4,
+  "individual_desktop_Name_Icon_StartupWMClass_preserved": true,
+  "individual_APK_cold_start_verified": true,
+  "overall_mobile_UX_accepted": false,
+  "known_Home_refocus_after_geometry_change_open": false,
+  "Home_guard_focused_cycle_verified": true,
+  "Home_guard_focused_cycle_rotation": "0.3.1-2",
+  "cleanup_source_revision": "0.3.1-3",
+  "actual_float_off_or_tiling_restoration_verified": false
+}

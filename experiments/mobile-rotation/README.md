@@ -1,4 +1,6 @@
-# Apollo automatic rotation 0.2.0-2
+# Historical Apollo rotation source 0.2.0-2
+
+For the selected installed source and current evidence, see the [latest integration](layout-followup/README.md). The snapshot below retains its original scope.
 
 **Installed, enabled and active.** The controller observed a sensor-triggered
 orientation change. **Human physical image-and-touch acceptance is pending**;

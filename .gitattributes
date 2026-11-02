@@ -11,3 +11,16 @@ patches/phone-omarchy/COPYING-Calls whitespace=-blank-at-eof
 experiments/sim-continuation/source/** -text
 experiments/mobile-rotation/payload/** -text
 experiments/mobile-rotation/PKGBUILD.reference -text
+experiments/mobile-rotation/layout-followup/*.py -text
+experiments/mobile-rotation/layout-followup/*.qml -text
+experiments/waydroid-apollo/*.patch -text whitespace=-blank-at-eol,-blank-at-eof
+patches/phone-omarchy/followup-51.1.apollo4/** -text whitespace=cr-at-eol
+experiments/calls-session/calls-daemon.service -text whitespace=cr-at-eol
+experiments/mobile-rotation/layout-followup/omamobile-launch -text whitespace=cr-at-eol
+experiments/mobile-rotation/layout-followup/*.patch -text whitespace=-blank-at-eol
+experiments/mobile-rotation/layout-followup/app-orientation.json -text whitespace=cr-at-eol
+experiments/mobile-rotation/layout-followup/CONTRACT.txt -text whitespace=cr-at-eol
+experiments/mobile-rotation/layout-followup/LICENSE-* -text whitespace=cr-at-eol
+experiments/mobile-rotation/layout-followup/*.qml whitespace=cr-at-eol
+experiments/waydroid-apollo/profile-1.0.0-6/** -text
+experiments/waydroid-apollo/waydroid-1.6.3.apollo2-1/** -text

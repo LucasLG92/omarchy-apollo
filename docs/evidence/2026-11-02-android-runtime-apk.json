@@ -1,0 +1,238 @@
+{
+  "schema": "apollo-individual-APK-window-acceptance-v1",
+  "passed": true,
+  "tool": "Waydroid 1.6.3.apollo2-1",
+  "profile": "omamobile-waydroid-apollo 1.0.0-6",
+  "Android": {
+    "release": "13",
+    "API": 33,
+    "image_security_patch": "2026-02-01",
+    "system_build": "20260927 VANILLA ARM64",
+    "vendor_build": "20261022 MAINLINE ARM64",
+    "boot_completed": true,
+    "renderer_family": "freedreno_adreno",
+    "HTTPS_204_inside_Android": true
+  },
+  "APK": {
+    "public_package": "org.fdroid.fdroid",
+    "official_APK_sha256": "19d51fad482239f6df6a99120e34513667e9a86d136dafdc4a211a68c3327b52",
+    "installed_via_normal_user_handler": true,
+    "APK_MIME_effective_as_user": true,
+    "public_activity_start_Status_ok": true,
+    "public_process_running": true,
+    "physical_joint_review_pending": true
+  },
+  "security": {
+    "explicit_character_allowlist": true,
+    "block_devices_denied_by_policy": true,
+    "kernel_log_node_access": "c 1:11 wm, no read",
+    "raw_video_framebuffer_debugfs_binds_removed": true,
+    "native_owner_session_preserved": true,
+    "normal_GPG_ALPM_and_Qkk_passed": true,
+    "new_Google_accounts_API_keys_device_IDs_or_user_data_requested": false
+  },
+  "lifecycle": {
+    "service_not_enabled_at_boot_by_integration": true,
+    "official_DBus_on_demand_activation_available": true,
+    "Cerrar_Android_desktop_action": "waydroid session stop",
+    "final_start_used_explicit_LXC_diagnostic": false,
+    "subsequent_cold_open_close_not_retested_before_human_review": false,
+    "normal_Close_Android_then_desktop_start_passed": true,
+    "normal_mobile_launcher": "omamobile-launch app <desktop_id>",
+    "desktop_test_harness_failure_followup": "Original harness failed; subsequent normal mobile-launcher verification confirmed ready/process/HTTPS without reinstall/init/direct LXC.",
+    "generic_Android_desktop_hidden_from_launcher": true,
+    "automatic_app_start_uses_background_session": true,
+    "APK_opener_uses_show_full_ui": false,
+    "apps_have_individual_desktop_entries_and_windows": true,
+    "CPU_emulator_on_phone": false
+  },
+  "limitations": [
+    "No Google Play/GMS included; no Play Integrity, banking or DRM guarantee.",
+    "Physical rotation/layout/keyboard acceptance remains pending.",
+    "Camera/microphone/GPS inside Android were not tested.",
+    "No battery or performance comparison claimed."
+  ],
+  "resolved_failures": [
+    "LXC7 needs explicit deny=a followed by exact character allowances; deny=b alone did not provide a usable policy.",
+    "Android init requires creating/writing c1:11; allowing wm without read changed immediate init exit to boot_completed.",
+    "Initial HTTPS check omitted argparse -- before curl flags; corrected probe verified HTTPS204 without firewall changes.",
+    "F-Droid shared a tiled workspace with Calls; normal mobile launcher restored full-width viewport and HWC followed configure. No APK incompatibility or forced-portrait override was required.",
+    "Unit umask0077 masked mkdir0755 to0700; explicit chmod0755 now permits UID1000 traversal and GIO parent watches. Child modes and bytes were preserved.",
+    "Cold application launch now starts Android in background; an individual icon opened F-Droid with zero Android Home/generic surfaces. Generic Waydroid launcher is NoDisplay; explicit expert CLI remains available."
+  ],
+  "historical_evidence_preserved": true,
+  "private_log_text_identifiers_or_credentials_exported": false,
+  "layout": {
+    "normal_mobile_launch_uses_own_workspace": true,
+    "Waydroid_configure_resizes_Android": true,
+    "observed_landscape_app_rect_before_compact_bars": [
+      960,
+      344
+    ],
+    "observed_HWC": {
+      "waydroid.display_width": "2400",
+      "waydroid.display_height": "860",
+      "waydroid.display_scale": "2.500000"
+    },
+    "relationship": "960x344 logical *2.5 =2400x860 Android pixels",
+    "global_fixed_portrait_props_or_FDroid_orientation_override": false,
+    "later_compact_bar_geometry_validated_by_rotation_agent": "960x372 workarea,32 top/28 bottom; not a repeated Android HTTPS test"
+  },
+  "orientation_metadata": {
+    "provider_installed_running": true,
+    "runtime_JSON_root_owned_mode": "0644",
+    "file": "/run/omamobile/orientation-hints.json",
+    "schema": {
+      "version": 1,
+      "rule_keys": [
+        "app_id",
+        "orientation",
+        "source"
+      ],
+      "orientation": [
+        "auto",
+        "portrait",
+        "landscape"
+      ],
+      "source": "android-activity"
+    },
+    "portrait_ActivityInfo_enums": [
+      1,
+      7,
+      9,
+      12
+    ],
+    "landscape_ActivityInfo_enums": [
+      0,
+      6,
+      8,
+      11
+    ],
+    "other_enums": "auto",
+    "source": "APK launcher ActivityInfo via cmd package resolve-activity; not arbitrary View/Intent data",
+    "identity_checks": [
+      "Android rootfs inode metadata",
+      "host foreground app_id"
+    ],
+    "runtime_FDroid_auto_confirmed": true,
+    "HOST_enum_parser_cases_passed": 21,
+    "native_rotation_client_installation": "owned by rotation agent",
+    "limitations": [
+      "Secondary activities/dynamic setRequestedOrientation are not queried by this launcher-manifest provider.",
+      "BEHIND/NOSENSOR/LOCKED have no inferred axis and remain auto; generic user compatibility overrides are supported by rotation client."
+    ],
+    "runtime_parent_mode": "0755",
+    "runtime_JSON_ACTUALLY_read_as_UID1000": true,
+    "GIO_atomic_replace_event_ACTUALLY_observed_as_UID1000": true,
+    "private_umask_unchanged": "0077",
+    "permission_fix_source_delta": "one explicit chmod0755 after root/type/no-write validation"
+  },
+  "historical_source_v1_preserved": true,
+  "profile5_update_restarted_Android_GUI_or_provider": false,
+  "individual_APK_cold_start_verified": true,
+  "overall_mobile_UX_accepted": false,
+  "physical_joint_review_pending": true,
+  "individual_APK_cold_cycle": {
+    "ok": true,
+    "normal_Close_Android_and_individual_icon_cold_start_passed": true,
+    "Android_ready": true,
+    "session_background_start": true,
+    "individual_FDroid_process_and_window": true,
+    "Android_Home_or_generic_surface_count": 0,
+    "individual_desktop_Name_Icon_StartupWMClass_byte_preserved": true,
+    "individual_window": {
+      "at": [
+        0,
+        32
+      ],
+      "size": [
+        960,
+        372
+      ],
+      "floating": false,
+      "fullscreen": 1
+    },
+    "native_session_preserved": true,
+    "no_show_full_ui_direct_LXC_AM_or_APK_reinstall": true,
+    "no_API_GPU_network_rechecks": true,
+    "raw_titles_queries_IDs_or_logs_exported": false,
+    "app_left_visible_for_joint_gesture": true
+  },
+  "package_integration": {
+    "ok": true,
+    "waydroid_version": "1.6.3.apollo2-1",
+    "profile_version": "1.0.0-6",
+    "two_packages_normal_GPG_ALPM_Qkk_passed": true,
+    "generic_Android_launcher_hidden": true,
+    "provider5_permissions_and_hardening_preserved": true,
+    "native_session_preserved": true,
+    "Android_cycle_started": false
+  },
+  "evidence_type": "sanitized controller-reviewed Android runtime and individual APK result summary",
+  "date": "2026-11-02",
+  "independent_reproduction": false,
+  "full_android_physical_acceptance": false,
+  "specific_kmsg_wm_rule_does_not_prove_global_root_read_isolation": true,
+  "known_Home_refocus_after_rotation_open": false,
+  "host_bars_followup": {
+    "automatic_no_app_no_focus_cycle_passed": true,
+    "portrait": {
+      "width": 432,
+      "top": 44,
+      "bottom": 44
+    },
+    "landscape": {
+      "width": 960,
+      "top": 32,
+      "bottom": 28
+    },
+    "search": {
+      "width": 408,
+      "height": 48
+    },
+    "last_physical_bars_failure_was_before_shell19": true,
+    "shell19_physical_retest_pending": false,
+    "raw_screen_type_addresses_logs_exported": false,
+    "Home_retained_before_guard": false,
+    "known_Home_refocus_open_before_guard": true,
+    "Home_retained_after_guard": true,
+    "physical_bar_cycle_human_accepted_on_shell20": true,
+    "physical_cycle_without_opening_app": true
+  },
+  "final_Home_guard_focused_cycle": {
+    "installed": true,
+    "rotation_package": "0.3.1-3",
+    "shell_package": "0.2.62.apollo45-20",
+    "last_acknowledged_pair_adopted_after_restart": true,
+    "adopted_pair_is_touch_matrix_readback": false,
+    "real_compositor_arm_cancel_verified": true,
+    "portrait_cycle_guard_armed": true,
+    "landscape_cycle_guard_armed": true,
+    "portrait_cycle_Home_empty": true,
+    "landscape_cycle_Home_empty": true,
+    "Home_retained": true,
+    "observed_background_app": "public F-Droid test app",
+    "background_windows_observed": 1,
+    "temporary_background_float_maximize": true,
+    "normal_reopen_guard_enabled_before": true,
+    "normal_reopen_guard_disabled_after": true,
+    "normal_reopen_app_opened": true,
+    "native_owner_session_and_other_components_preserved": true,
+    "Android_stopped_for_cycle": false,
+    "kernel_or_partitions_changed": false,
+    "all_APK_process_or_surface_coverage_verified": false,
+    "physical_bars_retest_after_shell19_pending": false,
+    "raw_identifiers_logs_addresses_exported": false,
+    "focused_real_cycle_tested_rotation": "0.3.1-2",
+    "cleanup_only_revision": "0.3.1-3",
+    "cleanup_live_namespace_and_inactive_rule_verified": true,
+    "cleanup_focused_assertions_passed": 104,
+    "additional_rotations_for_cleanup_update": 0,
+    "observed_reopened_window_floating_in_focused_cycle": true,
+    "pre_guard_floating_baseline_recorded": false,
+    "actual_float_off_or_tiling_restoration_verified": false,
+    "physical_bar_cycle_human_accepted": true
+  },
+  "physical_bar_cycle_human_accepted": true,
+  "global_visual_touch_hardware_acceptance_verified": false
+}

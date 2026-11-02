@@ -18,3 +18,13 @@ Do not replace these with raw terminal, camera, account, network or personal-gal
 `apollo-boot-r16.png` is a real 1080×2400 native KMS capture from the R16 minimal RAM rescue trial. It contains only the original Omarchy wordmark and background. It has a standard sRGB color tag and no text/EXIF metadata or identifiers. It is distinct from the SDDM Qt previews in [the V2 experiment](../experiments/original-boot-v2/README.md). No separate human confirmation of the final R16 screen was obtained.
 
 V2 previews are renders of the original MIT Omarchy composition and the portrait/touch adaptation, not photographs or successful phone PAM logins. The reference and initial 432×960 renders are byte-identical; the keyboard preview exercises a rejecting mock. Their only ancillary image data is technical DPI. Native theme PNG assets are unchanged upstream files. **David Heinemeier Hansson's original MIT attribution remains in each native theme directory.** This does not claim ownership of or endorsement by upstream Omarchy.
+
+
+## Calls 4 two-origin fixtures
+
+`phone-two-origins-landscape-fixture.png` and `phone-two-origins-portrait-fixture.png`
+are fresh960×344 and 432×916 real-GTK sandbox renders with two dummy origins and
+empty number fields. They are not phone captures or accounts/SIM inventories.
+Pixels were manually reviewed; only technical PNG chunks are retained. The original
+MIT Omarchy logo is unchanged; Calls GPL3+/libcall-ui LGPL2.1+ authorship remains.
+Fresh fixtures do not prove every runtime resize or physical rotation sequence.

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Instalar APK en Android
+Comment=Abrir Android bajo demanda y solicitar la instalación del APK local
+NoDisplay=true
+Exec=python3 /usr/lib/omamobile-waydroid/apollo-apk-open.py --apply %f
+MimeType=application/vnd.android.package-archive;
+Icon=waydroid
+X-Purism-FormFactor=Workstation;Mobile;

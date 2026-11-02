@@ -5,7 +5,8 @@
     "0001-omarchy-appearance.patch",
     "0002-private-default-logging.patch",
     "0001-calls-mobile-geometry.patch",
-    "0004-omarchy-phone-ui.patch"
+    "0004-omarchy-phone-ui.patch",
+    "0005-landscape-safearea.patch"
   ],
   "files": {
     "0001-calls-mobile-geometry.patch": "89bdc21500f4e115f8b68f633f29c0e355c307eb7175231dc6d5bb111ae6931d",
@@ -17,11 +18,29 @@
     "LICENSE-MIT-additional-style-and-scripts": "ab76b9a32b4736c4af1d5bf0b72b14ed8372e90417201ac7d948cd00f57fc809",
     "Omarchy-logo-LICENSE.txt": "f7e03b0c6e168a16a4dcc8573760b0d877e0854460f851746cc4a784c6d09707",
     "omarchy-logo.png": "ba8f1547a02ab5db64fe3923d0b834a220e2c3798c1674374a0eb92a18dfddfb",
-    "phone-style.css": "649b27c39c377811a84a07c3106ed9781379e6edc5d8b569c80e53e0f843e718"
+    "phone-style.css": "649b27c39c377811a84a07c3106ed9781379e6edc5d8b569c80e53e0f843e718",
+    "0005-landscape-safearea.patch": "756a08bad97fecf9cdc8ffd082fa19f0b1a7d41f5908881ac92fe81b8c70e018",
+    "followup-51.1.apollo4/src/ui/main-window.ui": "39a5fb6753f21b191cdf6f6f8466204775dd2d556aa59423f494880557384d9c",
+    "followup-51.1.apollo4/subprojects/libcall-ui/src/cui-dialpad.ui": "4ad218e9d910a6eb8a7977640766f4aa5d5f2314e5b90d741073c7c7ff851138"
   },
-  "installed_package": "gnome-calls 51.1.apollo3-1",
+  "installed_package": "gnome-calls 51.1.apollo4-1",
   "source_paths_changed_from_previous_ui": 10,
   "protected_C_header_provider_source_paths_unchanged": 197,
   "exact_source_reconstruction_requires_phone_style_copy_after_patch_4": true,
-  "phone_main_screen_human_accepted": true
+  "phone_main_screen_human_accepted": false,
+  "prior_main_screen_human_acceptance_version": "51.1.apollo3-1",
+  "latest_followup_payload_paths_changed": 2,
+  "normal_DBus_launch_verified": true,
+  "latest_followup_synthetic_viewports": [
+    [
+      960,
+      344
+    ],
+    [
+      432,
+      916
+    ]
+  ],
+  "latest_followup_dummy_origins": 2,
+  "latest_followup_physical_rotation_layout_accepted": false
 }

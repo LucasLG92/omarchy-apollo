@@ -639,6 +639,7 @@ def installed_mobile_milestone():
     phone = ROOT / "patches/phone-omarchy"
     for name, pin in json.loads((phone / "SOURCEPINS.json").read_text(encoding="utf-8"))["files"].items():
         assert hashlib.sha256((phone / name).read_bytes()).hexdigest() == pin
+        assert (phone / name).relative_to(ROOT).as_posix() in tracked_files(), "Pinned public source must not be ignored by Git"
     assert hashlib.sha256((phone / "phone-style.css").read_bytes()).hexdigest() == "649b27c39c377811a84a07c3106ed9781379e6edc5d8b569c80e53e0f843e718"
     for folder in ("sim-continuation", "mobile-rotation"):
         directory = ROOT / "experiments" / folder
@@ -651,6 +652,67 @@ def installed_mobile_milestone():
                 ast.parse(path.read_text(encoding="utf-8"))
     # Technical image chunks only. Manual pixel review remains separate.
     for name, size in (("phone-portrait-fixture.png", (432, 960)), ("phone-landscape-fixture.png", (800, 360))):
+        image = (ROOT / "media" / name).read_bytes()
+        assert image[:8] == b"\x89PNG\r\n\x1a\n" and struct.unpack(">II", image[16:24]) == size
+        cursor, chunks = 8, []
+        while cursor < len(image):
+            length = struct.unpack(">I", image[cursor:cursor + 4])[0]
+            chunks.append(image[cursor + 4:cursor + 8])
+            cursor += 12 + length
+        assert cursor == len(image) and set(chunks) <= {b"IHDR", b"IDAT", b"IEND", b"sRGB", b"cICP", b"pHYs"}
+
+
+def android_and_layout_followup():
+    data = json.loads((ROOT / "docs/evidence/2026-11-02-android-runtime-apk.json").read_text(encoding="utf-8"))
+    assert not data["independent_reproduction"]
+    assert data["Android"]["release"] == "13" and data["Android"]["API"] == 33
+    assert data["Android"]["boot_completed"] and data["Android"]["HTTPS_204_inside_Android"]
+    assert data["Android"]["renderer_family"] == "freedreno_adreno"
+    assert data["APK"]["public_package"] == "org.fdroid.fdroid"
+    assert data["APK"]["installed_via_normal_user_handler"] and data["APK"]["APK_MIME_effective_as_user"]
+    assert data["APK"]["public_activity_start_Status_ok"] and data["APK"]["public_process_running"]
+    assert data["lifecycle"]["normal_Close_Android_then_desktop_start_passed"]
+    assert not data["lifecycle"]["final_start_used_explicit_LXC_diagnostic"]
+    assert data["specific_kmsg_wm_rule_does_not_prove_global_root_read_isolation"]
+    assert not data["private_log_text_identifiers_or_credentials_exported"]
+    assert not data["layout"]["global_fixed_portrait_props_or_FDroid_orientation_override"]
+    assert data["orientation_metadata"]["portrait_ActivityInfo_enums"] == [1, 7, 9, 12]
+    assert data["orientation_metadata"]["landscape_ActivityInfo_enums"] == [0, 6, 8, 11]
+    directory = ROOT / "experiments/waydroid-apollo"
+    pins = json.loads((directory / "SOURCEPINS.json").read_text(encoding="utf-8"))
+    assert pins["profile_version"] == "1.0.0-6" and pins["exact_profile_payloads"] == 14
+    assert not pins["generated_live_policies_included"]
+    for name, row in pins["files"].items():
+        path = directory / name
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == row["sha256"]
+        text = path.read_text(encoding="utf-8")
+        if path.suffix == ".py" or text.startswith("#!/") and "python" in text.splitlines()[0]:
+            ast.parse(text)
+    directory = ROOT / "experiments/mobile-rotation/layout-followup"
+    pins = json.loads((directory / "SOURCEPINS.json").read_text(encoding="utf-8"))
+    for name, pin in pins["files"].items():
+        path = directory / name
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == pin
+        if path.suffix == ".py" or name == "omamobile-launch":
+            ast.parse(path.read_text(encoding="utf-8"))
+    assert pins["rotation_package"] == "0.3.1-3" and pins["shell_package"] == "0.2.62.apollo45-20"
+    guard = pins["final_guard_focused_result"]
+    assert guard["Home_retained"] and guard["normal_reopen_guard_disabled_after"]
+    assert guard["focused_real_cycle_tested_rotation"] == "0.3.1-2" and guard["cleanup_only_revision"] == "0.3.1-3"
+    assert guard["physical_bar_cycle_human_accepted"] and not guard["actual_float_off_or_tiling_restoration_verified"]
+    assert not guard["all_APK_process_or_surface_coverage_verified"]
+    assert pins["default_app_compatibility_rules"] == 0 and not pins["hardcoded_app_policy"]
+    assert pins["temporary_user_portrait_override_verified"] and pins["empty_home_sensor_restore_verified"]
+    assert pins["original_override_bytes_restored"] and pins["metadata_auto_restore_verified"]
+    assert not pins["real_touch_matrix_readback_available"]
+    assert json.loads((directory / "app-orientation.json").read_text(encoding="utf-8")) == {"version": 1, "rules": []}
+    unit = ROOT / "experiments/calls-session"
+    pins = json.loads((unit / "SOURCEPINS.json").read_text(encoding="utf-8"))
+    assert pins["package"] == "apollo-calls-session 0.1.0-2"
+    for name, pin in pins["files"].items():
+        assert hashlib.sha256((unit / name).read_bytes()).hexdigest() == pin
+    for name, size in (("phone-two-origins-landscape-fixture.png", (960, 344)),
+                       ("phone-two-origins-portrait-fixture.png", (432, 916))):
         image = (ROOT / "media" / name).read_bytes()
         assert image[:8] == b"\x89PNG\r\n\x1a\n" and struct.unpack(">II", image[16:24]) == size
         cursor, chunks = 8, []
@@ -709,6 +771,7 @@ def main():
     installed_native_boot_boundaries()
     cold_boot_sim_and_desktop_recurrence_boundaries()
     installed_mobile_milestone()
+    android_and_layout_followup()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

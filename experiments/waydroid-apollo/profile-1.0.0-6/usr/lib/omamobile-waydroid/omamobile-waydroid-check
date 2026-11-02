@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+"""Apollo variant of upstream's RO check. Never loads drivers or starts LXC."""
+from pathlib import Path
+import argparse
+import gzip
+import json
+import os
+import re
+import stat
+
+BASE = ['ANDROID_BINDER_IPC', 'PSI', 'MEMFD_CREATE', 'CGROUPS', 'CGROUP_FREEZER',
+        'CGROUP_DEVICE', 'CGROUP_BPF', 'PID_NS', 'NET_NS', 'IPC_NS', 'UTS_NS',
+        'IP_MULTIPLE_TABLES', 'IPV6_MULTIPLE_TABLES', 'INET_DIAG_DESTROY', 'NF_TABLES_INET']
+MODULE_OK = ['BRIDGE', 'VETH', 'TUN', 'OVERLAY_FS', 'FUSE_FS', 'NF_TABLES', 'NFT_NAT', 'NFT_MASQ',
+             'IP_NF_IPTABLES', 'IP6_NF_IPTABLES']
+ANDROID_NETWORK = ['NETFILTER_XTABLES_LEGACY', 'IP_NF_IPTABLES_LEGACY', 'IP6_NF_IPTABLES_LEGACY',
+    'IP_NF_FILTER', 'IP_NF_MANGLE', 'IP_NF_RAW',
+    'IP_NF_NAT', 'IP6_NF_FILTER', 'IP6_NF_MANGLE', 'IP6_NF_RAW', 'NETFILTER_XT_MARK',
+    'NETFILTER_XT_CONNMARK', 'NETFILTER_XT_MATCH_OWNER', 'NETFILTER_XT_MATCH_QUOTA',
+    'NETFILTER_XT_MATCH_BPF', 'NETFILTER_XT_MATCH_PKTTYPE', 'NETFILTER_XT_MATCH_U32',
+    'NETFILTER_XT_TARGET_IDLETIMER', 'NETFILTER_XT_TARGET_TCPMSS', 'NETFILTER_XT_MATCH_SOCKET']
+
+
+def parse_config(data):
+    values = {}
+    for line in data.decode().splitlines():
+        if line.startswith('CONFIG_') and '=' in line:
+            name, value = line.split('=', 1); values[name[7:]] = value
+        else:
+            match = re.fullmatch(r'# CONFIG_([A-Z0-9_]+) is not set', line)
+            if match: values[match[1]] = 'n'
+    return values
+
+
+def analyze(values):
+    required = {name: 'y' for name in BASE}
+    required.update({name: 'ym' for name in MODULE_OK + ANDROID_NETWORK})
+    required['NETFILTER_XTABLES_LEGACY'] = 'y'
+    missing = [name for name, accepted in required.items() if values.get(name, 'n') not in accepted]
+    names = set(values.get('ANDROID_BINDER_DEVICES', '').strip('"').split(','))
+    static = {'binder', 'hwbinder', 'vndbinder'} <= names
+    binderfs = values.get('ANDROID_BINDERFS') == 'y'
+    if not (static or binderfs): missing.append('ANDROID_BINDER_DEVICES_OR_BINDERFS')
+    return {'schema': 'apollo-waydroid-kernel-compatibility-v1', 'config_requirements_met': not missing,
+            'missing_options': sorted(missing), 'configured_binder_static_triplet': static,
+            'binderfs_configured': binderfs, 'binderfs_mandatory_for_waydroid_1_6_3': False,
+            'memfd_configured': values.get('MEMFD_CREATE') == 'y',
+            'required_options': required, 'runtime_checked': False,
+            'container_start_or_driver_loading_performed': False}
+
+
+def runtime(result):
+    def character(path):
+        try: return stat.S_ISCHR(Path(path).stat().st_mode)
+        except OSError: return False
+    result['runtime_checked'] = True
+    result['static_binder_nodes_are_char_devices'] = all(character('/dev/' + name) for name in ('binder', 'hwbinder', 'vndbinder'))
+    result['memory_psi_present'] = Path('/proc/pressure/memory').is_file()
+    result['cgroup2_controller_file_present'] = Path('/sys/fs/cgroup/cgroup.controllers').is_file()
+    render_ok = False
+    for node in Path('/sys/class/drm').glob('renderD*'):
+        try: driver = (node / 'device/driver').resolve(strict=True).name
+        except OSError: continue
+        if driver in ('msm', 'msm_dpu') and character('/dev/dri/' + node.name): render_ok = True
+    result['msm_render_node_present'] = render_ok
+    result['runtime_preconditions_met'] = all(result[key] for key in (
+        'memory_psi_present', 'cgroup2_controller_file_present', 'msm_render_node_present'))
+    result['binder_node_verification_pending_allocation'] = not result['static_binder_nodes_are_char_devices']
+    result['runtime_preconditions_met'] &= result['static_binder_nodes_are_char_devices'] or result['binderfs_configured']
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--config', type=Path)
+    group.add_argument('--running', action='store_true')
+    args = parser.parse_args()
+    path = Path('/proc/config.gz') if args.running else args.config
+    data = path.read_bytes()
+    result = analyze(parse_config(gzip.decompress(data) if path.suffix == '.gz' else data))
+    if args.running: runtime(result)
+    print(json.dumps(result, indent=2))
+    raise SystemExit(not result['config_requirements_met'] or (args.running and not result['runtime_preconditions_met']))
+
+
+if __name__ == '__main__':
+    main()

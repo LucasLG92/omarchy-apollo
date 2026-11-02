@@ -1,0 +1,193 @@
+{
+  "date": "2026-11-02",
+  "evidence_type": "sanitized controller-reviewed installed-device follow-up",
+  "supersedes_rotation_state_in": "2026-11-02-installed-mobile-batch.json",
+  "independent_reproduction": false,
+  "rotation": {
+    "package": "0.3.1-3",
+    "installed_active": true,
+    "human_observed_rotation": true,
+    "toolkit_geometry_numeric_checks_passed": true,
+    "global_image_touch_layout_human_accepted": false,
+    "current_monitor_rule_published_once_per_orientation": true,
+    "new_mode_scale_refresh_written": false,
+    "temporary_foreground_portrait_override_verified": true,
+    "temporary_output_transform": 0,
+    "temporary_touch_transform_requested": 0,
+    "empty_home_restored_sensor_transform": 1,
+    "original_override_bytes_restored": true,
+    "permanent_compatibility_rules_after_test": 0,
+    "restored_app_used_metadata_auto": true,
+    "restored_output_transform": 1,
+    "restored_touch_transform_requested": 1,
+    "real_touch_matrix_readback_available": false,
+    "last_acknowledged_pair_adoption_verified": true
+  },
+  "shell": {
+    "package": "0.2.62.apollo45-20",
+    "installed": true,
+    "viewport_change_cancels_settle_and_realigns_selected_page": true,
+    "homepager_13_preserved": true,
+    "launcher_numeric_geometry_verified": {
+      "input_width": 408,
+      "input_height": 48,
+      "font_pixels": 14,
+      "icon_pixels": 18
+    },
+    "launcher_text_focus_preserved_in_fixtures": true,
+    "AI_agent_actions_invoked_in_fixtures": 0,
+    "launcher_human_visual_acceptance": false,
+    "compact_landscape_bars": {
+      "top": 32,
+      "bottom": 28
+    },
+    "portrait_bars": {
+      "top": 44,
+      "bottom": 44
+    },
+    "normal_new_DBus_app_own_screen_verified": true,
+    "manual_post_launch_own_screen_action_required": false,
+    "focused_real_socket_synthetic_client_tests": 11,
+    "actual_geometryChanged_signal_verified": true,
+    "shell16_launcher_other_patches_INSTALL_preserved": true,
+    "automatic_bar_cycle": {
+      "automatic_no_app_no_focus_cycle_passed": true,
+      "portrait": {
+        "width": 432,
+        "top": 44,
+        "bottom": 44
+      },
+      "landscape": {
+        "width": 960,
+        "top": 32,
+        "bottom": 28
+      },
+      "search": {
+        "width": 408,
+        "height": 48
+      },
+      "Home_retained": false,
+      "known_Home_refocus_open": true,
+      "last_physical_bars_failure_was_before_shell19": true,
+      "shell19_physical_retest_pending": true,
+      "raw_screen_type_addresses_logs_exported": false
+    },
+    "panels19_preserved": true
+  },
+  "phone": {
+    "latest_installed_at_this_checkpoint": "51.1.apollo4-1",
+    "multi_origin_landscape_clip_observed": true,
+    "followup_51_1_apollo4_1_host_candidate": false,
+    "followup_candidate_published": false,
+    "new_physical_acceptance": false,
+    "normal_DBus_launch_running_verified": true,
+    "session_integration_package": "0.1.0-2",
+    "source_UI_paths_changed": 2,
+    "protected_C_header_provider_paths_unchanged": 197,
+    "synthetic_two_origin_viewports": [
+      [
+        960,
+        344
+      ],
+      [
+        432,
+        916
+      ]
+    ],
+    "synthetic_key_hits": 12,
+    "synthetic_navigation_hits": 3,
+    "synthetic_minimum_target_pixels": 44,
+    "synthetic_template_errors": 0,
+    "followup_source_in_this_record": true
+  },
+  "waydroid": {
+    "packages_and_fresh_initialization_installed": true,
+    "device_profile": "1.0.0-2",
+    "character_only_device_policy_installed": true,
+    "prior_devnull_permission_failure_observed": true,
+    "android_runtime_boot_demonstrated": false,
+    "apk_acceptance": false,
+    "google_play_verified": false
+  },
+  "full_phone_acceptance": false,
+  "private_data_exported": false,
+  "raw_logs_exported": false,
+  "phone_screenshots_exported": false,
+  "waydroid_state_superseded_by": "2026-11-02-android-runtime-apk.json",
+  "global_visual_physical_acceptance_pending": true,
+  "physical_joint_check_completed": true,
+  "opening_an_app_corrects_bars_human_reported": true,
+  "human_reported_android_Home_gesture_difficult": true,
+  "standalone_APK_apps_instead_of_Android_desktop_requested": true,
+  "standalone_APK_followup_implemented_and_accepted": false,
+  "standalone_APK_launch_implemented": true,
+  "standalone_APK_cold_start_verified": true,
+  "standalone_APK_complete_Home_focus_acceptance": false,
+  "Android_Home_or_generic_surface_count_in_cold_start": 0,
+  "known_Home_refocus_after_geometry_change_open": false,
+  "bars_followup": {
+    "automatic_no_app_no_focus_cycle_passed": true,
+    "portrait": {
+      "width": 432,
+      "top": 44,
+      "bottom": 44
+    },
+    "landscape": {
+      "width": 960,
+      "top": 32,
+      "bottom": 28
+    },
+    "search": {
+      "width": 408,
+      "height": 48
+    },
+    "last_physical_bars_failure_was_before_shell19": true,
+    "shell19_physical_retest_pending": false,
+    "raw_screen_type_addresses_logs_exported": false,
+    "Home_retained_before_guard": false,
+    "known_Home_refocus_open_before_guard": true,
+    "Home_retained_after_guard": true,
+    "physical_bar_cycle_human_accepted_on_shell20": true,
+    "physical_cycle_without_opening_app": true
+  },
+  "final_Home_guard_cycle": {
+    "installed": true,
+    "rotation_package": "0.3.1-3",
+    "shell_package": "0.2.62.apollo45-20",
+    "last_acknowledged_pair_adopted_after_restart": true,
+    "adopted_pair_is_touch_matrix_readback": false,
+    "real_compositor_arm_cancel_verified": true,
+    "portrait_cycle_guard_armed": true,
+    "landscape_cycle_guard_armed": true,
+    "portrait_cycle_Home_empty": true,
+    "landscape_cycle_Home_empty": true,
+    "Home_retained": true,
+    "observed_background_app": "public F-Droid test app",
+    "background_windows_observed": 1,
+    "temporary_background_float_maximize": true,
+    "normal_reopen_guard_enabled_before": true,
+    "normal_reopen_guard_disabled_after": true,
+    "normal_reopen_app_opened": true,
+    "native_owner_session_and_other_components_preserved": true,
+    "Android_stopped_for_cycle": false,
+    "kernel_or_partitions_changed": false,
+    "all_APK_process_or_surface_coverage_verified": false,
+    "physical_bars_retest_after_shell19_pending": false,
+    "raw_identifiers_logs_addresses_exported": false,
+    "focused_real_cycle_tested_rotation": "0.3.1-2",
+    "cleanup_only_revision": "0.3.1-3",
+    "cleanup_live_namespace_and_inactive_rule_verified": true,
+    "cleanup_focused_assertions_passed": 104,
+    "additional_rotations_for_cleanup_update": 0,
+    "observed_reopened_window_floating_in_focused_cycle": true,
+    "pre_guard_floating_baseline_recorded": false,
+    "actual_float_off_or_tiling_restoration_verified": false,
+    "physical_bar_cycle_human_accepted": true
+  },
+  "Home_focus_focused_cycle_passed": true,
+  "standalone_APK_focused_Home_guard_cycle_verified": true,
+  "physical_joint_check_scope": "physical bars passed vertical-landscape-vertical without opening an app; no broader APK/gesture/hardware acceptance inferred",
+  "historical_pre_shell19_joint_check_passed": false,
+  "physical_bar_cycle_human_accepted": true,
+  "global_visual_touch_hardware_acceptance_verified": false
+}

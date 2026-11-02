@@ -1,0 +1,136 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+# Android apps through Waydroid on Omarchy Mobile (Apollo MSM/Freedreno profile).
+#
+#   omamobile-waydroid check            read-only: kernel, GPU, cgroups, hardening
+#   omamobile-waydroid init             verify preloaded official images and initialize
+#                                       (root; SYSTEM_TYPE from waydroid.conf)
+#   omamobile-waydroid mesa             patch the vendor Mesa for the Apollo MSM/Freedreno
+#   omamobile-waydroid props            write our Android properties, then
+#                                       regenerate Waydroid's config
+#   omamobile-waydroid firewall on|off  ufw rules for waydroid0 (DHCP, DNS, routing)
+#   omamobile-waydroid on|off           start/stop on demand (no boot enablement)
+#   omamobile-waydroid status
+#
+# Nothing starts by itself: the package installs with Waydroid off.
+set -euo pipefail
+
+LIB=/usr/lib/omamobile-waydroid
+CONF=/etc/omamobile/waydroid.conf
+WORK=/var/lib/waydroid
+SYSTEM_TYPE=VANILLA
+LCD_DENSITY=400
+MULTI_WINDOWS=true
+# shellcheck source=/dev/null
+[[ -r $CONF ]] && . "$CONF"
+
+die() { echo "omamobile-waydroid: $*" >&2; exit 1; }
+need_root() { [[ $EUID -eq 0 ]] || die "run as root (sudo)"; }
+
+harden_config() {
+  "$LIB/omamobile-waydroid-harden" config /
+}
+
+cmd_check() {
+  local rc=0
+  "$LIB/omamobile-waydroid-check" --running || rc=1
+  if [[ -e $WORK/lxc/waydroid/config ]]; then
+    "$LIB/omamobile-waydroid-harden" verify / || rc=1
+  else
+    echo "--    Waydroid not initialized yet (omamobile-waydroid init)"
+    # The Python patch can be checked before init.
+    "$LIB/omamobile-waydroid-harden" verify / 2>/dev/null | grep -v 'no omamobile device rules' || true
+  fi
+  return "$rc"
+}
+
+cmd_props() {
+  need_root
+  [[ -e $WORK/waydroid.cfg ]] || die "not initialized (omamobile-waydroid init)"
+  python3 -I - "$WORK/waydroid.cfg" "$LCD_DENSITY" "$MULTI_WINDOWS" <<'EOF'
+import configparser, sys
+path, density, multi = sys.argv[1:4]
+cfg = configparser.ConfigParser()
+cfg.optionxform = str          # Android property names are case sensitive
+cfg.read(path)
+if "properties" not in cfg:
+    cfg["properties"] = {}
+p = cfg["properties"]
+p["ro.sf.lcd_density"] = density            # Apollo logical scale2.5 (160 *2.5)
+p["persist.waydroid.multi_windows"] = multi  # one Hyprland window per app
+p["persist.waydroid.width_padding"] = "0"
+p["persist.waydroid.height_padding"] = "0"
+with open(path, "w") as fh:
+    cfg.write(fh)
+print(f"{path}: properties set")
+EOF
+  waydroid upgrade -o
+  harden_config
+}
+
+cmd_mesa() {
+  die "Apollo uses Waydroid's native MSM/Freedreno GBM path; the Mali vendor patch is not applicable"
+}
+
+cmd_init() {
+  need_root
+  [[ ! -e $WORK/waydroid.cfg && ! -d $WORK/rootfs ]] || die "already initialized; refusing reset or overwrite"
+  "$LIB/omamobile-waydroid-check" --running >/dev/null || die "Apollo kernel prerequisites are not ready"
+  "$LIB/verify-local-images.py" || die "verified local official images are required; no network download attempted"
+  # /etc/waydroid-extra/images is an official preinstalled-images path.
+  # With a fresh stopped setup upstream skips OTA/image download and leaves LXC stopped.
+  waydroid init -i /etc/waydroid-extra/images -s VANILLA
+  harden_config
+  cmd_props
+  echo "Apollo Android initialized from local images; container has not been started or enabled."
+}
+
+cmd_firewall() {
+  need_root
+  command -v ufw >/dev/null || die "ufw is not installed"
+  local verb=${1:-}
+  case $verb in
+    on)
+      # Android's DHCP and DNS go to dnsmasq on the host's side of the
+      # bridge; everything else is forwarded and masqueraded by
+      # waydroid-net.sh. ufw's default forward policy is DROP, and every
+      # netfilter base chain must accept a packet, so ufw needs its own rules.
+      ufw allow in on waydroid0 to any port 67 proto udp comment 'omamobile-waydroid DHCP'
+      ufw allow in on waydroid0 to any port 53 comment 'omamobile-waydroid DNS'
+      ufw route allow in on waydroid0 comment 'omamobile-waydroid out'
+      ;;
+    off)
+      ufw --force delete allow in on waydroid0 to any port 67 proto udp || true
+      ufw --force delete allow in on waydroid0 to any port 53 || true
+      ufw --force delete route allow in on waydroid0 || true
+      ;;
+    *) die "firewall on|off" ;;
+  esac
+}
+
+cmd_onoff() {
+  need_root
+  case $1 in
+    on)
+      cmd_check >/dev/null || die "omamobile-waydroid check fails; not enabling"
+      systemctl start waydroid-container.service ;;
+    off)
+      systemctl stop waydroid-container.service ;;
+  esac
+}
+
+cmd_status() {
+  systemctl --no-pager --lines=0 status waydroid-container.service 2>/dev/null | sed -n 1,3p || true
+  waydroid status 2>/dev/null || true
+}
+
+case ${1:-} in
+  check) cmd_check ;;
+  init) cmd_init ;;
+  mesa) cmd_mesa ;;
+  props) cmd_props ;;
+  firewall) shift; cmd_firewall "${1:-}" ;;
+  on|off) cmd_onoff "$1" ;;
+  status) cmd_status ;;
+  *) sed -n '4,14p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

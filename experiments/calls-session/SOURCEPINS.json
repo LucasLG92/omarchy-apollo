@@ -1,0 +1,11 @@
+{
+  "package": "apollo-calls-session 0.1.0-2",
+  "license": "GPL-3.0-or-later",
+  "files": {
+    "calls-daemon.service": "7db83616684dd146ce1af531d9698f83f7a1bdd7dd5971db1daf22af38a80e3c"
+  },
+  "installed_path": "etc/systemd/user/calls-daemon.service",
+  "normal_mobile_launcher_DBus_activation_verified": true,
+  "attempt_0_1_0_1_dropin_is_current": false,
+  "change": "GNOME-only session targets replaced by graphical-session.target; service command/type retained"
+}

@@ -1,3 +1,26 @@
+# Omarchy Phone: Calls 4 landscape follow-up
+
+**Installed: 51.1.apollo4-1. Normal mobile-launcher/D-Bus activation is verified;
+physical rotation/layout acceptance is pending.** Apply `0005-landscape-safearea.patch`
+after the four earlier patches and exact style reconstruction described below.
+The patch changes only the Calls main-window UI and libcall-ui dialpad UI; both
+exact final files are included in `followup-51.1.apollo4/`.197 C/header/provider
+paths stay unchanged. The source licenses remain GPL3+ and LGPL2.1+ respectively.
+
+Fresh real-GTK sandbox fixtures used two dummy origins at 960×344 and 432×916:
+12 key hits,3 navigation hits, targets at least 44px, ancestor-clip checks and zero
+template errors passed. These are fresh fixture windows, not proof that every
+compositor/backend resize sequence or physical rotated call state works.
+
+The compact header shares the logo/navigation row in short landscape layouts;
+zero outer vertical dialpad padding keeps the last keypad row inside the area.
+The [session-unit integration](../../experiments/calls-session/README.md) replaces
+GNOME-only targets with the real graphical-session target. Shell 16 also preserves
+the app's own screen after cold D-Bus mapping; normal activation required no manual
+post-launch move. No telephony backend change or new call/audio test is claimed.
+
+## Earlier Calls3 source and four-viewport evidence
+
 # Omarchy Phone: source delta and visual checks
 
 Installed and human-accepted on the development phone as **GNOME Calls

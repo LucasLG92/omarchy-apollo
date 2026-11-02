@@ -1,6 +1,8 @@
 # Hardware status
 
-**Current: Omarchy 4.5 RC2, permanent kernel R9 and accepted mobile UI on one Mi 10T Pro.**
+
+
+**Current: Omarchy 4.5 RC2, permanent kernel R9 and independent Android-app integration on one Mi 10T Pro. The focused Home/rotation cycle passed; wider physical coverage remains open.**
 Normal native boot, Landlock ABI9 and 503 module-integrity checks passed. Hyprland
 0.57.0-2.1 and its upstream DMA-BUF backport are installed; the normal-reboot
 human test accepted desktop, Phone 51.1.apollo3-1 and uninterrupted SIM 0.2.2-1.
@@ -8,9 +10,10 @@ human test accepted desktop, Phone 51.1.apollo3-1 and uninterrupted SIM 0.2.2-1.
 R6/cold-login checkpoint for this tested configuration, without promising unlimited
 reboot reliability or complete daily-driver acceptance.
 
-Rotation 0.2.0-2 is installed/enabled/active and a sensor transform was observed;
-physical image/touch acceptance is pending. Waydroid installation is in progress:
-runtime, GPU acceleration, APK and Google Play acceptance are not verified.
+Rotation 0.3.1-3 is active and physical rotation was observed, with global visual/touch
+acceptance still open. Android 13/API 33 booted with Freedreno/Adreno and the official
+F-Droid APK installed/launched through the user handler. Normal stop/reopen through
+the mobile launcher also passed; the physical bar cycle passed, while wider app/gesture/layout coverage remains incomplete. Google Play/GMS is not included. [Latest follow-up](mobile-layout-android-2026-11-02.md).
 Microphone/incoming calls/SMS, broader radios/sensors, suspend and battery life
 remain open. Existing successful cellular IPv4 and outgoing/downlink results keep
 their scope. [Current structured record](evidence/2026-11-02-installed-mobile-batch.json).
@@ -36,7 +39,7 @@ recorded above; earlier failures remain part of the test history.
 | SIM / registration | Latest cold boot: human local access PIN accepted; modem connected (state11)/home, primary PIN no longer required, secondary PIN2 enum3 remains | Slot mapping and wider stability; prior slot entries do not prove physical card count, and PIN2 is not a second SIM |
 | SIM UI | Installed 0.2.2-1; combined human reboot continuity accepted. Selected payload source exported | Broader error/retry coverage; no automatic retry |
 | Voice / Messaging | R19: manual outgoing voicemail/downlink confirmed | Microphone/uplink, incoming calls and SMS unverified; newer SIM/data success does not establish them |
-| Cellular IP data | Latest R20: fresh AUTO profile active; cellular-bound IPv4 HTTPS204 with Wi-Fi connected/preferred. Prior Wi-Fi-off tests retained | IPv6, other SIMs/networks, reconnect/sustained transfer and speed. Cellular need not be default while Wi-Fi is preferred |
+| Cellular IP data | Latest R20: fresh AUTO profile active; cellular-bound IPv4 HTTPS 204 with Wi-Fi connected/preferred. Prior Wi-Fi-off tests retained | IPv6, other SIMs/networks, reconnect/sustained transfer and speed. Cellular need not be default while Wi-Fi is preferred |
 | Phone permissions | R11: active UID voice/messaging checks passed and read-only call list succeeded | Broader ordinary-session authorization and administration; no SIM was available in that earlier trial |
 | Privileged administration | Authenticated wheel/sudo rule and later human Polkit/password change from the active graphical session verified | Wider administrative/session coverage; no bypass policy claimed |
 | Local credential / owner UI | R20: setup layout accepted, credential saved; actual SDDM/PAM login and normal-boot desktop human-confirmed; later graphical Polkit/password change passed | Broader session/security coverage; r5 auto-close lacks separate human acceptance; clean first-user flow remains incomplete |
@@ -55,8 +58,8 @@ recorded above; earlier failures remain part of the test history.
 | Kernel / suspend | Permanent R9 normal boot, Landlock ABI9 and 503 module checks passed; historical R7/R8 candidates are superseded | Physical suspend/wake and calibrated energy tests; no battery-life claim |
 | Clean first-user setup | r3 userland 0.1.0-3 / profile 20261101-11 installed on R9; existing-owner guard/session preserved, wizard not activated | Disposable clean SDDM/logind/session acceptance and public installer |
 | Storage / recovery | R20: userdata repurposed for native root; super/metadata/cache cleared, subsequent normal native boot passed; expected boot/recovery image-prefix readback matched | Extended native recovery/rollback and repeated power-cycle testing. Earlier Android-return results are historical, not a current fallback claim |
-| Updates / Android apps | Guarded native updates used; Waydroid installation in progress | Android runtime/GPU/APK/Google services validation and broader rollback |
-| Automatic rotation | 0.2.0-2 installed/enabled/active; sensor-triggered transform observed | Physical image-and-touch acceptance across orientations |
+| Updates / Android apps | Android 13/API 33, Freedreno and F-Droid APK handler/activity verified; normal stop/reopen passed | Physical layout/rotation review and wider APKs; no Google Play/GMS |
+| Automatic rotation | 0.3.1-3 active, user observed physical rotation; toolkit geometry and Home pager correction installed | Global physical image/touch/layout acceptance remains open |
 
 ## Historical native installation and recurrence record
 
@@ -68,7 +71,7 @@ The user accepted basic HOME, hold-for-recents and keyboard closing on gesture/k
 
 The [owner form r5](../experiments/owner-setup/README.md) saved the normal local account credential. Actual login was then verified, including after normal native boot, without reading the secret or verifier. Later graphical Polkit/password change passed; the historical r5 auto-close result retains its narrower scope. Visual6 showed white text and skipped the expected logo; boot7’s logo was missed by the user, so its visual acceptance remains unconfirmed. No boot-speed benchmark is claimed.
 
-Automatic profile r2 worked on one network. After the latest cold-boot local SIM-PIN entry, it was active and a request bound to cellular returned IPv4 HTTPS204 with Wi-Fi connected/preferred. Primary access PIN was no longer required; secondary PIN2 (enum3) remained. A non-default cellular route under Wi-Fi preference is separate from that successful bound request. Earlier transition/restart observations remain in the lab record; no universal SIM/APN or throughput claim is made.
+Automatic profile r2 worked on one network. After the latest cold-boot local SIM-PIN entry, it was active and a request bound to cellular returned IPv4 HTTPS 204 with Wi-Fi connected/preferred. Primary access PIN was no longer required; secondary PIN2 (enum3) remained. A non-default cellular route under Wi-Fi preference is separate from that successful bound request. Earlier transition/restart observations remain in the lab record; no universal SIM/APN or throughput claim is made.
 
 ## How to read a result
 

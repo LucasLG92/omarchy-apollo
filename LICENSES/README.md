@@ -5,6 +5,9 @@ The root [MIT license](../LICENSE) covers original Omarchy Apollo integration an
 ## New rebase material
 
 | Material | SPDX / origin |
+| Apollo Waydroid 1.0.0-6 profile | MIT — Derek Ross/mobile source and Apollo adaptation; original notice in the exact payload |
+| Waydroid exposure-reduction and individual-app startup patch | GPL-3.0-or-later — Waydroid 1.6.3; three Python files retain their copyright/SPDX, with the generic desktop entry and [license/source record](../experiments/waydroid-apollo/README.md) |
+| Rotation/HomePager layout follow-up | MIT — Apollo contributors and Derek Ross / Omarchy Mobile contributors, original notices retained |
 | Hyprland DMA-BUF three-patch backport | BSD-3-Clause — original upstream authors and [license](../patches/hyprland-dmabuf/LICENSE) retained |
 | Calls UI/CSS/resource patches | GPL-3.0-or-later for Calls; LGPL-2.1-or-later for libcall-ui. Included [component licenses and source order](../patches/phone-omarchy/README.md); no relabeling as MIT |
 | Original Phone logo | MIT — David Heinemeier Hansson; exact original asset and [notice](../patches/phone-omarchy/Omarchy-logo-LICENSE.txt) |

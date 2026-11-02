@@ -1,0 +1,127 @@
+--- a/usr/bin/omamobile-launch
++++ b/usr/bin/omamobile-launch
+@@ -34,9 +34,12 @@
+ import json
+ import os
+ import re
++import select
+ import shlex
++import socket
+ import subprocess
+ import sys
++import time
+ 
+ HYPRCTL = os.environ.get("OMAMOBILE_HYPRCTL", "hyprctl")
+ # The launch rule: windows of the started process open on a new empty workspace.
+@@ -336,6 +339,81 @@
+ # ---------------------------------------------------------------- commands
+ 
+ 
++def open_app_events():
++    """Listen before launch; activation can map outside the exec-rule process."""
++    runtime = os.environ.get("XDG_RUNTIME_DIR")
++    signature = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
++    if not runtime or not signature or "/" in signature:
++        return None
++    stream = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
++    try:
++        stream.settimeout(0.5)
++        stream.connect(os.path.join(runtime, "hypr", signature, ".socket2.sock"))
++        stream.setblocking(False)
++        return stream
++    except OSError:
++        stream.close()
++        return None
++
++
++def place_new_dbus_app(app_id, entry, before, events, timeout=8):
++    """Fix only a new D-Bus window sharing another app's screen, once.
++
++    D-Bus/systemd activation does not inherit HL_EXEC_RULE_TOKEN. Stop after
++    its first mapped window; future user-requested split layouts are untouched.
++    Read only the event name, then match client class/initialClass as usual.
++    """
++    classes, host = matchers(app_id, entry)
++
++    def place_if_mapped():
++        clients = query("clients")
++        if not isinstance(clients, list):
++            return False
++        fresh = [c for c in clients if isinstance(c, dict)
++                 and norm_address(c.get("address")) not in before
++                 and not c.get("hidden", False)
++                 and not c.get("pinned", False)
++                 and isinstance((c.get("workspace") or {}).get("id"), int)
++                 and c["workspace"]["id"] > 0]
++        window = find_window(fresh, classes, host)
++        if not window:
++            return False
++        address = norm_address(window.get("address"))
++        if not address:
++            return False
++        peers = [c for c in clients if isinstance(c, dict)
++                 and norm_address(c.get("address")) != address
++                 and c.get("mapped", True) and not c.get("hidden", False)
++                 and (c.get("workspace") or {}).get("id") == window["workspace"]["id"]
++                 and not window_matches(c, classes, host)
++                 and str(c.get("class") or "").lower() not in SKIP_CLASSES]
++        if peers and cmd_own_screen([address]) != 0:
++            warn("could not give the newly opened app its own screen")
++        return True
++
++    deadline = time.monotonic() + timeout
++    if place_if_mapped():
++        return
++    pending = b""
++    while time.monotonic() < deadline:
++        try:
++            if not select.select([events], [], [], max(0, deadline - time.monotonic()))[0]:
++                return
++            data = events.recv(16384)
++            if not data:
++                return
++            pending += data
++            if len(pending) > 65536:
++                return
++            lines = pending.split(b"\n")
++            pending = lines.pop()
++            # Do not decode, inspect, store or log event payloads (titles etc.).
++            if any(line.startswith(b"openwindow>>") for line in lines) and place_if_mapped():
++                return
++        except (OSError, ValueError):
++            return
++
++
+ def cmd_app(args):
+     new = False
+     if args and args[0] == "--new":
+@@ -348,10 +426,28 @@
+         if window and norm_address(window.get("address")):
+             if focus_window(norm_address(window["address"])):
+                 return 0
++    else:
++        path = find_desktop_file(app_id)
++        _entry = read_entry(path) if path else {}
+     # Omarchy's own launch path (AppLibrary.launch): gtk-launch resolves the
+     # entry, in a scope under app-graphical.slice. The suffix keeps ids such
+     # as org.telegram.desktop resolving.
+-    return 0 if launch(["uwsm-app", "--", "gtk-launch", app_id + ".desktop"]) else 1
++    events = None
++    before = set()
++    if str(_entry.get("DBusActivatable") or "").lower() == "true":
++        clients = query("clients")
++        if isinstance(clients, list):
++            before = {norm_address(c.get("address")) for c in clients if isinstance(c, dict)}
++            events = open_app_events()
++    try:
++        if not launch(["uwsm-app", "--", "gtk-launch", app_id + ".desktop"]):
++            return 1
++        if events is not None:
++            place_new_dbus_app(app_id, _entry, before, events)
++        return 0
++    finally:
++        if events is not None:
++            events.close()
+ 
+ 
+ def cmd_cmd(args):

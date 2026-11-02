@@ -15,3 +15,9 @@ logs/
 *.pub
 .env*
 __pycache__/
+# Reviewed source snapshots, not a local build tree.
+!patches/phone-omarchy/followup-51.1.apollo4/src/
+!patches/phone-omarchy/followup-51.1.apollo4/src/ui/
+!patches/phone-omarchy/followup-51.1.apollo4/src/ui/main-window.ui
+!patches/phone-omarchy/followup-51.1.apollo4/subprojects/libcall-ui/src/
+!patches/phone-omarchy/followup-51.1.apollo4/subprojects/libcall-ui/src/cui-dialpad.ui

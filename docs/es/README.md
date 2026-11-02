@@ -1,10 +1,11 @@
 <p align="center"><img src="../../media/hero.svg" alt="Omarchy Apollo: Linux nativo adaptado al móvil" width="100%"></p>
 
+
 # Omarchy Apollo
 
-**Omarchy 4.5 RC2 nativo en el Xiaomi Mi 10T Pro, con kernel R9 permanente y el lote
-de interfaz aceptado tras reiniciar.** Proyecto comunitario independiente,
+**Omarchy 4.5 RC2 nativo en el Xiaomi Mi 10T Pro.** Proyecto comunitario independiente,
 experimental y probado en una unidad Pro. [English](../../README.md) · [Estado completo](../status.md).
+
 
 ## Lo nuevo, ya comprobado
 
@@ -13,7 +14,7 @@ experimental y probado en una unidad Pro. [English](../../README.md) · [Estado 
 - **Teléfono con aspecto original de Omarchy:** GNOME Calls 51.1.apollo3-1 instalado y aceptado, logo oficial intacto, marcos, números y navegación adaptados.
 - **SIM 0.2.2-1 sin saltos:** continuidad aceptada en la misma prueba. El PIN se introduce solo en el móvil; no hay reintentos automáticos.
 - **Gestos aceptados:** Inicio, recientes, cerrar teclado y volver a Inicio al cerrar la última app.
-- **Giro 0.2.0-2 activo:** cambio por sensor observado. Falta confirmar físicamente imagen y táctil juntos.
+- **Giro 0.3.1-3 activo:** el usuario observó que gira, pero siguen abiertos los tamaños y la adaptación visual/táctil completos. El pager se realinea al cambiar el área útil.
 
 <p align="center"><img src="../../media/phone-portrait-fixture.png" width="200" alt="Aplicación Teléfono real con datos vacíos en un entorno sintético"> <img src="../../media/phone-landscape-fixture.png" width="560" alt="Aplicación Teléfono en horizontal, prueba sintética"></p>
 
@@ -37,8 +38,13 @@ Un diagnóstico posterior de vídeo Venus completó180 fotogramas/6 segundos sin
 aborto intermitente anterior; la causa sigue abierta y no hay mejora de batería
 ni porcentaje de velocidad demostrado. El antiguo dato USB de 0,47 W está retirado.
 
-**Waydroid está en instalación:** todavía no están verificados el arranque Android,
-aceleración, APK ni Google Play. El asistente r3 ya está instalado en R9 como userland 0.1.0-3/perfil 20261101-11:
+**APK con icono y ventana propios:** el arranque en frío desde el icono de F-Droid ya pasó sin escritorio Android. El guard de Inicio pasó el ciclo real en vertical/horizontal y se cancela al reabrir la app. Las barras pasaron el ciclo automático; falta repetir su prueba física posterior a 19.
+
+**Android 13/API 33 ya arrancó con Freedreno/Adreno:** HTTPS 204 y F-Droid oficial
+instalado mediante el manejador APK/MIME normal, con actividad y proceso comprobados.
+También pasó cerrar Android y abrirlo desde su entrada normal, con F-Droid y HTTPS 204
+comprobados sin arranque LXC de diagnóstico. La revisión física conjunta sigue pendiente. VANILLA no incluye Google Play/GMS.
+[Fuentes, resultado y límites](../mobile-layout-android-2026-11-02.md). El asistente r3 ya está instalado en R9 como userland 0.1.0-3/perfil 20261101-11:
 se comprobó la integración sin alterar el propietario existente ni abrir el alta.
 **Crear una primera cuenta y su primer acceso real sigue pendiente**.
 

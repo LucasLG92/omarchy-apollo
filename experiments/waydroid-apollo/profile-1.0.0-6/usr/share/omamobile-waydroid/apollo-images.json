@@ -1,0 +1,18 @@
+{
+  "architecture": "arm64",
+  "images": [
+    {
+      "bytes": 1994985472,
+      "name": "system.img",
+      "sha256": "ba4da2882999bc09a63eab5f2b02a77cdce13df0b72b98fea58a4d7ccb125f4d"
+    },
+    {
+      "bytes": 421629952,
+      "name": "vendor.img",
+      "sha256": "6dbf79ef655804c3f5d6eebbcac13108fe3bb8c2448bae4c04528a63920ff533"
+    }
+  ],
+  "schema": "apollo-preloaded-official-waydroid-images-v1",
+  "system_type": "VANILLA",
+  "vendor_type": "MAINLINE"
+}

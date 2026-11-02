@@ -1,0 +1,262 @@
+--- a/usr/share/omamobile/shell/plugins/omamobile.bar/Bar.qml
++++ b/usr/share/omamobile/shell/plugins/omamobile.bar/Bar.qml
+@@ -49,6 +49,33 @@
+   }
+   readonly property int barSize: barHeightFor(screenInfo)
+ 
++  // Output geometry and layer configure arrive separately during rotation.
++  // Finish polish and request one frame after the last geometry notification,
++  // including when the bar's contents themselves have not changed.
++  component SettledPanel: PanelWindow {
++    id: panel
++    property int geometryRefreshes: 0
++    onWidthChanged: geometryRepaint.restart()
++    onHeightChanged: geometryRepaint.restart()
++    onVisibleChanged: geometryRepaint.restart()
++    Component.onCompleted: geometryRepaint.restart()
++    Connections {
++      target: panel.screen
++      function onGeometryChanged() { geometryRepaint.restart() }
++    }
++    Timer {
++      id: geometryRepaint
++      interval: 32
++      onTriggered: {
++        if (!panel.visible || !panel.updatesEnabled) return
++        panel.contentItem.ensurePolished()
++        const window = panel.contentItem.Window.window
++        if (window) window.update()
++        panel.geometryRefreshes++
++      }
++    }
++  }
++
+   readonly property color foreground: Commons.Color.bar.text
+   readonly property color background: Commons.Color.bar.background
+   readonly property color urgent: Commons.Color.bar.active
+@@ -229,7 +256,12 @@
+     function geometry(): string {
+       return JSON.stringify({ height: root.barSize, portraitHeight: root.portraitBarSize,
+         compactHeight: root.compactBarSize, contentLineHeight: statusFontMetrics.height,
+-        textFont: Style.font.title, iconFont: Style.font.iconLarge })
++        textFont: Style.font.title, iconFont: Style.font.iconLarge,
++        surfaces: Array.from(barWindows.instances).map(function(window) {
++          return { width: window.width, height: window.height, visible: window.visible,
++            implicitHeight: window.implicitHeight, geometryRefreshes: window.geometryRefreshes,
++            updatesEnabled: window.updatesEnabled }
++        }) })
+     }
+ 
+     function pullDown(): string {
+@@ -257,9 +289,10 @@
+   // ---------------------------------------------------------------- surface
+ 
+   Variants {
++    id: barWindows
+     model: Quickshell.screens
+ 
+-    PanelWindow {
++    SettledPanel {
+       id: barWindow
+ 
+       required property var modelData
+--- a/usr/share/omamobile/shell/plugins/omamobile.launcher/Launcher.qml
++++ b/usr/share/omamobile/shell/plugins/omamobile.launcher/Launcher.qml
+@@ -272,7 +272,11 @@
+         expectedDockWidth: root.searchWidth(root.screenInfo ? root.screenInfo.width : 0, root.screenInfo),
+         inputWidth: input.width, inputHeight: input.height, inputFont: input.font.pixelSize,
+         pillHeight: root.inputHeight, pillFont: Style.font.title, iconSize: Style.font.iconLarge },
+-      navigationGeometry: { stripHeight: root.stripHeight, stripShown: root.stripShown } })
++      navigationGeometry: { stripHeight: root.stripHeight, stripShown: root.stripShown,
++        surfaceShown: root.navigationSurfaceShown, inset: root.navigationInset,
++        dockSurfaceHeight: root.dockSurfaceHeight, homeDockInset: root.dockHeight,
++        starts: root.navigationStarts, homes: root.navigationHomes, recents: root.navigationRecents },
++      surfaces: { dock: root.panelGeometry(dockWindows.instances), strip: root.panelGeometry(homeStrips.instances) } })
+   }
+ 
+   function state() {
+@@ -301,7 +305,46 @@
+   readonly property color foreground: Commons.Color.menu.text
+   readonly property int touch: Math.max(44, Style.space(44))
+   readonly property int inputHeight: Math.max(48, Style.space(48))
+-  readonly property int dockHeight: inputHeight + Style.spacing.xxl * 2
++  readonly property int dockSurfaceHeight: inputHeight + Style.spacing.xxl * 2
++  // Home reads dockHeight through DrawerLink as the overlap within its
++  // workarea. The navigation zone already removes the rest of the 72px dock.
++  readonly property int dockHeight: Math.max(0, dockSurfaceHeight - navigationInset)
++  property int navigationStarts: 0
++  property int navigationHomes: 0
++  property int navigationRecents: 0
++  function panelGeometry(windows) {
++    return Array.from(windows).map(function(window) {
++      return { width: window.width, height: window.height, visible: window.visible,
++        implicitHeight: window.implicitHeight, geometryRefreshes: window.geometryRefreshes,
++        updatesEnabled: window.updatesEnabled }
++    })
++  }
++  // Keep the surface mapped and its exclusive zone unchanged. The final
++  // configure can follow QScreen's new size; a geometry-only repaint must not
++  // depend on app visibility or input before a fresh buffer is submitted.
++  component SettledPanel: PanelWindow {
++    id: panel
++    property int geometryRefreshes: 0
++    onWidthChanged: geometryRepaint.restart()
++    onHeightChanged: geometryRepaint.restart()
++    onVisibleChanged: geometryRepaint.restart()
++    Component.onCompleted: geometryRepaint.restart()
++    Connections {
++      target: panel.screen
++      function onGeometryChanged() { geometryRepaint.restart() }
++    }
++    Timer {
++      id: geometryRepaint
++      interval: 32
++      onTriggered: {
++        if (!panel.visible || !panel.updatesEnabled) return
++        panel.contentItem.ensurePolished()
++        const window = panel.contentItem.Window.window
++        if (window) window.update()
++        panel.geometryRefreshes++
++      }
++    }
++  }
+   // Keep the search control at its portrait width in either orientation.
+   // QScreen's short side is independent of bar/keyboard workarea insets.
+   function searchShortSide(screen) {
+@@ -453,9 +496,10 @@
+   // ---------------------------------------------------------------- dock
+ 
+   Variants {
++    id: dockWindows
+     model: Quickshell.screens
+ 
+-    PanelWindow {
++    SettledPanel {
+       id: dockWindow
+       required property var modelData
+       screen: modelData
+@@ -467,7 +511,7 @@
+       // keyboard covers it.
+       visible: root.dockShown
+       anchors { bottom: true; left: true; right: true }
+-      implicitHeight: root.dockHeight
++      implicitHeight: root.dockSurfaceHeight
+       exclusionMode: ExclusionMode.Ignore
+       color: Commons.Color.bar.background
+       WlrLayershell.namespace: "omamobile-dock"
+@@ -518,10 +562,11 @@
+   // It reserves its height (an exclusive zone), as Android's gesture-nav
+   // inset does, so windows end above it: with no zone, the pill covered the
+   // controls apps keep at the very bottom (the Phone app's Favorites,
+-  // Recents, Contacts and Keypad tabs). The zone goes with the window: the
+-  // strip isn't mapped on the home screen (the dock reserves its own height
+-  // there), with the drawer open, under the lock screen's keyboard, or for
+-  // a fullscreen window (video, the screensaver), which keeps the whole
++  // Recents, Contacts and Keypad tabs). The zone stays mapped on Home and
++  // under the drawer too: changing workarea when leaving an app needlessly
++  // reconfigures background Android surfaces. On Home it is transparent and
++  // input-empty, with the dock supplying the controls. It is unmapped under
++  // the lock screen's keyboard or for a fullscreen window, which keeps the whole
+   // screen. Under the lock it isn't drawn (no above_lock rule in
+   // hypr/phone.lua), and the session lock's surface covers the whole screen
+   // whatever is reserved.
+@@ -626,6 +671,7 @@
+   }
+ 
+   function goHome() {
++    navigationHomes++
+     endTextInput()
+     if (opened) dismiss(0)
+     // As the switcher's Home: an empty workspace, then the home page.
+@@ -698,6 +744,7 @@
+   }
+ 
+   function showRecents() {
++    navigationRecents++
+     endTextInput()
+     if (opened) dismiss(0)
+     // Through the CLI, like the dock's swipe: a plugin may only summon
+@@ -735,6 +782,8 @@
+   // The strip is on screen (each screen's window shows with it), and it is
+   // the keyboard's strip: the keyboard is up above it.
+   readonly property bool stripShown: appOnScreen && !opened && !fullscreenOnScreen && !(oskOpen && sessionLocked)
++  readonly property bool navigationSurfaceShown: !fullscreenOnScreen && !(oskOpen && sessionLocked)
++  readonly property int navigationInset: navigationSurfaceShown ? stripHeight : 0
+   readonly property bool keyboardStripShown: stripShown && oskOpen
+ 
+   Process {
+@@ -746,28 +795,33 @@
+   }
+ 
+   Variants {
++    id: homeStrips
+     model: Quickshell.screens
+ 
+-    PanelWindow {
++    SettledPanel {
+       id: homeStrip
+       required property var modelData
+       screen: modelData
+ 
+       // Never hidden for the keyboard: see the comment above.
+-      visible: root.stripShown
++      visible: root.navigationSurfaceShown
+       anchors { bottom: true; left: true; right: true }
+       implicitHeight: root.navigationStripHeight(screen)
+       // Auto: it reserves its height, so windows (and the keyboard, while it
+       // is up) end above it.
+       exclusionMode: ExclusionMode.Auto
+-      color: Commons.Color.bar.background
++      color: root.stripShown ? Commons.Color.bar.background : "transparent"
++      surfaceFormat.opaque: false
++      mask: Region { item: root.stripShown ? stripContent : null }
+       WlrLayershell.namespace: "omamobile-home-strip"
+       // Bottom, under the keyboard's Top: see the comment above.
+       WlrLayershell.layer: WlrLayer.Bottom
+       WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+ 
+       Item {
++        id: stripContent
+         anchors.fill: parent
++        visible: root.stripShown
+ 
+         HomePill { anchors.centerIn: parent }
+ 
+@@ -797,6 +851,9 @@
+     visible: true
+     mask: Region { item: root.opened ? sheet : null }
+     anchors { top: true; bottom: true; left: true; right: true }
++    // With no keyboard the drawer extends across the persistent nav inset
++    // to meet the dock. With IME visible it ends above the keyboard instead.
++    margins.bottom: root.oskOpen ? 0 : -root.navigationInset
+     // Normal: fit between the bar and the on-screen keyboard, like Android's
+     // adjustResize.
+     exclusionMode: ExclusionMode.Normal
+@@ -1122,7 +1179,7 @@
+         anchors.bottom: parent.bottom
+         // Always the dock's height, always shown: it rides up with the
+         // sheet over the dock's own pill and comes to rest exactly on it.
+-        height: root.dockHeight
++        height: root.dockSurfaceHeight
+ 
+         TextField {
+           id: input
+@@ -1298,6 +1355,9 @@
+     DragHandler {
+       id: swipe
+       target: null
++      // Take the grab while the finger is still within the compact strip.
++      // The upward Home distance and hold-for-recents policy stay unchanged.
++      dragThreshold: Math.min(8, Math.max(1, Math.floor(swipeArea.height / 4)))
+       property var navigation: NavigationModel.initial()
+       property bool geometryCancelled: false
+ 
+@@ -1323,7 +1383,7 @@
+         else if (remaining > 0) { hold.interval = remaining; hold.start() }
+       }
+       onActiveChanged: {
+-        if (active) { geometryCancelled = false; cancelNavigation() }
++        if (active) { root.navigationStarts++; geometryCancelled = false; cancelNavigation() }
+         else hold.stop()
+       }
+       // Only a real release navigates Home; stolen/cancelled grabs do not.

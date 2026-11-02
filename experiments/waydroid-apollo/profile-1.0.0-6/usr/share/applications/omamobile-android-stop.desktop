@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Cerrar Android
+Comment=Detener la sesión y el contenedor Android; las aplicaciones nativas siguen abiertas
+Exec=waydroid session stop
+Icon=waydroid
+Categories=Utility;
+X-Purism-FormFactor=Workstation;Mobile;

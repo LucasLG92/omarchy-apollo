@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=Android application orientation hints
+After=waydroid-container.service
+PartOf=waydroid-container.service
+ConditionPathExists=/var/lib/waydroid/waydroid.cfg
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -I -B /usr/lib/omamobile-waydroid/orientation-provider.py
+Restart=on-failure
+RestartSec=5
+LimitCORE=0
+UMask=0077
+NoNewPrivileges=yes

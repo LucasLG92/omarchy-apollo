@@ -1,0 +1,36 @@
+App orientation v1
+
+Persistent user compatibility overrides: /etc/apollo/app-orientation.json
+Runtime metadata provider, owned by the Waydroid profile:
+  /run/omamobile/orientation-hints.json
+
+Both files are regular root-owned files, not writable by group/other and not
+symlinks. Use root:root 0644 and atomic replacement. Missing files mean no rules.
+The format is {"version":1,"rules":[{"app_id":"<exact host Wayland class>",
+"orientation":"auto|portrait|landscape","source":"<source>"}]}.
+source must be user-compatibility in /etc and android-activity in /run.
+Maximum 64 unique exact app IDs. No minimum-size inference, regex matching,
+window title, argument string or hardcoded application-specific policy exists.
+
+Explicit /etc rules take precedence, including an explicit auto override.
+Otherwise the currently foreground host app uses its /run rule; Home and
+unknown/adaptable apps use the sensor. The current mapped sensor transform is
+kept when it belongs to the requested axis: portrait 0/2, landscape 1/3.
+Axis fallback is 0 or 1 respectively. Auto with unknown orientation waits for
+a new valid sensor observation. Stable dwell remains 450 ms.
+
+Android provider mapping: portrait enums 1/7/9/12, landscape 0/6/8/11;
+unspecified, user, sensor and locked 14 remain auto. Runtime state is removed
+on stop. An observed narrow/tiled window is not evidence of portrait-only.
+
+Foreground socket events are only refresh notifications; their payload is
+discarded without logging. The actual class is queried in memory and never
+written to the client status file. Root-owned policy file changes and focus
+changes refresh the decision; the existing five-second health check also
+reloads files. Existing rotation-lock, session-lock, sleep, DPMS, sensor claim,
+transaction invariant, external-drift and fail-closed guards remain in place.
+
+/run/user/<uid>/omamobile-rotation-state.json is one current mode-0600 snapshot,
+not a history: allowed, axis/source enums, last output transform and the
+acknowledged requested touch transform. Hyprland 0.57 exposes no per-device
+libinput matrix readback; this snapshot must not be described as such.

@@ -1,0 +1,72 @@
+--- waydroid-1.6.3/usr/lib/waydroid/tools/helpers/lxc.py
++++ waydroid-1.6.3.apollo2/usr/lib/waydroid/tools/helpers/lxc.py
+@@ -62,12 +62,12 @@
+     render, _ = tools.helpers.gpu.getDriNode(args)
+     make_entry(render)
+ 
+-    for n in glob.glob("/dev/fb*"):
+-        make_entry(n)
+-    for n in glob.glob("/dev/graphics/fb*"):
+-        make_entry(n)
+-    for n in glob.glob("/dev/video*"):
+-        make_entry(n)
++# omamobile-waydroid: for n in glob.glob("/dev/fb*"):
++# omamobile-waydroid: make_entry(n)
++# omamobile-waydroid: for n in glob.glob("/dev/graphics/fb*"):
++# omamobile-waydroid: make_entry(n)
++# omamobile-waydroid: for n in glob.glob("/dev/video*"):
++# omamobile-waydroid: make_entry(n)
+     for n in glob.glob("/dev/dma_heap/*"):
+         make_entry(n)
+ 
+@@ -97,7 +97,7 @@
+ 
+     # Necessary sw_sync node for HWC
+     make_entry("/dev/sw_sync")
+-    make_entry("/sys/kernel/debug", options="rbind,create=dir,optional 0 0")
++# omamobile-waydroid: make_entry("/sys/kernel/debug", options="rbind,create=dir,optional 0 0")
+ 
+     # Vibrator
+     make_entry("/sys/class/leds/vibrator",
+--- waydroid-1.6.3/usr/lib/waydroid/tools/actions/container_manager.py
++++ waydroid-1.6.3.apollo2/usr/lib/waydroid/tools/actions/container_manager.py
+@@ -78,7 +78,7 @@
+ 
+             # sw_sync for HWC
+             "/dev/sw_sync",
+-            "/sys/kernel/debug/sync/sw_sync",
++# omamobile-waydroid: "/sys/kernel/debug/sync/sw_sync",
+ 
+             # Media
+             "/dev/Vcodec",
+@@ -95,9 +95,9 @@
+         # DRM render nodes
+         perm_list.extend(glob.glob("/dev/dri/renderD*"))
+         # Framebuffers
+-        perm_list.extend(glob.glob("/dev/fb*"))
++# omamobile-waydroid: perm_list.extend(glob.glob("/dev/fb*"))
+         # Videos
+-        perm_list.extend(glob.glob("/dev/video*"))
++# omamobile-waydroid: perm_list.extend(glob.glob("/dev/video*"))
+         # DMA-BUF Heaps
+         perm_list.extend(glob.glob("/dev/dma_heap/*"))
+ 
+--- waydroid-1.6.3/usr/lib/waydroid/tools/actions/app_manager.py
++++ waydroid-1.6.3.apollo2/usr/lib/waydroid/tools/actions/app_manager.py
+@@ -69,7 +69,7 @@
+         launchNow()
+     except dbus.DBusException:
+         logging.error("Starting waydroid session")
+-        tools.actions.session_manager.start(args, launchNow, background=False)
++        tools.actions.session_manager.start(args, launchNow, background=(args.action == "app"))
+ 
+ def launch(args):
+     def justLaunch():
+--- waydroid-1.6.3/usr/share/applications/Waydroid.desktop
++++ waydroid-1.6.3.apollo2/usr/share/applications/Waydroid.desktop
+@@ -1,4 +1,5 @@
+ [Desktop Entry]
++NoDisplay=true
+ Type=Application
+ Name=Waydroid
+ GenericName=Android Container

@@ -1,0 +1,161 @@
+--- a/src/ui/main-window.ui
++++ b/src/ui/main-window.ui
+@@ -11,40 +11,89 @@
+         <child type="top">
+           <object class="AdwHeaderBar" id="header_bar">
+             <child type="title">
+-              <object class="GtkBox">
+-                <property name="orientation">vertical</property>
+-                <property name="spacing">3</property>
+-                <style>
+-                  <class name="omarchy-phone-brand" />
+-                </style>
+-                <child>
+-                  <!-- The original800x188 logo is an unmeasured overlay, so
+-                       its natural size cannot grow the header with window width. -->
+-                  <object class="GtkOverlay">
+-                    <property name="halign">center</property>
+-                    <property name="width-request">112</property>
+-                    <property name="height-request">26</property>
++              <object class="GtkStack" id="phone_header_layout">
++                <property name="hhomogeneous">False</property>
++                <property name="vhomogeneous">False</property>
++                <child>
++                  <object class="GtkStackPage">
++                    <property name="name">portrait</property>
+                     <property name="child">
+                       <object class="GtkBox">
+-                        <property name="width-request">112</property>
+-                        <property name="height-request">26</property>
++                        <property name="orientation">vertical</property>
++                        <property name="spacing">3</property>
++                        <style>
++                          <class name="omarchy-phone-brand" />
++                        </style>
++                        <child>
++                          <!-- The original800x188 logo is an unmeasured overlay, so
++                               its natural size cannot grow the header with window width. -->
++                          <object class="GtkOverlay">
++                            <property name="halign">center</property>
++                            <property name="width-request">112</property>
++                            <property name="height-request">26</property>
++                            <property name="child">
++                              <object class="GtkBox">
++                                <property name="width-request">112</property>
++                                <property name="height-request">26</property>
++                              </object>
++                            </property>
++                            <child type="overlay">
++                              <object class="GtkPicture">
++                                <property name="file">resource:///org/gnome/Calls/omarchy-logo.png</property>
++                                <property name="can-shrink">True</property>
++                                <property name="content-fit">contain</property>
++                              </object>
++                            </child>
++                          </object>
++                        </child>
++                        <child>
++                          <object class="GtkLabel">
++                            <property name="label" translatable="yes">Calls</property>
++                            <style>
++                              <class name="omarchy-phone-title" />
++                            </style>
++                          </object>
++                        </child>
+                       </object>
+                     </property>
+-                    <child type="overlay">
+-                      <object class="GtkPicture">
+-                        <property name="file">resource:///org/gnome/Calls/omarchy-logo.png</property>
+-                        <property name="can-shrink">True</property>
+-                        <property name="content-fit">contain</property>
+-                      </object>
+-                    </child>
+-                  </object>
+-                </child>
+-                <child>
+-                  <object class="GtkLabel">
+-                    <property name="label" translatable="yes">Calls</property>
+-                    <style>
+-                      <class name="omarchy-phone-title" />
+-                    </style>
++                  </object>
++                </child>
++                <child>
++                  <object class="GtkStackPage">
++                    <property name="name">landscape</property>
++                    <property name="child">
++                      <object class="GtkBox">
++                        <property name="orientation">horizontal</property>
++                        <property name="spacing">12</property>
++                        <child>
++                          <object class="GtkOverlay">
++                            <property name="valign">center</property>
++                            <property name="width-request">112</property>
++                            <property name="height-request">26</property>
++                            <property name="child">
++                              <object class="GtkBox">
++                                <property name="width-request">112</property>
++                                <property name="height-request">26</property>
++                              </object>
++                            </property>
++                            <child type="overlay">
++                              <object class="GtkPicture">
++                                <property name="file">resource:///org/gnome/Calls/omarchy-logo.png</property>
++                                <property name="can-shrink">True</property>
++                                <property name="content-fit">contain</property>
++                              </object>
++                            </child>
++                          </object>
++                        </child>
++                        <child>
++                          <object class="AdwViewSwitcher" id="landscape_switcher">
++                            <property name="policy">narrow</property>
++                            <property name="stack">main_stack</property>
++                            <style><class name="omarchy-phone-tabs" /></style>
++                          </object>
++                        </child>
++                      </object>
++                    </property>
+                   </object>
+                 </child>
+               </object>
+@@ -63,7 +112,7 @@
+           </object>
+         </child>
+         <child type="top">
+-          <object class="GtkBox">
++          <object class="GtkBox" id="portrait_navigation">
+             <property name="orientation">horizontal</property>
+             <property name="margin-start">12</property>
+             <property name="margin-end">12</property>
+@@ -121,6 +170,16 @@
+       <object class="AdwBreakpoint">
+         <condition>max-height: 420px</condition>
+         <setter object="CallsMainWindow" property="name">omarchy-phone-compact</setter>
++      </object>
++    </child>
++    <!-- Keep the dialer inside the workarea with a second origin visible.
++         Navigation and the original logo share one header on short wide views. -->
++    <child>
++      <object class="AdwBreakpoint">
++        <condition>max-height: 420px and min-width: 600px</condition>
++        <setter object="CallsMainWindow" property="name">omarchy-phone-compact</setter>
++        <setter object="phone_header_layout" property="visible-child-name">landscape</setter>
++        <setter object="portrait_navigation" property="visible">False</setter>
+       </object>
+     </child>
+   </template>
+--- a/subprojects/libcall-ui/src/cui-dialpad.ui
++++ b/subprojects/libcall-ui/src/cui-dialpad.ui
+@@ -10,8 +10,8 @@
+           <object class="AdwWrapBox" id="responsive_layout">
+             <property name="margin-start">24</property>
+             <property name="margin-end">24</property>
+-            <property name="margin-top">8</property>
+-            <property name="margin-bottom">8</property>
++            <property name="margin-top">0</property>
++            <property name="margin-bottom">0</property>
+             <property name="orientation">horizontal</property>
+             <child>
+               <object class="GtkBox" id="entry_row">

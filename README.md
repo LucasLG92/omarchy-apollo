@@ -1,5 +1,6 @@
 <p align="center"><img src="media/hero.svg" alt="Omarchy Apollo — native Linux, made for a phone" width="100%"></p>
 
+
 <p align="center">
   <a href="docs/status.md"><img src="https://img.shields.io/badge/status-experimental-f3c46b?style=flat-square" alt="Experimental"></a>
   <a href="https://github.com/omacom/omarchy/releases/tag/v4.5.0-rc2"><img src="https://img.shields.io/badge/target-Omarchy%204.5%20RC2-87c8ff?style=flat-square" alt="Omarchy 4.5 RC2 target"></a>
@@ -8,11 +9,11 @@
   <a href="LICENSES/README.md"><img src="https://img.shields.io/badge/licenses-MIT%20%2B%20upstream-c7b5ff?style=flat-square" alt="MIT and upstream licenses"></a>
 </p>
 
-<p align="center"><a href="docs/es/README.md">Español</a> · <a href="docs/status.md">Hardware status</a> · <a href="docs/mobile-milestone-2026-11-02.md">Latest milestone</a> · <a href="docs/roadmap.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
+<p align="center"><a href="docs/es/README.md">Español</a> · <a href="docs/status.md">Hardware status</a> · <a href="docs/mobile-layout-android-2026-11-02.md">Latest milestone</a> · <a href="docs/roadmap.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
 
 **An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-> **R9 native boot and the mobile UI are accepted on the development unit.** Kernel R9 is permanent with Landlock ABI9 and 503 module-integrity checks. After the DMA-BUF backport and normal reboot, the user accepted the desktop, Omarchy Phone and uninterrupted SIM flow. Rotation is installed but awaits physical image/touch acceptance. Waydroid is still in progress. [Latest grouped result and exact limits](docs/mobile-milestone-2026-11-02.md).
+> **Native boot, individual Android apps and a focused rotate/Home cycle are verified on the development unit.** The physical bar cycle also passed; wider app, gesture and hardware coverage remains incomplete. [Current milestone and limits](docs/mobile-layout-android-2026-11-02.md).
 
 ## Omarchy Phone, made to fit
 
@@ -47,7 +48,7 @@
 - **Original boot appearance.** R16 ran Plymouth through native DRM/active VT and produced the reviewed KMS capture above. V2 SDDM loads in actual ARM64 test mode and adds touch input to the original layout; **later R20 normal-boot login passed**, while the latest splash logo still lacks human confirmation.
 - **Current SIM UI: 0.2.2-1.** Event-based display continuation, stable-state auto-close and protected touch input are installed; the combined human reboot test passed without screen jumps. No automatic PIN retry. [Current selected source](experiments/sim-continuation/README.md); the older 0.1.3 export remains historical.
 - **Permanent kernel R9.** Normal native boot, Landlock ABI9 and 503 module-integrity checks passed. Recovery/DTBO were preserved.
-- **Rotation integration.** Version 0.2.0-2 is installed/enabled/active and a sensor-triggered transform was observed; physical image-and-touch acceptance is pending.
+- **Rotation and Android follow-up.** Rotation 0.3.1-3 and Home pager updates are installed; the user observed rotation but full visual/touch acceptance remains open. Android 13/API 33 booted with Freedreno and the official F-Droid APK installed/launched through the normal handler. Normal Android stop/reopen through the mobile launcher also passed; the physical bar cycle also passed, while wider app/gesture/hardware coverage remains incomplete. [Sources and evidence](docs/mobile-layout-android-2026-11-02.md).
 
 | Component | Latest observed result | Still needed |
 | --- | --- | --- |
@@ -57,7 +58,7 @@
 | Torch | Normal-user one-second on/off control passed | Visible-light confirmation |
 | Modem / SIM | Latest cold boot: local access PIN accepted, connected/home, primary PIN no longer required; remaining secondary PIN2 enum3 | Physical/logical slot mapping and wider stability; PIN2 is not a second SIM |
 | SIM UI | Installed 0.2.2-1: uninterrupted continuation accepted after reboot; selected source published | Broader retry/error coverage; no automatic PIN retry |
-| Voice / cellular data | R19 outgoing voicemail/downlink. Latest R20: active AUTO profile, cellular-bound IPv4 HTTPS204 with Wi-Fi connected/preferred | Microphone/uplink, incoming calls, SMS, IPv6, other SIMs/networks, throughput, AEC and VoLTE path |
+| Voice / cellular data | R19 outgoing voicemail/downlink. Latest R20: active AUTO profile, cellular-bound IPv4 HTTPS 204 with Wi-Fi connected/preferred | Microphone/uplink, incoming calls, SMS, IPv6, other SIMs/networks, throughput, AEC and VoLTE path |
 | Wi-Fi | R13: connected on screen; Wi-Fi-bound HTTPS request returned 200 | Reconnection, both bands, sustained transfer and suspend/resume |
 | Bluetooth | Service active | Pairing and audio |
 | Sensors / NFC | R13: accelerometer/light available after scratch-file fix; R11: NFC adapter registered | Proximity, NFC tag read and broader sensor acceptance |
@@ -67,7 +68,7 @@
 | Native boot / local login | R20: native installation completed, repeated normal internal-root boot and human credential→desktop login | Extended cold-login/boot/recovery coverage and a reproducible public installer |
 | Original boot / touch | R16 splash capture; R20 login; shell .8/r2 basic HOME, recents and keyboard closing human-confirmed | Latest logo not human-confirmed; last-app→Home later passed, with further polish pending; no touch LUKS unlock |
 | Kernel / power | R9 permanent native boot, Landlock ABI9 and 503 module checks passed; no accepted wattage figure | Calibrated unplugged power, physical suspend and battery life |
-| Rotation / Android apps | Rotation 0.2.0-2 active, sensor transform observed; Waydroid installation in progress | Physical orientation/touch, Android runtime, GPU/APK/Google services acceptance |
+| Rotation / Android apps | Physical rotation observed; shell 20/Calls 4 compact layout installed. Android 13/Freedreno/F-Droid and normal stop/reopen passed | Wider app/task, gesture and hardware coverage; wider APKs; no Google Play/GMS |
 
 See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.
 
