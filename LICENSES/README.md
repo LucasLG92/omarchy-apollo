@@ -6,6 +6,8 @@ The root [MIT license](../LICENSE) covers original Omarchy Apollo integration an
 
 | Material | SPDX / origin |
 | --- | --- |
+| R8 PM8150B current-units patch | [GPL-2.0-only](GPL-2.0.txt); charger by Teguh Sobirin, based on Caleb Connolly's PMI8998 driver; original source attribution retained |
+| R8 Apollo PON child-DTS patch | [GPL-2.0-only](GPL-2.0.txt) OR [BSD-2-Clause](BSD-2-Clause.txt) |
 | Original `media/hero.svg`, current project documentation and publication checker | MIT |
 | `QuickSettings.qml`, `TorchModel.js` changes in the torch patch | MIT — Omarchy Mobile and Apollo adaptation |
 | libcamera sensor helper/properties C++, new sensor-gain C++ test | [LGPL-2.1-or-later](LGPL-2.1-or-later.txt) |

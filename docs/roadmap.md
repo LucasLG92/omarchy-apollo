@@ -9,7 +9,7 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 - Validate repeated unplugged boot, recovery and an update/rollback path that retains the device stack.
 - Resolve recovery variability: R17 required buttons/full bootloader; R18/R19 returned automatically with original readbacks verified. Repeat and diagnose before claiming general automatic-return reliability.
 - Keep generic PC reset/installer/updater paths guarded until their Apollo equivalents are proven.
-- R20 actual local login passed after normal boot, with original theme/autologin checks. Confirm the latest logo/animation visually: visual6 failed and the user missed boot7’s logo. The [owner form r5](../experiments/owner-setup/README.md) still needs separate human auto-close acceptance; Polkit authentication remains pending.
+- R20 actual local login passed after normal boot, with original theme/autologin checks. Confirm the latest logo/animation visually: visual6 failed and the user missed boot7’s logo. The [owner form r5](../experiments/owner-setup/README.md) still needs separate human auto-close acceptance. Later graphical Polkit/password change passed; clean-first-user setup needs completed integration before a disposable clean-device test.
 
 ## 2. Finish the hardware acceptance
 
@@ -23,8 +23,10 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 
 ## 3. Make it comfortable all day
 
-- **Resolve the recurrent black desktop center after cold-boot login.** Shell .8/official Quickshell restart recovered Home, but root cause and a definitive startup fix remain unverified.
-- Installed gesture/keyboard r2 passed basic human HOME/recents/keyboard-closing acceptance. Refine thresholds, broader behavior/accessibility, and return Home after the final recent app closes. Offline checks and restart recovery do not close the startup issue.
+- **Resolve the recurrent black desktop center after cold-boot login.** The basic render loop is installed; cold-login acceptance is still pending. Shell restart recovery does not verify a definitive startup fix.
+- [Candidate checkpoint](engineering-2026-11-02.md): commit/test R7 only after its RAM Landlock/Pacman success; physically test R8 current/PON changes and the host-signed sleep fix. No accepted wattage or battery-life benchmark exists.
+- Complete clean-first-user entrypoints and session initialization: r2 is not deployable despite isolated checks/host signatures. Prepare and review r3, then test a disposable clean SDDM/logind installation without resetting the current owner. No first-user candidate is distributed in this update.
+- Installed gesture/keyboard r2 passed basic human HOME/recents/keyboard-closing acceptance; later last-app-close→Home passed. Refine thresholds and broader behavior/accessibility. Offline checks and restart recovery do not close the startup issue.
 - Translation coverage and readable device/lens names.
 - Safe screen-off/wake, suspend, alarms, charging, thermal and battery measurements on real storage.
 - Implement and test a separate touch-based encrypted-storage unlock path if LUKS is used; the SDDM keyboard does not provide it.

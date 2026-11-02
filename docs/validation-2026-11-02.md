@@ -4,6 +4,10 @@
 
 [Latest cold-boot SIM/desktop result](evidence/2026-11-02-cold-boot-sim-desktop.json) · [earlier boot7 record](evidence/2026-11-02-native-boot-v7.json) · [initial R20 snapshot](evidence/2026-11-02-r20.json) · [login-v6 follow-up](evidence/2026-11-02-login-v6.json) · [earlier hardware trials](validation-2026-11-01.md). Earlier pending fields remain historical snapshots, superseded only where the later record provides evidence.
 
+## Later engineering checkpoint
+
+[Cold-login, R7/R8, power and clean first-user status](engineering-2026-11-02.md) supersedes only the later state it explicitly records. The basic render loop is installed without cold-login acceptance. R7 Landlock/Pacman passed in RAM; permanent R7 boot and all R8 physical tests remain pending. The sleep fix is signed/verified on the host only. First-user r2 is not deployable: entrypoints are missing and clean-session initialization is incomplete; r3 is in preparation and not included. The permanent R6/boot7 installation result below remains valid.
+
 ## Storage and persistent boot
 
 - The initial 16 GiB source and complete physical readback matched **before the first writable native boot**. The ext4 filesystem was then expanded. [Why readback matters](internal-root-transfer.md).
@@ -17,7 +21,7 @@ No unit image, calibration, filesystem identity, secret or private verification 
 
 The user accepted the centered form, no duplicate software keyboard and correct second-field selection, then saved a local credential. Readiness/account-status checks used booleans only. Later **actual SDDM/PAM login passed**, including after normal boot: the user entered the credential locally and reached the desktop; the original theme, empty autologin User and ordinary-user Wayland socket were checked. No credential or account hash was read. This Linux credential is separate from SIM PIN. The subsequent cold-boot login succeeded but reproduced the desktop rendering failure described below; authentication success does not establish reliable startup presentation.
 
-The published [r5 source](../experiments/owner-setup/README.md), native profile `20261101-5`, adds closing **600 ms after success only**. Actual ARM64 GTK synthetic checks and normal GPG/ALPM package verification were reported; the synthetic sink makes no PAM/shadow/radio operation. Separate human acceptance of that setup auto-close and **Polkit authentication remain pending**. Successful login does not substitute for testing administrative authorization.
+The published [r5 source](../experiments/owner-setup/README.md), native profile `20261101-5`, adds closing **600 ms after success only**. Actual ARM64 GTK synthetic checks and normal GPG/ALPM package verification were reported; the synthetic sink makes no PAM/shadow/radio operation. Separate human acceptance of that setup auto-close and **Polkit was still pending in that snapshot**. Later normal graphical Polkit authorization/password change passed; clean-first-user setup is a separate, incomplete and undeployed flow. Successful login does not substitute for testing administrative authorization.
 
 ## SIM UI and successful cold-boot local PIN entry
 
@@ -33,7 +37,7 @@ An earlier live-gesture upgrade produced a black desktop that recovered through 
 
 Shell **.8** was installed with normal GPG/ALPM/Qkk verification. An official **Quickshell-only restart**, without restarting Hyprland or active PIN forms, recovered wallpaper, clock and eight icons according to the controller’s private capture review. The publication agent did not read or export that capture. This is recovery, **not a verified definitive startup fix**; cause investigation continues.
 
-After that installation, the user accepted basic **HOME, hold-for-recents and keyboard closing** with gesture/keyboard **r2**. The controller also reports 14 integrated-touch, 14 Qt, 9 helper and 5 plugin-compile offline checks passed. Wider refinement remains open; returning Home when the final recent app is closed is a pending request. No new shell/plugin source payload is added here.
+After that installation, the user accepted basic **HOME, hold-for-recents and keyboard closing** with gesture/keyboard **r2**. The controller also reports 14 integrated-touch, 14 Qt, 9 helper and 5 plugin-compile offline checks passed. Wider refinement remains open; returning Home when the final recent app closes later passed human acceptance. This does not validate cold-login rendering. No new shell/plugin source payload is added here.
 
 Visual boot6 failed human acceptance (white text/skipped logo). Boot7’s logo was missed by the user and remains visually unconfirmed; this is separate from the logged-in desktop recurrence.
 
@@ -47,7 +51,7 @@ No operator, APN, SIM/network identity or address is published. A prior browser 
 
 ## What remains unverified
 
-R19’s manual outgoing voicemail call and audible downlink remain the latest bounded voice result. Microphone/uplink, incoming calls, SMS, speed, AEC and the VoLTE path remain unverified. R13 Wi-Fi and R16 minimal-rescue Plymouth keep their original scopes. GPS, fingerprint, proximity, IR transmission and the other [hardware gaps](status.md) are not completed by the boot milestone. The recurrent desktop startup/rendering fault, Polkit, latest-logo acceptance, wider gesture/keyboard polish, battery/suspend and upgrade/rollback remain open.
+R19’s manual outgoing voicemail call and audible downlink remain the latest bounded voice result. Microphone/uplink, incoming calls, SMS, speed, AEC and the VoLTE path remain unverified. R13 Wi-Fi and R16 minimal-rescue Plymouth keep their original scopes. GPS, fingerprint, proximity, IR transmission and the other [hardware gaps](status.md) are not completed by the boot milestone. The recurrent desktop startup/rendering fault, latest-logo acceptance, wider gesture/keyboard polish, battery/suspend and upgrade/rollback remain open. Later graphical Polkit/password change passed, separately from the unvalidated clean-user flow.
 
 R17 manual recovery and R18/R19 automatic Android return preceded the native storage installation; they do not establish a current Android fallback after cleanup. No complete public builder/installer or independent reproduction is claimed. The regular Mi 10T still needs its own [variant validation](compatibility.md).
 

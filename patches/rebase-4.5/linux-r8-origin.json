@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "evidence_type": "sanitized source-only candidate provenance",
+  "kernel": "7.1.0-apollo-native-r8",
+  "target": "Linux 7.1 plus existing Apollo hardware/input patches; not an upstream standalone patch series",
+  "source_references": [
+    "https://github.com/torvalds/linux/tree/v7.1",
+    "https://github.com/royka1/Xiaomi-Apollo-pmOS-packages/tree/4c52c8bc8f8bd23a0e31dcd944a15f838777c3e2",
+    "https://github.com/MiCode/Xiaomi_Kernel_OpenSource/tree/acee5ab681485b77ba8d06ef4b0e39c8af974204"
+  ],
+  "patches": [
+    {
+      "file": "linux-pm8150b-current-units.patch",
+      "sha256": "e993d78eae2e5180106b73781e3ca63e221b816e9c7882e40a72ea5aad992f5d",
+      "license": "GPL-2.0-only"
+    },
+    {
+      "file": "linux-apollo-pon-reboot-modes.patch",
+      "sha256": "29bce01f3ce3fd58b1523bbb09d21ce64f6e0a2eecf9da6544f21c674ac3f41c",
+      "license": "GPL-2.0-only OR BSD-2-Clause"
+    }
+  ],
+  "driver_attribution": "GPL-2.0-only charger by Teguh Sobirin, based on Caleb Connolly's PMI8998 driver; original source attribution retained",
+  "current_units_primary_reference": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/acee5ab681485b77ba8d06ef4b0e39c8af974204/drivers/power/supply/qcom/smb5-lib.c#L5890",
+  "pon_mode_values_primary_reference": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/acee5ab681485b77ba8d06ef4b0e39c8af974204/include/linux/input/qpnp-power-on.h#L50",
+  "vendor_reset_path_primary_reference": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource/blob/acee5ab681485b77ba8d06ef4b0e39c8af974204/drivers/power/reset/msm-poweroff.c#L502",
+  "reboot_mode_upstream_reference": "https://github.com/torvalds/linux/blob/v7.1/drivers/power/reset/qcom-pon.c",
+  "dts_attribution": "Existing Apollo input child DTS retains GPL-2.0-only OR BSD-2-Clause",
+  "offline_kernel_dtb_modules_build_passed": true,
+  "only_config_change_from_r7": "CONFIG_LOCALVERSION",
+  "dt_semantic_delta": {
+    "mode-bootloader": 2,
+    "mode-recovery": 1
+  },
+  "hardware_tested": false,
+  "current_units_correction_changes_charge_policy": false,
+  "otg_current_telemetry_implemented": false,
+  "calibrated_current_or_power_measurement": false,
+  "pon_only_abl_behavior_proven": false,
+  "private_images_configs_logs_calibration_or_build_paths_included": false
+}

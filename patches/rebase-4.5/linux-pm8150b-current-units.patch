@@ -1,0 +1,48 @@
+--- a/drivers/power/supply/qcom_pm8150b_charger.c
++++ b/drivers/power/supply/qcom_pm8150b_charger.c
+@@ -19,6 +19,7 @@
+ #include <linux/platform_device.h>
+ #include <linux/pm_wakeirq.h>
+ #include <linux/of.h>
++#include <linux/overflow.h>
+ #include <linux/power_supply.h>
+ #include <linux/regmap.h>
+ #include <linux/types.h>
+@@ -563,6 +564,27 @@
+ 	return iio_read_channel_processed(chan, val);
+ }
+ 
++static int smb5_get_usb_current_now(struct smb5_chip *chip, int *val)
++{
++	int rc, current_uv, current_ua;
++
++	rc = smb5_get_iio_chan(chip, chip->usb_in_i_chan, &current_uv);
++	if (rc < 0)
++		return rc;
++
++	/*
++	 * The existing IIO getter only reports during active USB charging.
++	 * PM8150B USB_IN_I has a 0.2 V/A gain in buck mode: convert the
++	 * processed IIO voltage (uV) to power_supply current (uA).
++	 * This charging-state-gated path does not implement OTG telemetry.
++	 */
++	if (current_uv < 0 || check_mul_overflow(current_uv, 5, &current_ua))
++		return -ERANGE;
++
++	*val = current_ua;
++	return 0;
++}
++
+ static int smb5_get_prop_health(struct smb5_chip *chip, int *val)
+ {
+ 	int rc;
+@@ -616,8 +638,7 @@
+ 	case POWER_SUPPLY_PROP_CURRENT_MAX:
+ 		return smb5_get_current_limit(chip, &val->intval);
+ 	case POWER_SUPPLY_PROP_CURRENT_NOW:
+-		return smb5_get_iio_chan(chip, chip->usb_in_i_chan,
+-					 &val->intval);
++		return smb5_get_usb_current_now(chip, &val->intval);
+ 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+ 		return smb5_get_iio_chan(chip, chip->usb_in_v_chan,
+ 					 &val->intval);

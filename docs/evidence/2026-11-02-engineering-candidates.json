@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "evidence_type": "sanitized controller-reviewed engineering status summary",
+  "date": "2026-11-02",
+  "independent_reproduction": false,
+  "native_installation_r6_prior_normal_boot_still_verified": true,
+  "permanent_kernel": "7.1.0-apollo-native-r6",
+  "permanent_boot_revision": 7,
+  "desktop": {
+    "recurrent_black_center_issue_closed": false,
+    "scoped_basic_render_loop_installed": true,
+    "basic_render_loop_changes_gpu_backend": false,
+    "basic_render_loop_cold_login_human_verified": false,
+    "last_app_close_returns_home_human_verified": true
+  },
+  "kernel_r7": {
+    "landlock_ram_boot_verified": true,
+    "pacman_ram_test_passed": true,
+    "permanent_boot_committed_and_physically_verified": false
+  },
+  "kernel_r8": {
+    "offline_kernel_dtb_modules_build_passed": true,
+    "boot_image_integrated": false,
+    "hardware_tested": false,
+    "pon_reboot_candidate": true,
+    "current_now_units_candidate": true
+  },
+  "runtime_r6": {
+    "eas_enabled": true,
+    "energy_model_domains": 3,
+    "cpu_governor": "schedutil",
+    "cpu_idle_states_exposed": true,
+    "psci_menu_idle_usage_observed": true,
+    "cpu_policies_using_schedutil": 3,
+    "cpu_and_llcc_bwmon_bound": true,
+    "gpu_runtime_state_observed": "suspended",
+    "gmu_runtime_state_observed": "suspended",
+    "gmu_separate_driver_symlink_required_by_source_path": false,
+    "system_suspend_or_battery_life_verified": false,
+    "comparative_speed_or_power_benchmark": false
+  },
+  "power": {
+    "previous_usb_0_47_w_claim_withdrawn": true,
+    "accepted_power_watts": null,
+    "charger_current_units_under_review": true,
+    "current_units_patch_proves_savings_or_fast_charging": false,
+    "unplugged_battery_measurement_verified": false
+  },
+  "sleepd": {
+    "offline_tests_passed": {
+      "first_group": 6,
+      "second_group": 51
+    },
+    "package_signature_verified_on_host": true,
+    "installed_on_phone": false,
+    "physical_suspend_verified": false
+  },
+  "first_user_r2": {
+    "host_package_signatures_verified": true,
+    "installed_on_phone": false,
+    "deployable": false,
+    "source_included_in_this_update": false,
+    "blocking_integration_gaps": ["entrypoints", "session_skeleton"],
+    "checks": {
+      "backend": 32,
+      "qt_qml_arm": 49,
+      "gio_bus": 8,
+      "gtk_mock_arm": 19,
+      "shadow_pam_tmpfs": 33
+    },
+    "complete_clean_sddm_logind_setup_on_phone_verified": false,
+    "fingerprint_verified": false
+  },
+  "first_user_r3": {
+    "in_preparation": true,
+    "source_included_in_this_update": false,
+    "installed_on_phone": false,
+    "complete_clean_setup_verified": false
+  },
+  "administration": {
+    "authenticated_wheel_admin_rule_verified": true,
+    "polkit_and_password_change_from_graphical_session_human_verified": true
+  },
+  "no_complete_daily_driver_or_all_features_claim": true,
+  "binary_packages_signatures_keys_unit_images_calibration_or_logs_included": false,
+  "device_subscriber_operator_apn_ip_ssid_or_credential_values_included": false
+}

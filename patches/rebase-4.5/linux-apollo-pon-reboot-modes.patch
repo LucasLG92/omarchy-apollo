@@ -1,0 +1,11 @@
+--- a/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo-input.dts
++++ b/arch/arm64/boot/dts/qcom/sm8250-xiaomi-apollo-input.dts
+@@ -61,3 +61,8 @@
+ 		input-enable;
+ 	};
+ };
++
++&pon {
++	mode-bootloader = <0x02>;
++	mode-recovery = <0x01>;
++};

@@ -12,7 +12,7 @@
 
 **An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-> **Native installation works; desktop startup has an open regression.** Omarchy 4.5 RC2 boots from flashed native boot and internal ext4. After the latest cold boot, local login passed and SIM UI **0.2.1 accepted the access PIN entered only on the handset**; a cellular-bound IPv4 request returned HTTPS 204 with Wi-Fi connected. **The desktop center turned black again after login while the bar/search pill remained visible.** An official Quickshell restart on installed shell .8 restored the home screen, and the user accepted basic r2 HOME/recents/keyboard closing. **The recurring startup cause/fix is unresolved.** Polkit, broader phone hardware and daily-driver acceptance remain unverified. [Evidence and exact limits](docs/validation-2026-11-02.md).
+> **Native installation works; cold login and the next kernels are still in validation.** The permanent system remains R6/boot7. A basic render loop for Quickshell is installed but has no cold-login acceptance yet; the recurring black-center issue remains open. R7 passed Landlock/Pacman in a supervised RAM boot; permanent R7 boot and all R8 hardware tests are pending. Clean first-user setup is not deployable yet, and the sleep fix is host-only. [Current checkpoint and exact limits](docs/engineering-2026-11-02.md).
 
 ## On the device
 
@@ -25,8 +25,8 @@
 ## What is demonstrated
 
 - **Installed native boot (R20).** Internal ext4 root, systemd and the native hardware target boot through the flashed native boot path, without `fastboot boot`. Repeated normal boot passed after Android cleanup, with firmware/calibration guards and expected boot/recovery image-prefix readback checked.
-- **Local owner login.** The user accepted the mobile setup layout, saved a credential and later logged in after normal boot. Autologin is empty and the original theme is selected. [Owner form r5 and its isolated test](experiments/owner-setup/README.md); Polkit authentication and human acceptance of the setup auto-close remain pending.
-- **Touch navigation.** After shell .8/r2 installation, the user confirmed basic HOME, hold-for-recents and keyboard closing. Wider refinement remains open; returning Home when the final recent app is closed is still pending.
+- **Local owner login.** The user accepted the mobile setup layout, saved a credential and later logged in after normal boot. Autologin is empty and the original theme is selected. [Owner form r5 and its isolated test](experiments/owner-setup/README.md); later authenticated administration/password change passed from the graphical session. This does not validate a clean first-user installation.
+- **Touch navigation.** After shell .8/r2 installation, the user confirmed basic HOME, hold-for-recents and keyboard closing. Returning Home when the final recent app closes later passed human acceptance; wider refinement and cold-login reliability remain open.
 - **Native desktop and touch.** ARM64, systemd, Hyprland and Quickshell run on the internal display. The latest cold-boot login reproduced a black home-screen center, recovered by an official shell restart. This recurrence remains an open startup/rendering issue.
 - **Outgoing voice and downlink (R19).** GNOME Calls 51.1 was opened without a dial target. The user manually called their voicemail, the backend observed DIALING→ACTIVE / OUTGOING, and the user confirmed audible voicemail. No number or audio recording is published; the agent placed no call.
 - **Adreno GPU processing.** Freedreno reports **FD650**. All four camera sensors delivered 640×480 images; the main and ultrawide also passed larger RGB captures.
@@ -41,7 +41,7 @@
 
 | Component | Latest observed result | Still needed |
 | --- | --- | --- |
-| Display / GPU / touch | FD650/touch; recurrent black center after cold-boot login, bar/search pill visible; official shell restart recovered Home | **Startup/rendering cause and definitive fix open**, wider app/accessibility/power testing |
+| Display / GPU / touch | FD650/touch; recurring black center recovered by shell restart; basic render loop now installed | **Cold-login acceptance and definitive fix open**, wider app/accessibility/power testing |
 | Main camera | 24 RGB frames at **3000×2256**; GPU pipeline; autofocus reported focused in a separate illuminated sequence | Optical quality, color, video and full-resolution support; **108 MP is unavailable** in this driver |
 | Ultrawide / other cameras | Ultrawide: 24 RGB frames at **4200×3120**; all four sensors at 640×480 | Front high-resolution capture, macro focus, orientation and quality |
 | Torch | Normal-user one-second on/off control passed | Visible-light confirmation |
@@ -54,9 +54,9 @@
 | Haptics | R12: very soft physical AW8697 rumble; R13: local access and feedbackd opening from a fresh runtime v6 RAM boot | Strength and wider app feedback |
 | Infrared | R12: LIRC detected, capabilities `0x302` queried | **No signal transmitted:** optical emission and remote control untested |
 | GPS / fingerprint | Unverified | Native end-to-end support and physical tests |
-| Native boot / local login | R20: native installation completed, repeated normal internal-root boot and human credential→desktop login | Polkit authentication, extended boot/recovery coverage and a reproducible public installer |
-| Original boot / touch | R16 splash capture; R20 login; shell .8/r2 basic HOME, recents and keyboard closing human-confirmed | Latest logo not human-confirmed, further polish and last-app→Home behavior pending; no touch LUKS unlock |
-| Updates / battery | Native boot persists; earlier Android-return results are historical | Upgrade/rollback, unplugged power behavior, suspend and battery life |
+| Native boot / local login | R20: native installation completed, repeated normal internal-root boot and human credential→desktop login | Extended cold-login/boot/recovery coverage and a reproducible public installer |
+| Original boot / touch | R16 splash capture; R20 login; shell .8/r2 basic HOME, recents and keyboard closing human-confirmed | Latest logo not human-confirmed; last-app→Home later passed, with further polish pending; no touch LUKS unlock |
+| Kernels / power | R7 Landlock/Pacman passed in RAM; R8 and sleep fix are host-only candidates; no accepted wattage figure | Permanent R7 boot, R8 hardware tests, calibrated unplugged power, suspend and battery life |
 
 See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.
 
