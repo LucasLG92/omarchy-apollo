@@ -1,6 +1,7 @@
 # Media provenance
 
 | File | Origin and scope |
+| `phone-portrait-fixture.png`, `phone-landscape-fixture.png` | Real GNOME Calls full-window HOST fixtures, empty synthetic data/dummy provider, manually reviewed. No phone capture or real account/number. UI keeps Calls GPL-3.0-or-later / libcall-ui LGPL-2.1-or-later; original Omarchy logo remains DHH MIT. Successful human phone acceptance is recorded separately. |
 | --- | --- |
 | `hero.svg` | Original vector illustration made for this project. MIT licensed. It is not a screenshot or evidence of hardware functionality. |
 | `r20-root.svg` | Original MIT status badge: R20 native installation and normal boot verified on one Pro unit; it does not mark complete phone acceptance. It is an illustration, not a screenshot. |

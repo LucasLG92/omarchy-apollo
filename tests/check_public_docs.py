@@ -605,6 +605,62 @@ def cold_boot_sim_and_desktop_recurrence_boundaries():
     assert data["controller_reported_offline_checks"] == {"integrated_touch": 14, "qt": 14, "helper": 9, "plugin_compile": 5}
 
 
+def installed_mobile_milestone():
+    data = json.loads((ROOT / "docs/evidence/2026-11-02-installed-mobile-batch.json").read_text(encoding="utf-8"))
+    assert data["native_installation_complete"] and data["internal_root_normal_boot_verified"]
+    assert not data["independent_reproduction"] and not data["full_phone_functionality_verified"]
+    kernel = data["kernel"]
+    assert kernel["release"] == "7.1.0-apollo-native-r9"
+    assert kernel["permanent_boot_committed"] and kernel["normal_boot_verified"]
+    assert kernel["landlock_abi"] == 9 and kernel["module_integrity_checks_passed"] == 503
+    assert kernel["recovery_and_dtbo_preserved"]
+    assert data["desktop"]["hyprland_package"] == "0.57.0-2.1"
+    assert data["desktop"]["normal_reboot_human_accepted"]
+    assert not data["desktop"]["unlimited_cold_boot_reliability_proven"]
+    assert data["phone"]["package"] == "51.1.apollo3-1" and data["phone"]["main_screen_human_accepted"]
+    assert data["phone"]["synthetic_full_window_viewports"] == [[432, 960], [432, 520], [800, 360], [360, 756]]
+    assert data["phone"]["synthetic_dial_signals"] == data["phone"]["synthetic_gtk_css_template_warnings"] == 0
+    assert data["sim"]["package"] == "0.2.2-1" and data["sim"]["human_continuity_after_normal_reboot_accepted"]
+    assert not data["sim"]["automatic_pin_retry"]
+    assert data["rotation"]["installed_enabled_active"] and data["rotation"]["sensor_transform_observed"]
+    assert not data["rotation"]["physical_image_touch_acceptance"]
+    assert not any(data["private_data"].values())
+    assert not any(data["waydroid"][key] for key in ("android_runtime_verified", "apk_install_verified", "gpu_acceleration_verified", "google_play_verified"))
+    assert not data["first_user"]["clean_sddm_logind_session_verified"] and data["first_user"]["installed"]
+    assert data["first_user"]["existing_owner_ready_guard_preserved"]
+    assert not data["first_user"]["new_owner_wizard_activated"]
+
+    hypr = ROOT / "patches/hyprland-dmabuf"
+    pins = json.loads((hypr / "SOURCEPINS.json").read_text(encoding="utf-8"))
+    assert pins["upstream_patches_unmodified"] and pins["license"] == "BSD-3-Clause"
+    for row in pins["patches"]:
+        assert hashlib.sha256((hypr / row["patch"]).read_bytes()).hexdigest() == row["sha256"]
+        assert row["source"] == "https://github.com/hyprwm/Hyprland/commit/" + row["commit"]
+    phone = ROOT / "patches/phone-omarchy"
+    for name, pin in json.loads((phone / "SOURCEPINS.json").read_text(encoding="utf-8"))["files"].items():
+        assert hashlib.sha256((phone / name).read_bytes()).hexdigest() == pin
+    assert hashlib.sha256((phone / "phone-style.css").read_bytes()).hexdigest() == "649b27c39c377811a84a07c3106ed9781379e6edc5d8b569c80e53e0f843e718"
+    for folder in ("sim-continuation", "mobile-rotation"):
+        directory = ROOT / "experiments" / folder
+        pins = json.loads((directory / "SOURCEPINS.json").read_text(encoding="utf-8"))
+        prefix = "source" if folder == "sim-continuation" else "payload"
+        for name, pin in pins["files"].items():
+            path = directory / prefix / name
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == pin
+            if path.suffix == ".py":
+                ast.parse(path.read_text(encoding="utf-8"))
+    # Technical image chunks only. Manual pixel review remains separate.
+    for name, size in (("phone-portrait-fixture.png", (432, 960)), ("phone-landscape-fixture.png", (800, 360))):
+        image = (ROOT / "media" / name).read_bytes()
+        assert image[:8] == b"\x89PNG\r\n\x1a\n" and struct.unpack(">II", image[16:24]) == size
+        cursor, chunks = 8, []
+        while cursor < len(image):
+            length = struct.unpack(">I", image[cursor:cursor + 4])[0]
+            chunks.append(image[cursor + 4:cursor + 8])
+            cursor += 12 + length
+        assert cursor == len(image) and set(chunks) <= {b"IHDR", b"IDAT", b"IEND", b"sRGB", b"cICP", b"pHYs"}
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -652,6 +708,7 @@ def main():
     internal_root_and_owner_setup_review()
     installed_native_boot_boundaries()
     cold_boot_sim_and_desktop_recurrence_boundaries()
+    installed_mobile_milestone()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

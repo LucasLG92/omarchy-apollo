@@ -1,0 +1,58 @@
+--- a/src/style.css
++++ b/src/style.css
+@@ -28,3 +28,41 @@
+ .no-background {
+   background: none;
+ }
++
++/* Apollo Omarchy appearance: MIT-licensed additional style fragment.
++ * Append to Calls 51.1 src/style.css, which AdwApplication loads as a resource.
++ * Keep destructive/error/answer semantics and upstream layout/behavior.
++ */
++@media (prefers-contrast: no-preference) {
++  :root {
++    --window-bg-color: #1a1b26;
++    --window-fg-color: #c0caf5;
++    --view-bg-color: #1a1b26;
++    --view-fg-color: #c0caf5;
++    --headerbar-bg-color: #1a1b26;
++    --headerbar-fg-color: #c0caf5;
++    --headerbar-border-color: #414868;
++    --headerbar-backdrop-color: #1a1b26;
++    --card-bg-color: #24283b;
++    --card-fg-color: #c0caf5;
++    --popover-bg-color: #24283b;
++    --popover-fg-color: #c0caf5;
++    --dialog-bg-color: #24283b;
++    --dialog-fg-color: #c0caf5;
++    --accent-bg-color: #a8cd76;
++    --accent-fg-color: #1a1b26;
++    --accent-color: #a8cd76;
++    --sidebar-bg-color: #202333;
++    --sidebar-fg-color: #c0caf5;
++    --sidebar-backdrop-color: #1a1b26;
++  }
++  .phone-number-entry, .address-entry { color: #a8cd76; }
++  keypad > grid > button, cui-keypad > grid > button {
++    background: #24283b;
++    color: #c0caf5;
++    border: 1px solid #414868;
++  }
++  keypad > grid > button:hover, cui-keypad > grid > button:hover { background: #303650; }
++  keypad > grid > button:active, cui-keypad > grid > button:active { background: #414868; }
++}
++window { font-family: monospace; }
+--- a/src/calls-application.c
++++ b/src/calls-application.c
+@@ -474,6 +474,11 @@
+   g_print ("Calls %s starting up...\n", VCS_TAG);
+ 
+   cui_init (TRUE);
++
++  /* Appearance only: resource CSS is scoped to the Calls process. */
++  adw_style_manager_set_color_scheme (
++    adw_application_get_style_manager (ADW_APPLICATION (application)),
++    ADW_COLOR_SCHEME_FORCE_DARK);
+ 
+   if (!g_get_prgname ())
+     g_set_prgname (APP_ID);

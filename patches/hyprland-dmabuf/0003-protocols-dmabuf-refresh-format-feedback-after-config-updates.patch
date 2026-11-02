@@ -1,0 +1,251 @@
+From cd731f5e9659a17189b3ac130436a68e17cdb00b Mon Sep 17 00:00:00 2001
+From: Vaxry <vaxry@vaxry.net>
+Date: Fri, 30 Oct 2026 12:40:22 +0100
+Subject: [PATCH] protocols/dmabuf: refresh format feedback after config
+ updates
+
+---
+ src/protocols/LinuxDMABUF.cpp      |  25 +++---
+ src/protocols/LinuxDMABUF.hpp      |   4 +-
+ tests/protocols/DMABUFFeedback.cpp | 125 +++++++++++++++++++++++++++++
+ 3 files changed, 142 insertions(+), 12 deletions(-)
+
+diff --git a/src/protocols/LinuxDMABUF.cpp b/src/protocols/LinuxDMABUF.cpp
+index ee8d4343686..35bbb4abf95 100644
+--- a/src/protocols/LinuxDMABUF.cpp
++++ b/src/protocols/LinuxDMABUF.cpp
+@@ -29,7 +29,8 @@ static std::optional<dev_t> devIDFromFD(int fd) {
+ CDMABUFFormatTable::CDMABUFFormatTable(SDMABUFTranche _rendererTranche, std::vector<std::pair<PHLMONITORREF, SDMABUFTranche>> tranches_) :
+     m_rendererTranche(_rendererTranche), m_monitorTranches(tranches_) {
+ 
+-    static const auto                       PSKIP_NON_KMS = CConfigValue<Config::INTEGER>("quirks:skip_non_kms_dmabuf_formats");
++    static const auto PSKIP_NON_KMS = CConfigValue<Config::BOOL>("quirks:skip_non_kms_dmabuf_formats");
++    m_skipNonKMSFormats             = *PSKIP_NON_KMS;
+ 
+     std::vector<SDMABUFFormatTableEntry>    formatsVec;
+     std::set<std::pair<uint32_t, uint64_t>> formats;
+@@ -41,7 +42,7 @@ CDMABUFFormatTable::CDMABUFFormatTable(SDMABUFTranche _rendererTranche, std::vec
+     for (auto const& fmt : m_rendererTranche.formats) {
+         for (auto const& mod : fmt.modifiers) {
+             LOG(Log::TRACE, "Render format 0x{:x} ({}) with mod 0x{:x} ({})", fmt.drmFormat, NFormatUtils::drmFormatName(fmt.drmFormat), mod, NFormatUtils::drmModifierName(mod));
+-            if (*PSKIP_NON_KMS && !m_monitorTranches.empty()) {
++            if (m_skipNonKMSFormats && !m_monitorTranches.empty()) {
+                 if (std::ranges::none_of(m_monitorTranches, [fmt, mod](const std::pair<PHLMONITORREF, SDMABUFTranche>& pair) {
+                         return std::ranges::any_of(pair.second.formats, [fmt, mod](const SDRMFormat& format) {
+                             return format.drmFormat == fmt.drmFormat && std::ranges::any_of(format.modifiers, [mod](uint64_t modifier) { return mod == modifier; });
+@@ -451,6 +452,17 @@ void CLinuxDMABUFResource::sendMods() {
+ }
+ 
+ CLinuxDMABufV1Protocol::CLinuxDMABufV1Protocol(const wl_interface* iface, const int& ver, const std::string& name) : IWaylandProtocol(iface, ver, name) {
++    m_configRefreshed = Event::bus()->m_events.config.props_refreshed.listen([this](const bool) {
++        if (!m_formatTable)
++            return;
++
++        static const auto PSKIP_NON_KMS = CConfigValue<Config::BOOL>("quirks:skip_non_kms_dmabuf_formats");
++        if (m_formatTable->m_skipNonKMSFormats == *PSKIP_NON_KMS)
++            return;
++
++        resetFormatTable();
++    });
++
+     static auto P = Event::bus()->m_events.ready.listen([this] {
+         int  rendererFD = g_pCompositor->m_drmRenderNode.fd >= 0 ? g_pCompositor->m_drmRenderNode.fd : g_pCompositor->m_drm.fd;
+         auto dev        = devIDFromFD(rendererFD);
+@@ -498,15 +510,6 @@ CLinuxDMABufV1Protocol::CLinuxDMABufV1Protocol(const wl_interface* iface, const
+                 std::erase_if(m_formatTable->m_monitorTranches, [mon](std::pair<PHLMONITORREF, SDMABUFTranche> pair) { return pair.first == mon; });
+                 resetFormatTable();
+             });
+-
+-            static auto configReloaded = Event::bus()->m_events.config.reloaded.listen([this] {
+-                static const auto PSKIP_NON_KMS = CConfigValue<Config::INTEGER>("quirks:skip_non_kms_dmabuf_formats");
+-                static auto       prev          = *PSKIP_NON_KMS;
+-                if (prev != *PSKIP_NON_KMS) {
+-                    prev = *PSKIP_NON_KMS;
+-                    resetFormatTable();
+-                }
+-            });
+         }
+ 
+         m_formatTable = makeUnique<CDMABUFFormatTable>(eglTranche, tches);
+diff --git a/src/protocols/LinuxDMABUF.hpp b/src/protocols/LinuxDMABUF.hpp
+index 8bff4ae01f5..0cd1ecd8c1e 100644
+--- a/src/protocols/LinuxDMABUF.hpp
++++ b/src/protocols/LinuxDMABUF.hpp
+@@ -53,7 +53,8 @@ class CDMABUFFormatTable {
+     ~CDMABUFFormatTable() = default;
+ 
+     Hyprutils::OS::CFileDescriptor                        m_tableFD;
+-    size_t                                                m_tableSize = 0;
++    size_t                                                m_tableSize         = 0;
++    bool                                                  m_skipNonKMSFormats = false;
+     SDMABUFTranche                                        m_rendererTranche;
+     std::vector<std::pair<PHLMONITORREF, SDMABUFTranche>> m_monitorTranches;
+ };
+@@ -136,6 +137,7 @@ class CLinuxDMABufV1Protocol : public IWaylandProtocol {
+     UP<CDMABUFFormatTable>                        m_formatTable;
+     dev_t                                         m_mainDevice;
+     Hyprutils::OS::CFileDescriptor                m_mainDeviceFD;
++    CHyprSignalListener                           m_configRefreshed;
+ 
+     friend class CLinuxDMABUFResource;
+     friend class CLinuxDMABUFFeedbackResource;
+diff --git a/tests/protocols/DMABUFFeedback.cpp b/tests/protocols/DMABUFFeedback.cpp
+index 76c2d10a1fc..f7598eebd36 100644
+--- a/tests/protocols/DMABUFFeedback.cpp
++++ b/tests/protocols/DMABUFFeedback.cpp
+@@ -3,12 +3,15 @@
+ #include <animation/AnimationManager.hpp>
+ #include <config/ConfigValue.hpp>
+ #include <config/lua/ConfigManager.hpp>
++#include <config/lua/LuaBindings.hpp>
+ #include <config/shared/animation/AnimationTree.hpp>
+ #include <config/shared/inotify/ConfigWatcher.hpp>
+ #include <config/supplementary/jeremy/Jeremy.hpp>
++#include <config/supplementary/propRefresher/PropRefresher.hpp>
+ #include <desktop/view/window/Window.hpp>
+ #include <desktop/view/window/WaylandBackend.hpp>
+ #include <event/EventBus.hpp>
++#include <managers/eventLoop/EventLoopManager.hpp>
+ #include <protocols/LinuxDMABUF.hpp>
+ #include <protocols/PresentationTime.hpp>
+ #include <protocols/core/Compositor.hpp>
+@@ -23,6 +26,10 @@
+ #include <sys/socket.h>
+ #include <unistd.h>
+ 
++extern "C" {
++#include <lauxlib.h>
++}
++
+ // Synthetic format lists exercise feedback policy without a DRM device or GPU.
+ class CDMABUFFormatTableTest : public ::testing::Test {
+   protected:
+@@ -258,6 +265,10 @@ class CDMABUFFeedbackTest : public CDMABUFFormatTableTest {
+         rebuild();
+     }
+ 
++    WP<CSignalListener> configListener(CLinuxDMABufV1Protocol& protocol) {
++        return protocol.m_configRefreshed;
++    }
++
+     void readFeedback() {
+         wl_display_flush_clients(m_display.get());
+         std::vector<uint32_t>                       wire;
+@@ -435,3 +446,117 @@ TEST_F(CDMABUFFeedbackTest, RemovedScanoutTargetGetsCompleteRendererFallback) {
+     EXPECT_EQ(m_feedback.at(id).tableEvents, 2U);
+     EXPECT_EQ(m_feedback.at(id).doneEvents, 3U);
+ }
++
++class CDMABUFConfigFeedbackTest : public CDMABUFFeedbackTest {
++  protected:
++    void SetUp() override {
++        CDMABUFFeedbackTest::SetUp();
++        m_previousEventLoop                = std::move(g_pEventLoopManager);
++        m_previousRefresher                = std::move(Config::Supplementary::refresher());
++        g_pEventLoopManager                = makeUnique<CEventLoopManager>(g_pCompositor->m_wlDisplay, g_pCompositor->m_wlEventLoop);
++        Config::Supplementary::refresher() = makeUnique<Config::Supplementary::CPropRefresher>();
++        m_lua.reset(luaL_newstate());
++        ASSERT_TRUE(m_lua);
++        Config::Lua::Bindings::registerBindings(m_lua.get(), Config::Lua::mgr().get());
++    }
++
++    void TearDown() override {
++        m_lua.reset();
++        Config::Supplementary::refresher() = std::move(m_previousRefresher);
++        g_pEventLoopManager                = std::move(m_previousEventLoop);
++        CDMABUFFeedbackTest::TearDown();
++    }
++
++    void setRuntimeFiltering(bool enabled) {
++        const auto code = std::format("hl.config({{ quirks = {{ skip_non_kms_dmabuf_formats = {} }} }})", enabled ? "true" : "false");
++        ASSERT_EQ(luaL_dostring(m_lua.get(), code.c_str()), LUA_OK);
++        EXPECT_TRUE(Config::Lua::mgr()->m_errors.empty());
++    }
++
++    void dispatchRefresh() {
++        ASSERT_EQ(wl_event_loop_dispatch(g_pCompositor->m_wlEventLoop, 0), 0);
++        readFeedback();
++    }
++
++  private:
++    std::unique_ptr<lua_State, decltype(&lua_close)> m_lua{nullptr, lua_close};
++    UP<CEventLoopManager>                            m_previousEventLoop;
++    UP<Config::Supplementary::CPropRefresher>        m_previousRefresher;
++};
++
++TEST_F(CDMABUFConfigFeedbackTest, RuntimeConfigRefreshesBothDirectionsAndSkipsUnchangedValues) {
++    uint32_t id = 0;
++    bindFeedback(id);
++    readFeedback();
++    for (const bool filtered : {true, false}) {
++        const auto count = m_feedback.at(id).doneEvents;
++        setRuntimeFiltering(filtered);
++        dispatchRefresh();
++        expectFeedback(id, filtered);
++        EXPECT_EQ(m_feedback.at(id).doneEvents, count + 1);
++        EXPECT_EQ(m_feedback.at(id).tableEvents, count + 1);
++
++        setRuntimeFiltering(filtered);
++        dispatchRefresh();
++        EXPECT_EQ(m_feedback.at(id).doneEvents, count + 1);
++        EXPECT_EQ(m_feedback.at(id).tableEvents, count + 1);
++
++        uint32_t fresh = 0;
++        bindFeedback(fresh);
++        readFeedback();
++        expectFeedback(fresh, filtered);
++    }
++}
++
++TEST_F(CDMABUFConfigFeedbackTest, FirstReloadPropertyRefreshAppliesChangedSetting) {
++    uint32_t id = 0;
++    bindFeedback(id);
++    readFeedback();
++    setFiltering(true);
++    // Model reload completion: parsed values, reloaded notification, then the
++    // deferred property refresh. Other compositor properties need no refresh here.
++    Event::bus()->m_events.config.reloaded.emit();
++    Config::Supplementary::refresher()->scheduleRefresh(0);
++    dispatchRefresh();
++    expectFeedback(id, true);
++    EXPECT_EQ(m_feedback.at(id).doneEvents, 2U);
++    EXPECT_EQ(m_feedback.at(id).tableEvents, 2U);
++}
++
++TEST_F(CDMABUFConfigFeedbackTest, BatchedChangesCompareAgainstAppliedTable) {
++    uint32_t id = 0;
++    bindFeedback(id);
++    readFeedback();
++    setRuntimeFiltering(true);
++    setRuntimeFiltering(false);
++    dispatchRefresh();
++    expectFeedback(id, false);
++    EXPECT_EQ(m_feedback.at(id).doneEvents, 1U);
++    EXPECT_EQ(m_feedback.at(id).tableEvents, 1U);
++}
++
++TEST_F(CDMABUFConfigFeedbackTest, MonitorRebuildRecordsSettingBeforeDeferredRefresh) {
++    uint32_t id = 0;
++    bindFeedback(id);
++    readFeedback();
++    setRuntimeFiltering(true);
++    removeMonitor();
++    readFeedback();
++    expectFeedback(id, false); // No KMS tranches remain, so retain all renderer formats.
++    EXPECT_EQ(m_feedback.at(id).doneEvents, 2U);
++    dispatchRefresh();
++    EXPECT_EQ(m_feedback.at(id).doneEvents, 2U);
++    EXPECT_EQ(m_feedback.at(id).tableEvents, 2U);
++}
++
++TEST_F(CDMABUFConfigFeedbackTest, RefreshBeforeInitializationAndAfterDestructionIsSafe) {
++    auto       protocol = makeUnique<CLinuxDMABufV1Protocol>(&zwp_linux_dmabuf_v1_interface, 5, "uninitialized-dmabuf-test");
++    const auto listener = configListener(*protocol);
++    ASSERT_FALSE(listener.expired());
++    setRuntimeFiltering(true);
++    dispatchRefresh();
++    protocol.reset();
++    EXPECT_TRUE(listener.expired());
++    setRuntimeFiltering(false);
++    dispatchRefresh();
++}

@@ -5,6 +5,10 @@ The root [MIT license](../LICENSE) covers original Omarchy Apollo integration an
 ## New rebase material
 
 | Material | SPDX / origin |
+| Hyprland DMA-BUF three-patch backport | BSD-3-Clause — original upstream authors and [license](../patches/hyprland-dmabuf/LICENSE) retained |
+| Calls UI/CSS/resource patches | GPL-3.0-or-later for Calls; LGPL-2.1-or-later for libcall-ui. Included [component licenses and source order](../patches/phone-omarchy/README.md); no relabeling as MIT |
+| Original Phone logo | MIT — David Heinemeier Hansson; exact original asset and [notice](../patches/phone-omarchy/Omarchy-logo-LICENSE.txt) |
+| SIM continuation0.2.2 and rotation 0.2.0-2 payloads | MIT — original Apollo contributor headers/notices retained in each experiment |
 | --- | --- |
 | R8 PM8150B current-units patch | [GPL-2.0-only](GPL-2.0.txt); charger by Teguh Sobirin, based on Caleb Connolly's PMI8998 driver; original source attribution retained |
 | R8 Apollo PON child-DTS patch | [GPL-2.0-only](GPL-2.0.txt) OR [BSD-2-Clause](BSD-2-Clause.txt) |

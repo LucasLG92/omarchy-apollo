@@ -1,13 +1,29 @@
 # Hardware status
 
-**Current track: Omarchy 4.5 RC2, native installation completed on one Mi 10T Pro development unit, with an open desktop-startup regression.** Native boot/internal root and local login are verified. **The latest cold-boot login reproduced a black desktop center while the bar/search pill remained visible.** The home screen recovered through an official Quickshell restart on installed shell .8; the recurring startup cause and definitive fix remain unresolved. [Latest result](evidence/2026-11-02-cold-boot-sim-desktop.json).
+**Current: Omarchy 4.5 RC2, permanent kernel R9 and accepted mobile UI on one Mi 10T Pro.**
+Normal native boot, Landlock ABI9 and 503 module-integrity checks passed. Hyprland
+0.57.0-2.1 and its upstream DMA-BUF backport are installed; the normal-reboot
+human test accepted desktop, Phone 51.1.apollo3-1 and uninterrupted SIM 0.2.2-1.
+[Latest grouped evidence](mobile-milestone-2026-11-02.md) supersedes the earlier
+R6/cold-login checkpoint for this tested configuration, without promising unlimited
+reboot reliability or complete daily-driver acceptance.
 
-SIM UI 0.2.1 accepted the access PIN entered only on the phone. The modem reached connected/home with secondary PIN2 remaining; a cellular-bound IPv4 HTTPS request returned 204 while Wi-Fi was connected/preferred. Basic shell .8/r2 HOME/recents/keyboard closing passed human acceptance. **Complete daily-driver acceptance is not verified:** broader phone/audio/hardware, IPv6, throughput, battery/suspend and a public installer remain open. Later graphical Polkit/password change passed. [The next-kernel/cold-login checkpoint](engineering-2026-11-02.md) records an installed basic render loop with cold-login validation pending, R7 RAM success and host-only R8/sleep/first-user candidates.
+Rotation 0.2.0-2 is installed/enabled/active and a sensor transform was observed;
+physical image/touch acceptance is pending. Waydroid installation is in progress:
+runtime, GPU acceleration, APK and Google Play acceptance are not verified.
+Microphone/incoming calls/SMS, broader radios/sensors, suspend and battery life
+remain open. Existing successful cellular IPv4 and outgoing/downlink results keep
+their scope. [Current structured record](evidence/2026-11-02-installed-mobile-batch.json).
+
+## Earlier detailed hardware results and remaining coverage
+
+The following dated trials retain their original scope. Newer installed state is
+recorded above; earlier failures remain part of the test history.
 
 | Area | Evidence / latest result | Acceptance gap |
 | --- | --- | --- |
 | Native OS / root | R20: flashed native boot, internal ext4 root/systemd/hardware target and repeated normal boot verified, including after Android cleanup | Extended boot/recovery coverage, unplugged power tests and reproducible public installation |
-| Display / touch | Recurrent black center recovered by official shell restart; basic render loop installed. HOME/recents/keyboard closing and later final-app-close→Home human-accepted | **Cold-login acceptance and definitive fix open**; refinement, accessibility and sustained performance |
+| Display / touch | DMA-BUF backport installed; desktop accepted after normal reboot. HOME/recents/keyboard closing and final-app-close→Home accepted | Extended reboot, app/accessibility and sustained-performance coverage |
 | Original Plymouth splash | R16 reviewed native KMS capture. Later visual6 failed human acceptance; boot7 retained graphics proof and booted the internal root | User did not observe the latest logo: physical logo/animation acceptance remains open |
 | Original SDDM V2 | R20: original theme selected, autologin User empty, ordinary-user Wayland socket and human credential→desktop login verified after normal boot | Broader greeter/error/session coverage; no touch LUKS unlock |
 | Main camera — S5KHMX | R9: illuminated 240-frame sequence with AF state “focused”; R10: 24 RGB frames, 3000×2256, FD650 | Optical focus quality, color, video, rotation; sensor driver exposes 3008×2256 RAW, **not 108 MP** |
@@ -18,7 +34,7 @@ SIM UI 0.2.1 accepted the access PIN entered only on the phone. The modem reache
 | Torch | R9: normal-user one-second brightness 0 → 255 → 0 | Physical light not separately confirmed |
 | Modem / EFS | Modem discovered; EFS normal stop/restart succeeds after fix | Actual EFS transfer and cellular stability |
 | SIM / registration | Latest cold boot: human local access PIN accepted; modem connected (state11)/home, primary PIN no longer required, secondary PIN2 enum3 remains | Slot mapping and wider stability; prior slot entries do not prove physical card count, and PIN2 is not a second SIM |
-| SIM UI | Installed 0.2.1-1: compact masked-button keypad, human cold-boot access-PIN entry passed. Profile 20261101-6 launcher fix and earlier synthetic checks retain their scope | Broader retry/error/UX coverage; public source 0.1.3 remains historical, no new UI/launcher payload included |
+| SIM UI | Installed 0.2.2-1; combined human reboot continuity accepted. Selected payload source exported | Broader error/retry coverage; no automatic retry |
 | Voice / Messaging | R19: manual outgoing voicemail/downlink confirmed | Microphone/uplink, incoming calls and SMS unverified; newer SIM/data success does not establish them |
 | Cellular IP data | Latest R20: fresh AUTO profile active; cellular-bound IPv4 HTTPS204 with Wi-Fi connected/preferred. Prior Wi-Fi-off tests retained | IPv6, other SIMs/networks, reconnect/sustained transfer and speed. Cellular need not be default while Wi-Fi is preferred |
 | Phone permissions | R11: active UID voice/messaging checks passed and read-only call list succeeded | Broader ordinary-session authorization and administration; no SIM was available in that earlier trial |
@@ -36,18 +52,19 @@ SIM UI 0.2.1 accepted the access PIN entered only on the phone. The modem reache
 | GPS / fingerprint | Unverified | Fix/reliability; enrollment, verification and unlock |
 | Audio | R19: voicemail downlink heard by the user during the active outgoing call | Microphone/uplink, route coverage, call AEC and media audio; no audio file was recorded |
 | Runtime power mechanisms | R6 greeter snapshot: EAS1, 3 Energy Model domains, schedutil on 3 policies, PSCI/menu idle usage, GPU runtime suspended and both bwmon bound | No benchmark, physical rail-power or battery-life claim; prior USB wattage withdrawn, units candidate not hardware tested |
-| Kernel / suspend candidates | R7 Landlock/Pacman passed in RAM; R8 compiled; sleep fix signed on host, not installed | Permanent R7 boot, all R8 hardware tests and physical suspend/wake |
-| Clean first-user setup | r2 isolated checks and host signatures passed, but entrypoints are missing and clean-session initialization is incomplete | r2 is **not deployable**; r3 integration in preparation, not included or installed; clean SDDM/logind acceptance pending |
+| Kernel / suspend | Permanent R9 normal boot, Landlock ABI9 and 503 module checks passed; historical R7/R8 candidates are superseded | Physical suspend/wake and calibrated energy tests; no battery-life claim |
+| Clean first-user setup | r3 userland 0.1.0-3 / profile 20261101-11 installed on R9; existing-owner guard/session preserved, wizard not activated | Disposable clean SDDM/logind/session acceptance and public installer |
 | Storage / recovery | R20: userdata repurposed for native root; super/metadata/cache cleared, subsequent normal native boot passed; expected boot/recovery image-prefix readback matched | Extended native recovery/rollback and repeated power-cycle testing. Earlier Android-return results are historical, not a current fallback claim |
-| Updates / Android apps | Earlier integration is archived; native 4.5 updater remains guarded/incomplete | Coherent upgrade/rollback and new-track Waydroid validation |
+| Updates / Android apps | Guarded native updates used; Waydroid installation in progress | Android runtime/GPU/APK/Google services validation and broader rollback |
+| Automatic rotation | 0.2.0-2 installed/enabled/active; sensor-triggered transform observed | Physical image-and-touch acceptance across orientations |
 
-## Latest native installation record
+## Historical native installation and recurrence record
 
 [Latest SIM/desktop follow-up](evidence/2026-11-02-cold-boot-sim-desktop.json) supersedes boot7’s pending SIM and limited desktop state. [Boot7 and normal-boot evidence](evidence/2026-11-02-native-boot-v7.json) supersede the pending-installation state in the [initial R20 snapshot](evidence/2026-11-02-r20.json) and [earlier login-v6 record](evidence/2026-11-02-login-v6.json). The initial 16 GiB transfer passed full physical readback before first writable native boot; later boot/recovery checks verified the expected image prefixes, not claimed hashes of entire partitions. [Lab notes](validation-2026-11-02.md) · [transfer lesson](internal-root-transfer.md).
 
-An earlier live-update black desktop recovered, and one later normal boot reached the desktop. **A subsequent cold-boot login reproduced the black center**, so the earlier success does not close the startup issue. Quickshell was alive and its Home model loaded while the bar/search pill rendered. Installed shell .8 passed normal GPG/ALPM/Qkk checks; an official Quickshell restart, without a Hyprland restart or active PIN forms, restored wallpaper, clock and eight icons according to the controller’s private review. The capture is not public. The cause and definitive startup fix remain open.
+An earlier live-update black desktop recovered, and one later normal boot reached the desktop. **A subsequent cold-boot login reproduced the black center**, so the earlier success does not close the startup issue. Quickshell was alive and its Home model loaded while the bar/search pill rendered. Installed shell .8 passed normal GPG/ALPM/Qkk checks; an official Quickshell restart, without a Hyprland restart or active PIN forms, restored wallpaper, clock and eight icons according to the controller’s private review. The capture is not public. At that historical checkpoint the cause and definitive startup fix remained open. The later installed DMA-BUF backport and accepted reboot test are recorded above.
 
-The user accepted basic HOME, hold-for-recents and keyboard closing on gesture/keyboard r2. Later last-app-close→Home passed human acceptance. Further refinement remains open. A basic render loop is installed but has not passed cold-login acceptance. These successful interactions do not validate startup rendering.
+The user accepted basic HOME, hold-for-recents and keyboard closing on gesture/keyboard r2. Later last-app-close→Home passed human acceptance. Further refinement remains open. That checkpoint had not passed cold-login acceptance. The later grouped DMA-BUF/reboot result above supersedes its pending desktop state; the individual earlier gesture tests did not establish startup rendering.
 
 The [owner form r5](../experiments/owner-setup/README.md) saved the normal local account credential. Actual login was then verified, including after normal native boot, without reading the secret or verifier. Later graphical Polkit/password change passed; the historical r5 auto-close result retains its narrower scope. Visual6 showed white text and skipped the expected logo; boot7’s logo was missed by the user, so its visual acceptance remains unconfirmed. No boot-speed benchmark is claimed.
 

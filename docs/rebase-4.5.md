@@ -2,7 +2,18 @@
 
 The current development track starts from a fresh ARM64 userspace and adapts the touch interface to Omarchy 4.5. R9–R19 acceptance came from RAM trials ending in restored Android. R20 later completed native installation on the development unit: flashed native boot and internal ext4 root passed repeated normal boot/login, including after Android cleanup. A complete public installer and full phone acceptance are still unvalidated.
 
-## Recorded stack
+## Latest installed milestone
+
+Permanent kernel **R9** now boots normally with Landlock ABI9 and 503 module checks.
+Installed **Hyprland 0.57.0-2.1**, **Calls 51.1.apollo3-1** and **SIM 0.2.2-1** passed
+the combined normal-reboot human acceptance. Rotation 0.2.0-2 is active with a
+sensor transform observed; physical image/touch acceptance is pending. Waydroid
+installation is in progress, without runtime/APK acceptance. First-user r3 userland 0.1.0-3/profile 20261101-11 is installed on R9, with the
+existing-owner guard and active session preserved. A real clean first-account
+creation/login remains unvalidated.
+[Current source and evidence links](mobile-milestone-2026-11-02.md).
+
+## Earlier recorded stack (historical snapshots)
 
 | Component | Recorded version / source |
 | --- | --- |
@@ -63,7 +74,7 @@ The user saved a local credential, then completed actual SDDM/PAM login, includi
 
 Automatic profile r2 created a fresh cellular profile after normal boot and returned IPv4 HTTPS 204 with Wi-Fi off on one network. Later cold-boot local SIM-PIN entry passed and a cellular-bound IPv4 request returned HTTPS204 while Wi-Fi was connected/preferred. Other SIMs/operators, IPv6 and throughput remain unvalidated. No profile identities or new automatic-profile source are published. [Latest evidence and limits](validation-2026-11-02.md) · [owner r5 source and test](../experiments/owner-setup/README.md).
 
-## Current candidate checkpoint
+## Earlier candidate checkpoint (superseded where listed above)
 
 [Engineering status](engineering-2026-11-02.md) separates permanent R6/boot7, R7 RAM success, R8 offline source, basic-render-loop cold-login validation and the host-only sleep fix. Clean first-user r2 is blocked by missing entrypoints and incomplete clean-session initialization; isolated checks do not make it deployable. r3 is being prepared, with no source or packages included in this update. The earlier USB wattage figure is withdrawn.
 

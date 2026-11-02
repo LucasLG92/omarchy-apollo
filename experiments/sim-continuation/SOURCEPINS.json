@@ -1,0 +1,14 @@
+{
+  "version": "0.2.2-1",
+  "license": "MIT",
+  "files": {
+    "usr/lib/apollo/sim-ui/apollo-sim-unlock.py": "cf46205ae78f75aec4e768a983b438b0344ab89d147a09dbf022cd31d84c9afe",
+    "usr/lib/apollo/sim-ui/sim_state.py": "39e4f857fe91257d4289a3171d42c3bd524774dd78c86471d6ebbdb1bf98a871",
+    "usr/lib/apollo/sim-ui/omarchy.css": "c8e1c4d715788ab500bbbaee876e4c46cb9242ceb681c675abf8ddab4df309fc",
+    "usr/lib/apollo/sim-ui/launch-continuation.py": "726dc2a35f9a54be493f69f6519f8012bd72f7807b8f294597122df0f94e6497",
+    "usr/lib/systemd/system/apollo-sim-pin.service.d/20-continuation.conf": "38220b7a45b8d8905a999c667ff4d0bc49bf9e255b988daf997bb683462cf49c"
+  },
+  "installed": true,
+  "human_continuity_after_reboot_accepted": true,
+  "automatic_pin_retry": false
+}

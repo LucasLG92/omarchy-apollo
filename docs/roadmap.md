@@ -1,6 +1,6 @@
 # Roadmap
 
-The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 status](status.md) has a completed native installation with repeated normal boot and local login on the Pro development unit. **A recurrent black desktop center after cold-boot login is open**, despite restart recovery. Complete phone acceptance, a public installer and maintenance/recovery coverage remain unfinished. The earlier installation remains a [historical reference](history/README-2026-10-30.md).
+The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 status](status.md) has a completed native installation with repeated normal boot and local login on the Pro development unit. **The targeted upstream DMA-BUF backport and a normal-reboot human test now pass** for desktop, Phone and SIM continuity. Wider reboot coverage remains useful. Complete phone acceptance, a public installer and maintenance/recovery coverage remain unfinished. The earlier installation remains a [historical reference](history/README-2026-10-30.md).
 
 ## 1. Reproducible, recoverable native installation
 
@@ -15,7 +15,7 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 
 - **Variant coverage:** validate the regular Mi 10T 5G separately, including its main camera, memory/storage profile and per-unit calibration. Pro evidence does not establish non-Pro compatibility; follow the [model matrix](compatibility.md).
 - **Cameras:** front high-resolution/stride failure, macro focus, rotation, video, optical focus and color. The current main driver has no 108 MP mode.
-- **Phone/audio:** R19 verified one manual outgoing voicemail call and audible downlink. Validate microphone/uplink, incoming calls, SMS, AEC, VoLTE path and broader routing. R20 automatic profile r2 created a fresh profile after normal boot and passed cellular IPv4 HTTPS with Wi-Fi off on one network; latest local PIN entry in SIM UI 0.2.1 passed, connected/home and a cellular-bound IPv4 HTTPS204 result passed with Wi-Fi connected/preferred. Validate other SIMs/networks, IPv6, reconnection, sustained transfer and broader UI/error/retry coverage separately. The public 0.1.3 source remains historical, and no new source is included. Resolve physical/logical slot mapping without treating slot-entry count as card count; validate Polkit use of the local R20 credential without changing SIM protection or general modem authorization policy.
+- **Phone/audio:** R19 verified one manual outgoing voicemail call and audible downlink. Validate microphone/uplink, incoming calls, SMS, AEC, VoLTE path and broader routing. R20 automatic profile r2 created a fresh profile after normal boot and passed cellular IPv4 HTTPS with Wi-Fi off on one network; latest local PIN entry in SIM UI 0.2.1 passed, connected/home and a cellular-bound IPv4 HTTPS204 result passed with Wi-Fi connected/preferred. Validate other SIMs/networks, IPv6, reconnection, sustained transfer and broader UI/error/retry coverage separately. The public0.1.3 source remains historical; selected 0.2.2 continuation source and accepted reboot flow are now published. Resolve physical/logical slot mapping without treating slot-entry count as card count; validate Polkit use of the local R20 credential without changing SIM protection or general modem authorization policy.
 - **Connectivity:** R13 connected Wi-Fi and completed a Wi-Fi-bound HTTPS request. Test both bands, sustained transfer, reconnect/suspend and Bluetooth pairing/audio.
 - **Sensors/NFC:** R13 fixed one missing scratch-file creation failure and retained accelerometer/light availability. Test longer operation, sensor integration, proximity and NFC tags. GPS needs a reliable fix; fingerprint needs enrollment/verification/unlock.
 - **Haptics:** R12 confirmed a very soft AW8697 rumble; R13 booted runtime v6 with local access and feedbackd discovery without manual restart. Test strength, application feedback and repeated boots.
@@ -23,19 +23,21 @@ The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 sta
 
 ## 3. Make it comfortable all day
 
-- **Resolve the recurrent black desktop center after cold-boot login.** The basic render loop is installed; cold-login acceptance is still pending. Shell restart recovery does not verify a definitive startup fix.
-- [Candidate checkpoint](engineering-2026-11-02.md): commit/test R7 only after its RAM Landlock/Pacman success; physically test R8 current/PON changes and the host-signed sleep fix. No accepted wattage or battery-life benchmark exists.
-- Complete clean-first-user entrypoints and session initialization: r2 is not deployable despite isolated checks/host signatures. Prepare and review r3, then test a disposable clean SDDM/logind installation without resetting the current owner. No first-user candidate is distributed in this update.
-- Installed gesture/keyboard r2 passed basic human HOME/recents/keyboard-closing acceptance; later last-app-close→Home passed. Refine thresholds and broader behavior/accessibility. Offline checks and restart recovery do not close the startup issue.
+- Extend reboot and app coverage beyond the accepted Hyprland 0.57.0-2.1 DMA-BUF configuration. The [latest batch](mobile-milestone-2026-11-02.md) passed normal-reboot desktop/Phone/SIM acceptance; earlier restart-only recovery remains historical.
+- R9 is permanent and normal-boot verified with Landlock ABI9 and 503 module checks. Extend physical suspend/wake, calibrated power and battery-life tests. The earlier [candidate checkpoint](engineering-2026-11-02.md) is historical; no accepted wattage or autonomy benchmark exists.
+- First-user r3 userland 0.1.0-3 / profile 20261101-11 is installed on R9 with the existing-owner guard preserved; the wizard did not activate. Test a disposable clean SDDM/logind/session installation without resetting the current owner; r2 is obsolete. No first-user candidate is distributed in this update.
+- Installed gesture/keyboard r2 passed basic human HOME/recents/keyboard-closing acceptance; later last-app-close→Home passed. Refine thresholds and broader behavior/accessibility. The later DMA-BUF/reboot result supersedes the earlier startup checkpoint; the gesture tests alone did not establish startup rendering.
 - Translation coverage and readable device/lens names.
 - Safe screen-off/wake, suspend, alarms, charging, thermal and battery measurements on real storage.
 - Implement and test a separate touch-based encrypted-storage unlock path if LUKS is used; the SDDM keyboard does not provide it.
 - Performance profiles measured against latency and power, not guessed from service startup.
 - Keep LTE/NR5G registration and the R19 call result separate from throughput claims; later R20 cellular IPv4 HTTPS is one connectivity result, with no speed measurement.
 
+- Rotation 0.2.0-2 is installed/enabled/active with a sensor-triggered transform observed. Validate physical image and touch across orientations.
+
 ## 4. Revalidate optional Android compatibility
 
-The earlier Waydroid/VANILLA, APK and GPU checks remain useful history. Repeat them on the new profile before announcing support for Android apps, Google services or Android access to camera/microphone.
+Waydroid installation is in progress on the current native stack. The earlier Waydroid/VANILLA, APK and GPU checks remain historical: verify Android runtime, GPU acceleration, actual APK use and privacy before announcing support. Google Play/services are not verified.
 
 ## What moves an item to complete
 

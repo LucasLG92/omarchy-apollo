@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+pkgname=omamobile-apollo-rotation
+pkgver=0.2.0
+pkgrel=2
+pkgdesc='Apollo SSC SensorProxy rotation client for Hyprland 0.57'
+arch=('any')
+license=('MIT')
+depends=('python' 'python-gobject' 'systemd' 'hyprland>=0.57' 'hyprland<0.58')
+optdepends=('iio-sensor-proxy: existing Apollo SSC SensorProxy service')
+backup=('etc/apollo/rotation.json')
+source=('payload.tar.gz')
+sha256sums=('7ac297eba603dc435a6c0614a522e78d5dc6f329a2e14a053f443368dd4a806d')
+
+package() {
+  install -Dm755 "$srcdir/usr/lib/omamobile-apollo/rotation.py" "$pkgdir/usr/lib/omamobile-apollo/rotation.py"
+  install -Dm644 "$srcdir/usr/lib/systemd/user/omamobile-autorotate.service" "$pkgdir/usr/lib/systemd/user/omamobile-autorotate.service"
+  install -Dm644 "$srcdir/etc/apollo/rotation.json" "$pkgdir/etc/apollo/rotation.json"
+  install -Dm644 "$srcdir/usr/share/omamobile-apollo/rotation-baseline.lua" "$pkgdir/usr/share/omamobile-apollo/rotation-baseline.lua"
+  install -Dm644 "$srcdir/usr/share/omamobile-apollo/rotation-profile.after-baseline.json" "$pkgdir/usr/share/omamobile-apollo/rotation-profile.after-baseline.json"
+  install -Dm644 "$srcdir/usr/share/licenses/$pkgname/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

@@ -8,13 +8,21 @@
   <a href="LICENSES/README.md"><img src="https://img.shields.io/badge/licenses-MIT%20%2B%20upstream-c7b5ff?style=flat-square" alt="MIT and upstream licenses"></a>
 </p>
 
-<p align="center"><a href="docs/es/README.md">Español</a> · <a href="docs/status.md">Hardware status</a> · <a href="docs/validation-2026-11-02.md">Latest lab notes</a> · <a href="docs/roadmap.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
+<p align="center"><a href="docs/es/README.md">Español</a> · <a href="docs/status.md">Hardware status</a> · <a href="docs/mobile-milestone-2026-11-02.md">Latest milestone</a> · <a href="docs/roadmap.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a></p>
 
 **An independent effort to bring native Omarchy to the Xiaomi Mi 10T Pro (`apollo`).** A touch interface, the normal Linux desktop and a GPU camera pipeline on a Snapdragon phone — with the results and the gaps documented together.
 
-> **Native installation works; cold login and the next kernels are still in validation.** The permanent system remains R6/boot7. A basic render loop for Quickshell is installed but has no cold-login acceptance yet; the recurring black-center issue remains open. R7 passed Landlock/Pacman in a supervised RAM boot; permanent R7 boot and all R8 hardware tests are pending. Clean first-user setup is not deployable yet, and the sleep fix is host-only. [Current checkpoint and exact limits](docs/engineering-2026-11-02.md).
+> **R9 native boot and the mobile UI are accepted on the development unit.** Kernel R9 is permanent with Landlock ABI9 and 503 module-integrity checks. After the DMA-BUF backport and normal reboot, the user accepted the desktop, Omarchy Phone and uninterrupted SIM flow. Rotation is installed but awaits physical image/touch acceptance. Waydroid is still in progress. [Latest grouped result and exact limits](docs/mobile-milestone-2026-11-02.md).
 
-## On the device
+## Omarchy Phone, made to fit
+
+<p align="center"><img src="media/phone-portrait-fixture.png" width="200" alt="Real Phone application with empty synthetic data, portrait host fixture"> <img src="media/phone-landscape-fixture.png" width="560" alt="Real Phone application with empty synthetic data, landscape host fixture"></p>
+
+<p align="center"><em>Real-application host fixtures, not phone captures. The installed main screen was accepted separately after normal reboot. Original Omarchy logo and file-specific licenses retained.</em></p>
+
+[UI source and test scope](patches/phone-omarchy/README.md) · [Upstream DMA-BUF fixes](patches/hyprland-dmabuf/README.md) · [SIM continuation](experiments/sim-continuation/README.md) · [Rotation source](experiments/mobile-rotation/README.md)
+
+## Earlier device captures
 
 <p align="center"><a href="media/apollo-home-r11.png"><img src="media/apollo-home-r11.png" width="200" alt="Actual R11 home-screen capture"></a> <a href="media/apollo-boot-r16.png"><img src="media/apollo-boot-r16.png" width="200" alt="Actual R16 native Plymouth KMS capture"></a> <a href="experiments/original-boot-v2/README.md"><img src="experiments/original-boot-v2/previews/login-initial-432.png" width="200" alt="V2 SDDM Qt preview; later successful phone login is recorded separately"></a></p>
 
@@ -27,26 +35,28 @@
 - **Installed native boot (R20).** Internal ext4 root, systemd and the native hardware target boot through the flashed native boot path, without `fastboot boot`. Repeated normal boot passed after Android cleanup, with firmware/calibration guards and expected boot/recovery image-prefix readback checked.
 - **Local owner login.** The user accepted the mobile setup layout, saved a credential and later logged in after normal boot. Autologin is empty and the original theme is selected. [Owner form r5 and its isolated test](experiments/owner-setup/README.md); later authenticated administration/password change passed from the graphical session. This does not validate a clean first-user installation.
 - **Touch navigation.** After shell .8/r2 installation, the user confirmed basic HOME, hold-for-recents and keyboard closing. Returning Home when the final recent app closes later passed human acceptance; wider refinement and cold-login reliability remain open.
-- **Native desktop and touch.** ARM64, systemd, Hyprland and Quickshell run on the internal display. The latest cold-boot login reproduced a black home-screen center, recovered by an official shell restart. This recurrence remains an open startup/rendering issue.
+- **Desktop accepted after reboot.** Hyprland `0.57.0-2.1` includes three targeted upstream DMA-BUF feedback fixes. The user accepted the desktop, Phone and uninterrupted SIM flow in the normal-reboot test. Earlier black-center observations stay in the lab history; unlimited cold-boot reliability is not claimed.
 - **Outgoing voice and downlink (R19).** GNOME Calls 51.1 was opened without a dial target. The user manually called their voicemail, the backend observed DIALING→ACTIVE / OUTGOING, and the user confirmed audible voicemail. No number or audio recording is published; the agent placed no call.
 - **Adreno GPU processing.** Freedreno reports **FD650**. All four camera sensors delivered 640×480 images; the main and ultrawide also passed larger RGB captures.
-- **Ordinary phone permissions (R11).** The local user queried calls without the startup OS authentication prompt. Daemon administration and firmware changes still require administrator authentication. R18's PIN UI ran as root only in supervised RAM; ordinary-user integration is still pending.
+- **Ordinary phone permissions (R11).** The local user queried calls without the startup OS authentication prompt. Daemon administration and firmware changes still require administrator authentication. R18's PIN UI ran as root only in supervised RAM; the later installed continuation and human reboot result are documented separately.
 - **Measured changes.** Increasing CMA from 32 to **256 MiB** resolved the main-camera DMA allocation failure. Normal EFS service stop/restart and original boot/DTBO restoration were checked separately.
 - **Physical haptics.** R12 exercised AW8697 rumble for **120 ms at 8192/65535 magnitude** (about 12.5%). The user confirmed a **very low-strength vibration**; normal-session access and feedbackd discovery were also checked.
 - **Cellular IPv4 on the internal root.** Automatic profile r2 was active after the latest local SIM-PIN entry; a request **bound to cellular returned HTTPS 204 while Wi-Fi was connected/preferred**. Earlier Wi-Fi-off results keep their scope. One network is tested; other SIMs/networks, IPv6, sustained transfer and throughput remain unvalidated. No operator, APN, address or screenshot is published.
 - **Connected Wi-Fi.** In R13, the user connected on the phone screen and an HTTPS request bound to the Wi-Fi interface returned **200**. No network identity or credentials are published.
 - **Sensor scratch-file fix.** Runtime `20261101-6` completed a RAM boot, created the allowed private scratch file and exposed accelerometer/light. The specific missing-file error was absent in the collected boot log and a **20.97-second observation**; this is not a general speed benchmark.
 - **Original boot appearance.** R16 ran Plymouth through native DRM/active VT and produced the reviewed KMS capture above. V2 SDDM loads in actual ARM64 test mode and adds touch input to the original layout; **later R20 normal-boot login passed**, while the latest splash logo still lacks human confirmation.
-- **SIM UI version boundary.** The installed app is **0.2.1-1**, compact, with masked button fields and its own keypad instead of a text-input/OSK surface. The controller reports unchanged radio core/13 flow methods, 18 classification checks and 17 ARM64 GTK synthetic checks. **Human local access-PIN entry in 0.2.1 passed after cold boot:** the modem reached connected/home, primary PIN was no longer required and remaining lock was secondary `SIM_PIN2` (3). This does not mean a second SIM card or complete UI acceptance. The [published 0.1.3 source](experiments/sim-unlock/README.md) and R18/R19 registration remain historical; no new UI source is included.
+- **Current SIM UI: 0.2.2-1.** Event-based display continuation, stable-state auto-close and protected touch input are installed; the combined human reboot test passed without screen jumps. No automatic PIN retry. [Current selected source](experiments/sim-continuation/README.md); the older 0.1.3 export remains historical.
+- **Permanent kernel R9.** Normal native boot, Landlock ABI9 and 503 module-integrity checks passed. Recovery/DTBO were preserved.
+- **Rotation integration.** Version 0.2.0-2 is installed/enabled/active and a sensor-triggered transform was observed; physical image-and-touch acceptance is pending.
 
 | Component | Latest observed result | Still needed |
 | --- | --- | --- |
-| Display / GPU / touch | FD650/touch; recurring black center recovered by shell restart; basic render loop now installed | **Cold-login acceptance and definitive fix open**, wider app/accessibility/power testing |
+| Display / GPU / touch | FD650/touch; upstream DMA-BUF backport installed, desktop accepted after normal reboot | Wider reboot/app/accessibility/power coverage |
 | Main camera | 24 RGB frames at **3000×2256**; GPU pipeline; autofocus reported focused in a separate illuminated sequence | Optical quality, color, video and full-resolution support; **108 MP is unavailable** in this driver |
 | Ultrawide / other cameras | Ultrawide: 24 RGB frames at **4200×3120**; all four sensors at 640×480 | Front high-resolution capture, macro focus, orientation and quality |
 | Torch | Normal-user one-second on/off control passed | Visible-light confirmation |
 | Modem / SIM | Latest cold boot: local access PIN accepted, connected/home, primary PIN no longer required; remaining secondary PIN2 enum3 | Physical/logical slot mapping and wider stability; PIN2 is not a second SIM |
-| SIM UI | Installed 0.2.1-1: human local access-PIN entry passed after cold boot; earlier synthetic checks retained | Broader UI/retry/error acceptance; repository source 0.1.3 remains historical |
+| SIM UI | Installed 0.2.2-1: uninterrupted continuation accepted after reboot; selected source published | Broader retry/error coverage; no automatic PIN retry |
 | Voice / cellular data | R19 outgoing voicemail/downlink. Latest R20: active AUTO profile, cellular-bound IPv4 HTTPS204 with Wi-Fi connected/preferred | Microphone/uplink, incoming calls, SMS, IPv6, other SIMs/networks, throughput, AEC and VoLTE path |
 | Wi-Fi | R13: connected on screen; Wi-Fi-bound HTTPS request returned 200 | Reconnection, both bands, sustained transfer and suspend/resume |
 | Bluetooth | Service active | Pairing and audio |
@@ -56,7 +66,8 @@
 | GPS / fingerprint | Unverified | Native end-to-end support and physical tests |
 | Native boot / local login | R20: native installation completed, repeated normal internal-root boot and human credential→desktop login | Extended cold-login/boot/recovery coverage and a reproducible public installer |
 | Original boot / touch | R16 splash capture; R20 login; shell .8/r2 basic HOME, recents and keyboard closing human-confirmed | Latest logo not human-confirmed; last-app→Home later passed, with further polish pending; no touch LUKS unlock |
-| Kernels / power | R7 Landlock/Pacman passed in RAM; R8 and sleep fix are host-only candidates; no accepted wattage figure | Permanent R7 boot, R8 hardware tests, calibrated unplugged power, suspend and battery life |
+| Kernel / power | R9 permanent native boot, Landlock ABI9 and 503 module checks passed; no accepted wattage figure | Calibrated unplugged power, physical suspend and battery life |
+| Rotation / Android apps | Rotation 0.2.0-2 active, sensor transform observed; Waydroid installation in progress | Physical orientation/touch, Android runtime, GPU/APK/Google services acceptance |
 
 See the [full status and evidence links](docs/status.md). A detected device, an authorization check or a passing fixture is not a completed hardware feature.
 

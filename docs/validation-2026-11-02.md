@@ -1,5 +1,7 @@
 # R20 — native installation, normal boot and local login
 
+> **Historical checkpoint.** The [later installed R9/mobile milestone](mobile-milestone-2026-11-02.md) supersedes the current-state statements below where explicitly listed. Earlier results and failures retain their original scope.
+
 **Reviewed 2026-11-02. One Mi 10T Pro development unit; no independent reproduction.** **Native OS installation is completed on this unit:** flashed native boot/internal root and local login are verified. **Later cold-boot login reproduced the black desktop center**; an official shell restart recovered Home, but the startup/rendering cause and definitive fix remain open. Human local SIM-PIN entry and cellular IPv4 passed. This does not establish complete daily-driver acceptance or a public installer.
 
 [Latest cold-boot SIM/desktop result](evidence/2026-11-02-cold-boot-sim-desktop.json) · [earlier boot7 record](evidence/2026-11-02-native-boot-v7.json) · [initial R20 snapshot](evidence/2026-11-02-r20.json) · [login-v6 follow-up](evidence/2026-11-02-login-v6.json) · [earlier hardware trials](validation-2026-11-01.md). Earlier pending fields remain historical snapshots, superseded only where the later record provides evidence.

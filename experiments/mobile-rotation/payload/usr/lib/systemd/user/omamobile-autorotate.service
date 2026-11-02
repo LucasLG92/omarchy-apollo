@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=Apollo screen rotation through the existing SSC SensorProxy
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/lib/omamobile-apollo/rotation.py --profile /etc/apollo/rotation.json
+Restart=no
+
+[Install]
+WantedBy=graphical-session.target

@@ -2,3 +2,12 @@
 *.png binary
 *.jpg binary
 *.webp binary
+# Preserve the reviewed upstream/source bytes, including a deliberate CRLF CSS.
+patches/hyprland-dmabuf/*.patch -text whitespace=-blank-at-eol
+patches/phone-omarchy/* -text
+patches/phone-omarchy/*.patch whitespace=-blank-at-eol
+patches/phone-omarchy/phone-style.css whitespace=cr-at-eol
+patches/phone-omarchy/COPYING-Calls whitespace=-blank-at-eof
+experiments/sim-continuation/source/** -text
+experiments/mobile-rotation/payload/** -text
+experiments/mobile-rotation/PKGBUILD.reference -text

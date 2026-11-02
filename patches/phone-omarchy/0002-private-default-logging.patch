@@ -1,0 +1,32 @@
+--- a/src/calls-log.c
++++ b/src/calls-log.c
+@@ -173,8 +173,9 @@
+   const char *log_domain = NULL;
+   const char *log_message = NULL;
+ 
++  /* Detailed formatting must not bypass the severity/verbosity filter. */
+   /* If domain is “all” show logs upto debug regardless of the verbosity */
+-  switch ((int) log_level) {
++  switch ((int) (log_level & ~CALLS_LOG_DETAILED)) {
+   case G_LOG_LEVEL_MESSAGE:
+     if (any_domain || domains)
+       break;
+@@ -234,7 +235,7 @@
+   if (!log_message)
+     log_message = "(NULL) message";
+ 
+-  if (any_domain || strcasestr (domains, log_domain))
++  if (!domains || any_domain || strcasestr (domains, log_domain))
+     return calls_log_write (log_level, log_domain, log_message,
+                             fields, n_fields, user_data);
+ 
+@@ -258,7 +259,8 @@
+     if (domains && !*domains)
+       g_clear_pointer (&domains, g_free);
+ 
+-    if (!domains || g_str_equal (domains, "all"))
++    /* Debug output, which may contain phone numbers, requires opt-in. */
++    if (domains && g_str_equal (domains, "all"))
+       any_domain = TRUE;
+ 
+     stderr_is_journal = g_log_writer_is_journald (fileno (stderr));

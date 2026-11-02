@@ -1,0 +1,27 @@
+{
+  "upstream": "https://download.gnome.org/sources/calls/51/calls-51.1.tar.xz",
+  "upstream_sha256": "b98b8d061264ee8ea65115facfcd0a3f979a0bace43fcfc71f603c7629b94feb",
+  "patch_order": [
+    "0001-omarchy-appearance.patch",
+    "0002-private-default-logging.patch",
+    "0001-calls-mobile-geometry.patch",
+    "0004-omarchy-phone-ui.patch"
+  ],
+  "files": {
+    "0001-calls-mobile-geometry.patch": "89bdc21500f4e115f8b68f633f29c0e355c307eb7175231dc6d5bb111ae6931d",
+    "0001-omarchy-appearance.patch": "167fd4c89c3a814574a99da49ebc055864204f1171e8cb0e1d996c3513d64767",
+    "0002-private-default-logging.patch": "555b000424ac5d1e6813bbfadb11e2154ea3b76b103bf5ccaa324a7aa43135a4",
+    "0004-omarchy-phone-ui.patch": "eeb962a8433ff086655e5c1ec24c82086dd944620136d23d856c2080545d35ed",
+    "COPYING-Calls": "0ae0485a5bd37a63e63603596417e4eb0e653334fa6c7f932ca3a0e85d4af227",
+    "COPYING-libcall-ui": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+    "LICENSE-MIT-additional-style-and-scripts": "ab76b9a32b4736c4af1d5bf0b72b14ed8372e90417201ac7d948cd00f57fc809",
+    "Omarchy-logo-LICENSE.txt": "f7e03b0c6e168a16a4dcc8573760b0d877e0854460f851746cc4a784c6d09707",
+    "omarchy-logo.png": "ba8f1547a02ab5db64fe3923d0b834a220e2c3798c1674374a0eb92a18dfddfb",
+    "phone-style.css": "649b27c39c377811a84a07c3106ed9781379e6edc5d8b569c80e53e0f843e718"
+  },
+  "installed_package": "gnome-calls 51.1.apollo3-1",
+  "source_paths_changed_from_previous_ui": 10,
+  "protected_C_header_provider_source_paths_unchanged": 197,
+  "exact_source_reconstruction_requires_phone_style_copy_after_patch_4": true,
+  "phone_main_screen_human_accepted": true
+}

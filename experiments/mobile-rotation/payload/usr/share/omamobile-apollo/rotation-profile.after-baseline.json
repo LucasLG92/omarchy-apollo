@@ -1,0 +1,9 @@
+{
+  "monitor": "DSI-1",
+  "touch_device": "nvtcapacitivetouchscreen",
+  "baseline_monitor_transform": 0,
+  "baseline_touch_transform": 0,
+  "baseline_touch_output": "DSI-1",
+  "monitor_rule_verified": true,
+  "orientation_map": [0, 1, 2, 3]
+}

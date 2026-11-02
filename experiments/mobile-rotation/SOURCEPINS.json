@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0-2",
+  "license": "MIT",
+  "files": {
+    "usr/lib/omamobile-apollo/rotation.py": "9fc190040efd4a232c39069e61d7b650a6b155bc2071f032128796b71245e9f1",
+    "usr/lib/systemd/user/omamobile-autorotate.service": "28150a02c9c136918d4b82a685a46d0456c36eaf62885cc8297318f33a6493ee",
+    "etc/apollo/rotation.json": "21383636f99d53c99f3670a8d77f6511feb0731fed6fb25eb87bbf21aa055cac",
+    "usr/share/omamobile-apollo/rotation-baseline.lua": "c6297e5308e49b1fb7febaef531bbb7c100e1df64fa584eec13c282cb7d234a8",
+    "usr/share/omamobile-apollo/rotation-profile.after-baseline.json": "21383636f99d53c99f3670a8d77f6511feb0731fed6fb25eb87bbf21aa055cac",
+    "usr/share/licenses/omamobile-apollo-rotation/LICENSE": "bb93129e7dee018657c54d7235030ef300acf420d899cf6581fae3ad498fc68a"
+  },
+  "installed_enabled_active": true,
+  "sensor_triggered_transform_observed": true,
+  "physical_image_and_touch_acceptance": false,
+  "reference_recipe_archive_not_distributed": true
+}

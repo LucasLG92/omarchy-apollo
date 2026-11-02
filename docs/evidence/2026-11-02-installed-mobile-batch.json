@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "date": "2026-11-02",
+  "evidence_type": "sanitized controller-reviewed installed-device milestone summary",
+  "supersedes_current_state_in": [
+    "2026-11-02-engineering-candidates.json",
+    "2026-11-02-cold-boot-sim-desktop.json"
+  ],
+  "independent_reproduction": false,
+  "tested_model": "Xiaomi Mi 10T Pro",
+  "full_phone_functionality_verified": false,
+  "native_installation_complete": true,
+  "internal_root_normal_boot_verified": true,
+  "kernel": {
+    "release": "7.1.0-apollo-native-r9",
+    "permanent_boot_committed": true,
+    "normal_boot_verified": true,
+    "landlock_abi": 9,
+    "module_integrity_checks_passed": 503,
+    "recovery_and_dtbo_preserved": true
+  },
+  "desktop": {
+    "hyprland_package": "0.57.0-2.1",
+    "upstream_dmabuf_backport_installed": true,
+    "normal_reboot_human_accepted": true,
+    "unlimited_cold_boot_reliability_proven": false
+  },
+  "phone": {
+    "package": "51.1.apollo3-1",
+    "main_screen_human_accepted": true,
+    "synthetic_full_window_viewports": [
+      [
+        432,
+        960
+      ],
+      [
+        432,
+        520
+      ],
+      [
+        800,
+        360
+      ],
+      [
+        360,
+        756
+      ]
+    ],
+    "synthetic_key_targets": 12,
+    "minimum_synthetic_touch_target_pixels": 44,
+    "synthetic_navigation_targets": 3,
+    "synthetic_dial_signals": 0,
+    "synthetic_gtk_css_template_warnings": 0,
+    "protected_C_header_provider_source_paths_unchanged": 197
+  },
+  "sim": {
+    "package": "0.2.2-1",
+    "human_continuity_after_normal_reboot_accepted": true,
+    "automatic_pin_retry": false,
+    "new_subscriber_or_credentials_test_data_exported": false
+  },
+  "rotation": {
+    "package": "0.2.0-2",
+    "installed_enabled_active": true,
+    "sensor_transform_observed": true,
+    "physical_image_touch_acceptance": false
+  },
+  "video": {
+    "venus_h264_followup_frames": 180,
+    "followup_seconds": 6,
+    "followup_exit": 0,
+    "earlier_intermittent_abort_root_cause_known": false,
+    "battery_or_speed_ratio_claimed": false
+  },
+  "waydroid": {
+    "installation_in_progress": true,
+    "android_runtime_verified": false,
+    "apk_install_verified": false,
+    "gpu_acceleration_verified": false,
+    "google_play_verified": false
+  },
+  "first_user": {
+    "r3_host_prepared_and_signed": true,
+    "clean_sddm_logind_session_verified": false,
+    "installed": true,
+    "package": "apollo-firstboot-userland 0.1.0-3",
+    "native_profile": "20261101-11",
+    "existing_owner_ready_guard_preserved": true,
+    "new_owner_wizard_activated": false
+  },
+  "unverified": [
+    "microphone/uplink",
+    "incoming calls",
+    "SMS",
+    "IPv6",
+    "other SIMs/networks",
+    "GPS",
+    "fingerprint",
+    "proximity",
+    "IR transmission",
+    "Bluetooth pairing/audio",
+    "battery life",
+    "physical suspend/wake"
+  ],
+  "private_data": {
+    "identifiers_networks_subscribers_credentials": false,
+    "raw_logs": false,
+    "per_unit_calibration_firmware_or_images": false,
+    "personal_or_phone_captures": false
+  }
+}

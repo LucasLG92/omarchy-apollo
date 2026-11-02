@@ -1,0 +1,119 @@
+keypad > grid > button, .dial-button, .delete-button .rounded-button {
+  border-radius: 9999px;
+}
+
+.dial-button {
+  padding: 19px 42px;
+}
+
+.delete-button {
+  padding: 8px 12px;
+}
+
+.phone-number-entry {
+  font-size: 24px;
+}
+
+.address-entry {
+  font-size: 18px;
+}
+
+.error-state-message {
+  background-color: @error_color;
+  border-bottom: 1px solid darker(@error_color);
+  color: @white;
+  padding: 6px;
+}
+
+.no-background {
+  background: none;
+}
+
+/* Apollo appearance layer (MIT additional fragment).
+ * Geometry is declared in libcall-ui's own stylesheet, which the real
+ * application loads later at the same priority. Colors follow GTK's palette.
+ */
+window { font-family: monospace; }
+
+/* SPDX-License-Identifier: MIT
+ * Omarchy Phone presentation. Geometry is shared with the libcall-ui provider
+ * at its real priority; the active Omarchy GTK palette supplies all colors.
+ */
+window.omarchy-phone {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 14px;
+}
+window.omarchy-phone headerbar {
+  box-shadow: none;
+  border-bottom: 1px solid alpha(currentColor, 0.18);
+  border-radius: 0;
+  min-height: 56px;
+}
+window.omarchy-phone .omarchy-phone-title { font-size: 12px; font-weight: 400; }
+window.omarchy-phone .omarchy-phone-brand { padding: 4px 0; }
+window.omarchy-phone button,
+window.omarchy-phone entry,
+window.omarchy-phone row,
+window.omarchy-phone .card,
+window.omarchy-phone .boxed-list,
+window.omarchy-phone .rounded-button {
+  border-radius: 0;
+  box-shadow: none;
+}
+window.omarchy-phone .omarchy-phone-tabs button {
+  border: 1px solid alpha(currentColor, 0.18);
+  margin: 4px;
+  min-height: 44px;
+  padding: 4px 10px;
+}
+window.omarchy-phone .omarchy-phone-tabs button label { font-size: 12px; }
+window.omarchy-phone row { min-height: 48px; }
+window.omarchy-phone cui-keypad > grid > button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+window.omarchy-phone cui-keypad > grid > button > box { min-height: 44px; }
+window.omarchy-phone cui-keypad .digit,
+window.omarchy-phone cui-keypad .symbol {
+  font-size: 24px;
+  font-weight: 400;
+  font-stretch: normal;
+  font-feature-settings: "tnum";
+}
+window.omarchy-phone cui-keypad .letters { font-size: 10px; font-stretch: normal; }
+window.omarchy-phone cui-dialpad .phone-number-entry {
+  font-size: 22px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 8px;
+}
+window.omarchy-phone cui-dialpad .dial-button {
+  min-width: 56px;
+  min-height: 44px;
+  padding: 4px 12px;
+}
+window.omarchy-phone cui-dialpad .delete-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+@media (prefers-contrast: no-preference) {
+  window.omarchy-phone { background: var(--window-bg-color); color: var(--window-fg-color); }
+  window.omarchy-phone headerbar { background: var(--window-bg-color); }
+  window.omarchy-phone .omarchy-phone-tabs button { background: var(--view-bg-color); }
+  window.omarchy-phone .omarchy-phone-tabs button:checked {
+    color: var(--accent-color);
+    background: alpha(var(--accent-bg-color), 0.14);
+    border-color: var(--accent-color);
+  }
+  window.omarchy-phone cui-keypad > grid > button {
+    background: var(--view-bg-color);
+    color: var(--window-fg-color);
+    border: 1px solid alpha(var(--window-fg-color), 0.26);
+  }
+  window.omarchy-phone cui-keypad > grid > button:active {
+    background: alpha(var(--accent-bg-color), 0.22);
+  }
+  window.omarchy-phone .boxed-list { border: 1px solid alpha(var(--window-fg-color), 0.18); }
+}

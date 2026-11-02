@@ -1,0 +1,880 @@
+--- a/src/calls.gresources.xml
++++ b/src/calls.gresources.xml
+@@ -16,6 +16,7 @@
+   <gresource prefix="/org/gnome/Calls/">
+     <file>style.css</file>
+     <file>org.gnome.Calls.metainfo.xml</file>
++    <file>omarchy-logo.png</file>
+   </gresource>
+   <gresource prefix="/org/gnome/Calls/icons/">
+     <file>call-arrow-incoming-symbolic.svg</file>
+--- a/src/style.css
++++ b/src/style.css
+@@ -34,3 +34,86 @@
+  * application loads later at the same priority. Colors follow GTK's palette.
+  */
+ window { font-family: monospace; }
++
++/* SPDX-License-Identifier: MIT
++ * Omarchy Phone presentation. Geometry is shared with the libcall-ui provider
++ * at its real priority; the active Omarchy GTK palette supplies all colors.
++ */
++window.omarchy-phone {
++  font-family: "JetBrainsMono Nerd Font", monospace;
++  font-size: 14px;
++}
++window.omarchy-phone headerbar {
++  box-shadow: none;
++  border-bottom: 1px solid alpha(currentColor, 0.18);
++  border-radius: 0;
++  min-height: 56px;
++}
++window.omarchy-phone .omarchy-phone-title { font-size: 12px; font-weight: 400; }
++window.omarchy-phone .omarchy-phone-brand { padding: 4px 0; }
++window.omarchy-phone button,
++window.omarchy-phone entry,
++window.omarchy-phone row,
++window.omarchy-phone .card,
++window.omarchy-phone .boxed-list,
++window.omarchy-phone .rounded-button {
++  border-radius: 0;
++  box-shadow: none;
++}
++window.omarchy-phone .omarchy-phone-tabs button {
++  border: 1px solid alpha(currentColor, 0.18);
++  margin: 4px;
++  min-height: 44px;
++  padding: 4px 10px;
++}
++window.omarchy-phone .omarchy-phone-tabs button label { font-size: 12px; }
++window.omarchy-phone row { min-height: 48px; }
++window.omarchy-phone cui-keypad > grid > button {
++  min-width: 44px;
++  min-height: 44px;
++  padding: 0;
++}
++window.omarchy-phone cui-keypad > grid > button > box { min-height: 44px; }
++window.omarchy-phone cui-keypad .digit,
++window.omarchy-phone cui-keypad .symbol {
++  font-size: 24px;
++  font-weight: 400;
++  font-stretch: normal;
++  font-feature-settings: "tnum";
++}
++window.omarchy-phone cui-keypad .letters { font-size: 10px; font-stretch: normal; }
++window.omarchy-phone cui-dialpad .phone-number-entry {
++  font-size: 22px;
++  min-width: 0;
++  min-height: 44px;
++  padding: 4px 8px;
++}
++window.omarchy-phone cui-dialpad .dial-button {
++  min-width: 56px;
++  min-height: 44px;
++  padding: 4px 12px;
++}
++window.omarchy-phone cui-dialpad .delete-button {
++  min-width: 44px;
++  min-height: 44px;
++  padding: 0;
++}
++@media (prefers-contrast: no-preference) {
++  window.omarchy-phone { background: var(--window-bg-color); color: var(--window-fg-color); }
++  window.omarchy-phone headerbar { background: var(--window-bg-color); }
++  window.omarchy-phone .omarchy-phone-tabs button { background: var(--view-bg-color); }
++  window.omarchy-phone .omarchy-phone-tabs button:checked {
++    color: var(--accent-color);
++    background: alpha(var(--accent-bg-color), 0.14);
++    border-color: var(--accent-color);
++  }
++  window.omarchy-phone cui-keypad > grid > button {
++    background: var(--view-bg-color);
++    color: var(--window-fg-color);
++    border: 1px solid alpha(var(--window-fg-color), 0.26);
++  }
++  window.omarchy-phone cui-keypad > grid > button:active {
++    background: alpha(var(--accent-bg-color), 0.22);
++  }
++  window.omarchy-phone .boxed-list { border: 1px solid alpha(var(--window-fg-color), 0.18); }
++}
+--- a/src/ui/account-overview.ui
++++ b/src/ui/account-overview.ui
+@@ -9,7 +9,7 @@
+         <child type="top">
+           <object class="AdwHeaderBar">
+             <child type="end">
+-              <object class="GtkSpinner" id="spinner"/>
++              <object class="GtkSpinner" id="spinner" />
+             </child>
+           </object>
+         </child>
+@@ -36,9 +36,9 @@
+                             <property name="halign">center</property>
+                             <property name="use-underline">True</property>
+                             <property name="label" translatable="yes">_Add Account</property>
+-                            <signal name="clicked" handler="on_add_account_clicked" swapped="yes"/>
++                            <signal name="clicked" handler="on_add_account_clicked" swapped="yes" />
+                             <style>
+-                              <class name="suggested-action"/>
++                              <class name="suggested-action" />
+                             </style>
+                           </object>
+                         </child>
+@@ -56,9 +56,9 @@
+                         <property name="margin-bottom">18</property>
+                         <property name="margin-start">12</property>
+                         <property name="margin-end">12</property>
+-                        <signal name="row-activated" handler="on_account_row_activated" swapped="no"/>
++                        <signal name="row-activated" handler="on_account_row_activated" swapped="no" />
+                         <style>
+-                          <class name="boxed-list"/>
++                          <class name="boxed-list" />
+                         </style>
+                       </object>
+                     </property>
+@@ -70,6 +70,9 @@
+         </property>
+       </object>
+     </child>
++    <style>
++      <class name="omarchy-phone" />
++    </style>
+   </template>
+   <object class="GtkListBoxRow" id="add_row">
+     <property name="child">
+--- a/src/ui/call-window.ui
++++ b/src/ui/call-window.ui
+@@ -20,7 +20,7 @@
+                         <property name="column_spacing">12</property>
+                         <property name="row_spacing">12</property>
+                         <property name="selection_mode">none</property>
+-                        <signal name="child-activated" handler="call_selector_child_activated_cb" swapped="no"/>
++                        <signal name="child-activated" handler="call_selector_child_activated_cb" swapped="no" />
+                       </object>
+                     </property>
+                   </object>
+@@ -44,12 +44,12 @@
+     </child>
+     <child type="titlebar">
+       <object class="GtkStack" id="header_bar_stack">
+-        <property name="visible_child_name" bind-source="main_stack" bind-property="visible_child_name" bind-flags="bidirectional|sync-create"/>
++        <property name="visible_child_name" bind-source="main_stack" bind-property="visible_child_name" bind-flags="bidirectional|sync-create" />
+         <child>
+           <object class="GtkStackPage">
+             <property name="name">calls</property>
+             <property name="child">
+-              <object class="GtkHeaderBar"/>
++              <object class="GtkHeaderBar" />
+             </property>
+           </object>
+         </child>
+@@ -61,7 +61,7 @@
+                 <child>
+                   <object class="GtkButton" id="show_calls">
+                     <property name="icon-name">system-switch-user-symbolic</property>
+-                    <signal name="clicked" handler="show_calls_clicked_cb" swapped="no"/>
++                    <signal name="clicked" handler="show_calls_clicked_cb" swapped="no" />
+                   </object>
+                 </child>
+               </object>
+@@ -70,5 +70,8 @@
+         </child>
+       </object>
+     </child>
++    <style>
++      <class name="omarchy-phone" />
++    </style>
+   </template>
+ </interface>
+--- a/src/ui/main-window.ui
++++ b/src/ui/main-window.ui
+@@ -7,26 +7,79 @@
+     <property name="width-request">360</property>
+     <property name="height-request">294</property>
+     <child>
+-      <object class="AdwBreakpoint">
+-        <condition>max-width: 510sp</condition>
+-        <setter object="header_bar" property="title-widget"/>
+-        <setter object="switcher_bar" property="reveal">True</setter>
+-      </object>
+-    </child>
+-    <child>
+       <object class="AdwToolbarView">
+         <child type="top">
+           <object class="AdwHeaderBar" id="header_bar">
+             <child type="title">
+-              <object class="AdwViewSwitcher" id="title_switcher">
+-                <property name="policy">wide</property>
+-                <property name="stack">main_stack</property>
++              <object class="GtkBox">
++                <property name="orientation">vertical</property>
++                <property name="spacing">3</property>
++                <style>
++                  <class name="omarchy-phone-brand" />
++                </style>
++                <child>
++                  <!-- The original800x188 logo is an unmeasured overlay, so
++                       its natural size cannot grow the header with window width. -->
++                  <object class="GtkOverlay">
++                    <property name="halign">center</property>
++                    <property name="width-request">112</property>
++                    <property name="height-request">26</property>
++                    <property name="child">
++                      <object class="GtkBox">
++                        <property name="width-request">112</property>
++                        <property name="height-request">26</property>
++                      </object>
++                    </property>
++                    <child type="overlay">
++                      <object class="GtkPicture">
++                        <property name="file">resource:///org/gnome/Calls/omarchy-logo.png</property>
++                        <property name="can-shrink">True</property>
++                        <property name="content-fit">contain</property>
++                      </object>
++                    </child>
++                  </object>
++                </child>
++                <child>
++                  <object class="GtkLabel">
++                    <property name="label" translatable="yes">Calls</property>
++                    <style>
++                      <class name="omarchy-phone-title" />
++                    </style>
++                  </object>
++                </child>
+               </object>
+             </child>
+             <child type="end">
+               <object class="GtkMenuButton">
+                 <property name="menu-model">app-menu</property>
+                 <property name="icon-name">open-menu-symbolic</property>
++              </object>
++            </child>
++            <property name="show-start-title-buttons">False</property>
++            <property name="show-end-title-buttons">False</property>
++            <style>
++              <class name="omarchy-phone-header" />
++            </style>
++          </object>
++        </child>
++        <child type="top">
++          <object class="GtkBox">
++            <property name="orientation">horizontal</property>
++            <property name="margin-start">12</property>
++            <property name="margin-end">12</property>
++            <property name="margin-bottom">8</property>
++            <property name="hexpand">True</property>
++            <style>
++              <class name="omarchy-phone-navigation" />
++            </style>
++            <child>
++              <object class="AdwViewSwitcher" id="title_switcher">
++                <property name="policy">narrow</property>
++                <property name="stack">main_stack</property>
++                <property name="hexpand">True</property>
++                <style>
++                  <class name="omarchy-phone-tabs" />
++                </style>
+               </object>
+             </child>
+           </object>
+@@ -55,12 +108,22 @@
+         <child type="bottom">
+           <object class="AdwViewSwitcherBar" id="switcher_bar">
+             <property name="stack">main_stack</property>
+-          </object>
+-        </child>
++            <property name="visible">False</property>
++            <property name="reveal">False</property>
++          </object>
++        </child>
++      </object>
++    </child>
++    <style>
++      <class name="omarchy-phone" />
++    </style>
++    <child>
++      <object class="AdwBreakpoint">
++        <condition>max-height: 420px</condition>
++        <setter object="CallsMainWindow" property="name">omarchy-phone-compact</setter>
+       </object>
+     </child>
+   </template>
+-
+   <object class="AdwDialog" id="ussd_dialog">
+     <property name="default-widget">ussd_entry</property>
+     <property name="title" translatable="yes">USSD</property>
+@@ -76,16 +139,16 @@
+                 <property name="use-underline">True</property>
+                 <property name="focus-on-click">False</property>
+                 <property name="label" translatable="yes">_Cancel</property>
+-                <signal name="clicked" handler="window_ussd_cancel_clicked_cb" swapped="yes"/>
++                <signal name="clicked" handler="window_ussd_cancel_clicked_cb" swapped="yes" />
+               </object>
+             </child>
+             <child type="start">
+               <object class="GtkButton" id="ussd_close_button">
+-                <property name="visible" bind-source="ussd_cancel_button" bind-property="visible" bind-flags="sync-create|invert-boolean|bidirectional"/>
++                <property name="visible" bind-source="ussd_cancel_button" bind-property="visible" bind-flags="sync-create|invert-boolean|bidirectional" />
+                 <property name="focus-on-click">False</property>
+                 <property name="use-underline">True</property>
+                 <property name="label" translatable="yes">_Close</property>
+-                <signal name="clicked" handler="adw_dialog_close" object="ussd_dialog" swapped="yes"/>
++                <signal name="clicked" handler="adw_dialog_close" object="ussd_dialog" swapped="yes" />
+               </object>
+             </child>
+             <child type="end">
+@@ -94,9 +157,9 @@
+                 <property name="focus-on-click">False</property>
+                 <property name="sensitive">False</property>
+                 <property name="use-underline">True</property>
+-                <signal name="clicked" handler="window_ussd_reply_clicked_cb" swapped="yes"/>
++                <signal name="clicked" handler="window_ussd_reply_clicked_cb" swapped="yes" />
+                 <style>
+-                  <class name="suggested-action"/>
++                  <class name="suggested-action" />
+                 </style>
+               </object>
+             </child>
+@@ -128,7 +191,7 @@
+                       <object class="GtkEntry" id="ussd_entry">
+                         <property name="visible">False</property>
+                         <property name="input-purpose">phone</property>
+-                        <signal name="changed" handler="window_ussd_entry_changed_cb" swapped="yes"/>
++                        <signal name="changed" handler="window_ussd_entry_changed_cb" swapped="yes" />
+                       </object>
+                     </child>
+                   </object>
+@@ -148,7 +211,6 @@
+       </object>
+     </property>
+   </object>
+-
+   <menu id="app-menu">
+     <section>
+       <item>
+@@ -157,14 +219,6 @@
+       </item>
+     </section>
+     <section>
+-      <!--item>
+-          <attribute name="label" translatable="yes">_Keyboard shortcuts</attribute>
+-          <attribute name="action"></attribute>
+-          </item-->
+-      <!--item>
+-          <attribute name="label" translatable="yes">_Help</attribute>
+-          <attribute name="action"></attribute>
+-          </item-->
+       <item>
+         <attribute name="label" translatable="yes" comments="&quot;Calls&quot; is the application name, do not translate">_About Calls</attribute>
+         <attribute name="action">win.about</attribute>
+--- a/src/ui/new-call-box.ui
++++ b/src/ui/new-call-box.ui
+@@ -14,7 +14,7 @@
+             <property name="orientation">vertical</property>
+             <child>
+               <object class="AdwClamp">
+-                <property name="orientation">vertical</property>
++                <property name="orientation">horizontal</property>
+                 <child>
+                   <object class="GtkBox">
+                     <property name="orientation">vertical</property>
+@@ -24,38 +24,39 @@
+                         <property name="halign">center</property>
+                         <child>
+                           <object class="AdwComboRow" id="origin_list">
+-                            <signal name="notify::selected" handler="notify_selected_index_cb" swapped="yes"/>
++                            <signal name="notify::selected" handler="notify_selected_index_cb" swapped="yes" />
+                           </object>
+                         </child>
+                       </object>
+                     </child>
+                     <child>
+                       <object class="GtkEntry" id="address_entry">
+-                        <property name="visible" bind-source="CallsNewCallBox" bind-property="numeric-input-only" bind-flags="sync-create|invert-boolean"/>
++                        <property name="visible" bind-source="CallsNewCallBox" bind-property="numeric-input-only" bind-flags="sync-create|invert-boolean" />
+                         <property name="xalign">0.5</property>
+                         <property name="placeholder-text" translatable="yes">Enter a VoIP address</property>
+-                        <signal name="activate" handler="address_activate_cb" swapped="yes"/>
+-                        <signal name="changed" handler="address_changed_cb" swapped="yes"/>
++                        <signal name="activate" handler="address_activate_cb" swapped="yes" />
++                        <signal name="changed" handler="address_changed_cb" swapped="yes" />
+                         <style>
+-                          <class name="address-entry"/>
++                          <class name="address-entry" />
+                         </style>
+                       </object>
+                     </child>
+                     <child>
+                       <object class="CuiDialpad" id="dialpad">
+-                        <property name="visible" bind-source="CallsNewCallBox" bind-property="numeric-input-only" bind-flags="sync-create"/>
+-                        <signal name="dialed" handler="dialpad_dialed_cb"/>
++                        <property name="visible" bind-source="CallsNewCallBox" bind-property="numeric-input-only" bind-flags="sync-create" />
++                        <signal name="dialed" handler="dialpad_dialed_cb" />
++                        <property name="vexpand">True</property>
+                       </object>
+                     </child>
+                     <child>
+                       <object class="GtkListBox" id="result_list">
+-                        <property name="visible" bind-source="CallsNewCallBox" bind-property="numeric-input-only" bind-flags="sync-create|invert-boolean"/>
++                        <property name="visible" bind-source="CallsNewCallBox" bind-property="numeric-input-only" bind-flags="sync-create|invert-boolean" />
+                         <property name="margin-top">16</property>
+                         <property name="selection-mode">none</property>
+                         <child>
+                           <object class="AdwActionRow" id="result">
+                             <property name="visible">False</property>
+-                            <property name="title" bind-source="address_entry" bind-property="text"/>
++                            <property name="title" bind-source="address_entry" bind-property="text" />
+                             <property name="width-request">300</property>
+                             <property name="subtitle" translatable="yes">SIP Account</property>
+                             <child type="prefix">
+@@ -67,9 +68,9 @@
+                             <child>
+                               <object class="GtkButton" id="dial_result_btn">
+                                 <property name="icon-name">call-start-symbolic</property>
+-                                <signal name="clicked" handler="dial_result_clicked_cb" swapped="yes"/>
++                                <signal name="clicked" handler="dial_result_clicked_cb" swapped="yes" />
+                                 <style>
+-                                  <class name="rounded-button"/>
++                                  <class name="rounded-button" />
+                                 </style>
+                               </object>
+                             </child>
+@@ -77,13 +78,20 @@
+                         </child>
+                       </object>
+                     </child>
++                    <property name="vexpand">True</property>
+                   </object>
+                 </child>
++                <property name="maximum-size">960</property>
++                <property name="vexpand">True</property>
+               </object>
+             </child>
++            <property name="vexpand">True</property>
+           </object>
+         </property>
+       </object>
+     </child>
++    <style>
++      <class name="omarchy-phone-dialer" />
++    </style>
+   </template>
+ </interface>
+--- a/subprojects/libcall-ui/src/cui-dialpad.ui
++++ b/subprojects/libcall-ui/src/cui-dialpad.ui
+@@ -14,45 +14,72 @@
+             <property name="margin-bottom">8</property>
+             <property name="orientation">horizontal</property>
+             <child>
+-              <object class="GtkEntry" id="keypad_entry">
++              <object class="GtkBox" id="entry_row">
++                <property name="orientation">horizontal</property>
++                <property name="spacing">8</property>
+                 <property name="hexpand">True</property>
+-                <property name="xalign">0.5</property>
+-                <property name="placeholder-text" translatable="True">Enter a number</property>
+-                <property name="tooltip-text" translatable="True">Type a phone number</property>
+-                <signal name="activate" handler="dial_clicked_or_activated_cb" swapped="yes" />
+-                <style>
+-                  <class name="phone-number-entry" />
+-                </style>
+-                <property name="width-chars">1</property>
+-                <property name="max-width-chars">18</property>
+                 <property name="valign">center</property>
++                <child>
++                  <object class="GtkEntry" id="keypad_entry">
++                    <property name="hexpand">True</property>
++                    <property name="xalign">0.5</property>
++                    <property name="placeholder-text" translatable="True">Enter a number</property>
++                    <property name="tooltip-text" translatable="True">Type a phone number</property>
++                    <signal name="activate" handler="dial_clicked_or_activated_cb" swapped="yes" />
++                    <style>
++                      <class name="phone-number-entry" />
++                    </style>
++                    <property name="width-chars">1</property>
++                    <property name="max-width-chars">8</property>
++                    <property name="valign">center</property>
++                  </object>
++                </child>
++                <child>
++                  <object class="GtkButton" id="backspace">
++                    <property name="receives-default">True</property>
++                    <property name="halign">center</property>
++                    <property name="valign">center</property>
++                    <property name="margin-end">0</property>
++                    <signal name="clicked" handler="backspace_clicked_cb" swapped="yes" />
++                    <child>
++                      <object class="GtkImage">
++                        <property name="icon-name">edit-clear-symbolic</property>
++                      </object>
++                    </child>
++                    <style>
++                      <class name="delete-button" />
++                    </style>
++                  </object>
++                </child>
+               </object>
+             </child>
+             <property name="child-spacing">16</property>
+-            <property name="line-spacing">8</property>
++            <property name="line-spacing">12</property>
+             <property name="align">0.5</property>
+-            <property name="natural-line-length">300</property>
++            <property name="natural-line-length">640</property>
+             <child>
+               <object class="AdwWrapBox" id="keypad_controls">
+                 <property name="orientation">horizontal</property>
+                 <property name="child-spacing">16</property>
+                 <property name="line-spacing">8</property>
+                 <property name="align">0.5</property>
+-                <property name="natural-line-length">350</property>
++                <property name="natural-line-length">360</property>
+                 <child>
+                   <object class="CuiKeypad" id="keypad">
+-                    <property name="halign">center</property>
+-                    <property name="margin-top">8</property>
+-                    <property name="margin-bottom">8</property>
+-                    <property name="row-spacing">8</property>
++                    <property name="halign">fill</property>
++                    <property name="margin-top">0</property>
++                    <property name="margin-bottom">0</property>
++                    <property name="row-spacing">4</property>
+                     <property name="column-spacing">12</property>
+                     <property name="entry">keypad_entry</property>
+                     <property name="valign">center</property>
++                    <property name="hexpand">True</property>
++                    <property name="width-request">264</property>
+                   </object>
+                 </child>
+                 <child>
+                   <object class="GtkBox" id="control_box">
+-                    <property name="hexpand">False</property>
++                    <property name="hexpand">True</property>
+                     <child>
+                       <object class="GtkButton" id="dial">
+                         <property name="receives-default">True</property>
+@@ -69,36 +96,29 @@
+                           <class name="suggested-action" />
+                           <class name="image-button" />
+                         </style>
+-                      </object>
+-                    </child>
+-                    <child>
+-                      <object class="GtkButton" id="backspace">
+-                        <property name="receives-default">True</property>
+-                        <property name="halign">center</property>
+-                        <property name="valign">center</property>
+-                        <property name="margin-end">0</property>
+-                        <signal name="clicked" handler="backspace_clicked_cb" swapped="yes" />
+-                        <child>
+-                          <object class="GtkImage">
+-                            <property name="icon-name">edit-clear-symbolic</property>
+-                          </object>
+-                        </child>
+-                        <style>
+-                          <class name="delete-button" />
+-                        </style>
++                        <property name="hexpand">True</property>
++                        <property name="width-request">80</property>
++                        <property name="height-request">52</property>
+                       </object>
+                     </child>
+                     <property name="orientation">horizontal</property>
+-                    <property name="spacing">12</property>
+-                    <property name="halign">center</property>
++                    <property name="spacing">0</property>
++                    <property name="halign">fill</property>
+                     <property name="valign">center</property>
+                   </object>
+                 </child>
++                <property name="hexpand">True</property>
++                <property name="valign">center</property>
+               </object>
+             </child>
++            <property name="valign">center</property>
+           </object>
+         </child>
++        <property name="vexpand">True</property>
+       </object>
+     </child>
++    <style>
++      <class name="omarchy-phone-pad" />
++    </style>
+   </template>
+ </interface>
+--- a/subprojects/libcall-ui/src/cui-keypad.ui
++++ b/subprojects/libcall-ui/src/cui-keypad.ui
+@@ -1,21 +1,21 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <interface domain="call-ui">
+-  <requires lib="gtk" version="4.0"/>
++  <requires lib="gtk" version="4.0" />
+   <template class="CuiKeypad" parent="AdwBin">
+     <child>
+       <object class="GtkGrid" id="grid">
+-        <property name="hexpand">False</property>
++        <property name="hexpand">True</property>
+         <property name="vexpand">False</property>
+-        <property name="row-spacing" bind-source="CuiKeypad" bind-property="row-spacing" bind-flags="sync-create"/>
+-        <property name="column-spacing" bind-source="CuiKeypad" bind-property="column-spacing" bind-flags="sync-create"/>
++        <property name="row-spacing" bind-source="CuiKeypad" bind-property="row-spacing" bind-flags="sync-create" />
++        <property name="column-spacing" bind-source="CuiKeypad" bind-property="column-spacing" bind-flags="sync-create" />
+         <property name="column-homogeneous">True</property>
+         <child>
+           <object class="CuiKeypadButton" id="btn_1">
+             <property name="symbols">1</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">0</property>
+               <property name="row">0</property>
+@@ -27,8 +27,8 @@
+             <property name="symbols">2ABC</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">1</property>
+               <property name="row">0</property>
+@@ -40,8 +40,8 @@
+             <property name="symbols">3DEF</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">2</property>
+               <property name="row">0</property>
+@@ -53,8 +53,8 @@
+             <property name="symbols">4GHI</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">0</property>
+               <property name="row">1</property>
+@@ -66,8 +66,8 @@
+             <property name="symbols">5JKL</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">1</property>
+               <property name="row">1</property>
+@@ -79,8 +79,8 @@
+             <property name="symbols">6MNO</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">2</property>
+               <property name="row">1</property>
+@@ -92,8 +92,8 @@
+             <property name="symbols">7PQRS</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">0</property>
+               <property name="row">2</property>
+@@ -105,8 +105,8 @@
+             <property name="symbols">8TUV</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">1</property>
+               <property name="row">2</property>
+@@ -118,8 +118,8 @@
+             <property name="symbols">9WXYZ</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="letters-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">2</property>
+               <property name="row">2</property>
+@@ -128,14 +128,14 @@
+         </child>
+         <child>
+           <object class="GtkButton" id="btn_asterisk">
+-            <property name="visible" bind-source="CuiKeypad" bind-property="symbols-visible" bind-flags="sync-create"/>
++            <property name="visible" bind-source="CuiKeypad" bind-property="symbols-visible" bind-flags="sync-create" />
+             <property name="focus-on-click">False</property>
+-            <signal name="clicked" handler="asterisk_button_clicked_cb" swapped="yes"/>
++            <signal name="clicked" handler="asterisk_button_clicked_cb" swapped="yes" />
+             <child>
+               <object class="GtkLabel" id="label_asterisk">
+                 <property name="label">∗</property>
+                 <style>
+-                  <class name="symbol"/>
++                  <class name="symbol" />
+                 </style>
+               </object>
+             </child>
+@@ -150,8 +150,8 @@
+             <property name="symbols">0+</property>
+             <property name="visible">True</property>
+             <property name="focus_on_click">False</property>
+-            <property name="show-symbols" bind-source="CuiKeypad" bind-property="symbols-visible" bind-flags="sync-create"/>
+-            <signal name="clicked" handler="button_clicked_cb" swapped="true"/>
++            <property name="show-symbols" bind-source="CuiKeypad" bind-property="symbols-visible" bind-flags="sync-create" />
++            <signal name="clicked" handler="button_clicked_cb" swapped="true" />
+             <layout>
+               <property name="column">1</property>
+               <property name="row">3</property>
+@@ -160,14 +160,14 @@
+         </child>
+         <child>
+           <object class="GtkButton" id="btn_hash">
+-            <property name="visible" bind-source="CuiKeypad" bind-property="symbols-visible" bind-flags="sync-create"/>
++            <property name="visible" bind-source="CuiKeypad" bind-property="symbols-visible" bind-flags="sync-create" />
+             <property name="focus-on-click">False</property>
+-            <signal name="clicked" handler="hash_button_clicked_cb" swapped="yes"/>
++            <signal name="clicked" handler="hash_button_clicked_cb" swapped="yes" />
+             <child>
+               <object class="GtkLabel" id="label_hash">
+                 <property name="label">#</property>
+                 <style>
+-                  <class name="symbol"/>
++                  <class name="symbol" />
+                 </style>
+               </object>
+             </child>
+@@ -177,6 +177,7 @@
+             </layout>
+           </object>
+         </child>
++        <property name="row-homogeneous">True</property>
+       </object>
+     </child>
+   </template>
+--- a/subprojects/libcall-ui/src/style.css
++++ b/subprojects/libcall-ui/src/style.css
+@@ -96,3 +96,99 @@
+     background: alpha(var(--accent-bg-color), 0.22);
+   }
+ }
++
++/* SPDX-License-Identifier: MIT
++ * Omarchy Phone presentation. Geometry is shared with the libcall-ui provider
++ * at its real priority; the active Omarchy GTK palette supplies all colors.
++ */
++window.omarchy-phone {
++  font-family: "JetBrainsMono Nerd Font", monospace;
++  font-size: 14px;
++}
++window.omarchy-phone headerbar {
++  box-shadow: none;
++  border-bottom: 1px solid alpha(currentColor, 0.18);
++  border-radius: 0;
++  min-height: 56px;
++}
++window.omarchy-phone .omarchy-phone-title { font-size: 12px; font-weight: 400; }
++window.omarchy-phone .omarchy-phone-brand { padding: 4px 0; }
++window.omarchy-phone button,
++window.omarchy-phone entry,
++window.omarchy-phone row,
++window.omarchy-phone .card,
++window.omarchy-phone .boxed-list,
++window.omarchy-phone .rounded-button {
++  border-radius: 0;
++  box-shadow: none;
++}
++window.omarchy-phone .omarchy-phone-tabs button {
++  border: 1px solid alpha(currentColor, 0.18);
++  margin: 4px;
++  min-height: 44px;
++  padding: 4px 10px;
++}
++window.omarchy-phone .omarchy-phone-tabs button label { font-size: 12px; }
++window.omarchy-phone row { min-height: 48px; }
++window.omarchy-phone cui-keypad > grid > button {
++  min-width: 44px;
++  min-height: 44px;
++  padding: 0;
++}
++window.omarchy-phone cui-keypad > grid > button > box { min-height: 44px; }
++window.omarchy-phone cui-keypad .digit,
++window.omarchy-phone cui-keypad .symbol {
++  font-size: 24px;
++  font-weight: 400;
++  font-stretch: normal;
++  font-feature-settings: "tnum";
++}
++window.omarchy-phone cui-keypad .letters { font-size: 10px; font-stretch: normal; }
++window.omarchy-phone cui-dialpad .phone-number-entry {
++  font-size: 22px;
++  min-width: 0;
++  min-height: 44px;
++  padding: 4px 8px;
++}
++window.omarchy-phone cui-dialpad .dial-button {
++  min-width: 56px;
++  min-height: 44px;
++  padding: 4px 12px;
++}
++window.omarchy-phone cui-dialpad .delete-button {
++  min-width: 44px;
++  min-height: 44px;
++  padding: 0;
++}
++@media (prefers-contrast: no-preference) {
++  window.omarchy-phone { background: var(--window-bg-color); color: var(--window-fg-color); }
++  window.omarchy-phone headerbar { background: var(--window-bg-color); }
++  window.omarchy-phone .omarchy-phone-tabs button { background: var(--view-bg-color); }
++  window.omarchy-phone .omarchy-phone-tabs button:checked {
++    color: var(--accent-color);
++    background: alpha(var(--accent-bg-color), 0.14);
++    border-color: var(--accent-color);
++  }
++  window.omarchy-phone cui-keypad > grid > button {
++    background: var(--view-bg-color);
++    color: var(--window-fg-color);
++    border: 1px solid alpha(var(--window-fg-color), 0.26);
++  }
++  window.omarchy-phone cui-keypad > grid > button:active {
++    background: alpha(var(--accent-bg-color), 0.22);
++  }
++  window.omarchy-phone .boxed-list { border: 1px solid alpha(var(--window-fg-color), 0.18); }
++}
++
++/* Compact geometry selected by the window's libadwaita height breakpoint.
++ * LGPL-2.1-or-later. No new color roles or per-frame work.
++ */
++window#omarchy-phone-compact cui-keypad > grid > button > box { min-height: 0; }
++window#omarchy-phone-compact cui-keypad .digit,
++window#omarchy-phone-compact cui-keypad .symbol { font-size: 20px; min-height: 0; }
++window#omarchy-phone-compact cui-keypad .letters { font-size: 9px; min-height: 0; }
++
++/* Header menu keeps its official symbolic icon with a thumb-sized target.
++ * LGPL-2.1-or-later.
++ */
++window.omarchy-phone headerbar button { min-width: 44px; min-height: 44px; padding: 0; }

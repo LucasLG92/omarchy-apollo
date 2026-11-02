@@ -1,5 +1,7 @@
 # Next kernels, cold login and clean first-user setup
 
+> **Historical checkpoint.** The [later installed R9/mobile milestone](mobile-milestone-2026-11-02.md) supersedes the current-state statements below where explicitly listed. Earlier results and failures retain their original scope.
+
 **Development checkpoint, not a complete-phone release.** The permanent installation remains **R6 / boot7**. Earlier internal-root boot and local login are verified. Quickshell now uses an installed, scoped `QSG_RENDER_LOOP=basic` configuration; a live restart restored rendering, but **cold-login acceptance is pending**. This changes the render loop, not the GPU backend. The recurring black-center issue remains open.
 
 | Work | What passed | What has not passed |

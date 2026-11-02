@@ -1,0 +1,25 @@
+/* SPDX-License-Identifier: MIT
+ * Protected access composition: same original Omarchy branding as SDDM.
+ * No user theme or credential file is loaded by this privileged application.
+ */
+window.apollo-access-continuation { background: #1a1b26; color: #c0caf5;
+ font-family: "JetBrainsMono Nerd Font", monospace; font-size: 14px; }
+.apollo-access-continuation button { background: #24283b; color: #c0caf5;
+ border: 1px solid #414868; border-radius: 0; box-shadow: none; padding: 0; min-height: 0; transition: none; }
+.apollo-access-continuation button:hover { background: #303650; }
+.apollo-access-continuation button:active { background: #414868; }
+.apollo-access-continuation button:focus-visible { outline: 2px solid #a8cd76; outline-offset: 2px; }
+.apollo-access-continuation .omarchy-key { font-size: 21px; font-weight: 400; }
+.apollo-access-continuation .omarchy-primary { background: #a8cd76; color: #1a1b26;
+ border-color: #a8cd76; font-size: 16px; font-weight: 600; }
+.apollo-access-continuation .omarchy-pin-field { background: #1a1b26; color: #a8cd76;
+ border: 2px solid #a8cd76; padding: 4px 8px; }
+.apollo-access-continuation .omarchy-pin-field label { font-size: 16px; }
+.apollo-access-continuation .omarchy-inventory,
+.apollo-access-continuation .access-caption { color: #a9b1d6; font-size: 11px; }
+.apollo-access-continuation .omarchy-status { font-size: 12px; color: #c0caf5; }
+.apollo-access-continuation .access-later { background: transparent; border-color: transparent; font-size: 12px; }
+.apollo-access-continuation button:disabled { opacity: 0.55; }
+.apollo-access-continuation spinner { color: #a8cd76; }
+.apollo-access-continuation progressbar trough { min-height: 2px; background: #292e42; border: none; border-radius: 0; }
+.apollo-access-continuation progressbar progress { min-height: 2px; background: #a8cd76; border: none; border-radius: 0; }

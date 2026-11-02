@@ -1,0 +1,31 @@
+{
+  "baseline_commit": "0aa6745f705f2c4b0a5004eb019ef76e5bbdb426",
+  "patches": [
+    {
+      "commit": "27b4f82ace930d6632b21699c4c0fc675f28bd14",
+      "subject": "config: restore opt-in KMS dmabuf filtering",
+      "patch": "0001-config-restore-opt-in-KMS-dmabuf-filtering.patch",
+      "sha256": "d95fa8de5a954139dc470de4d97e7aaa99f945c073f6326ff84bd7b8ff0ddce0",
+      "source": "https://github.com/hyprwm/Hyprland/commit/27b4f82ace930d6632b21699c4c0fc675f28bd14"
+    },
+    {
+      "commit": "7a058d7e4d7abb9513fcb61ea1beeadcb66a0f3a",
+      "subject": "protocols/dmabuf: use replacement table for feedback updates",
+      "patch": "0002-protocols-dmabuf-use-replacement-table-for-feedback-updates.patch",
+      "sha256": "35929b24634af3e993b329442ad8eb52d37d259eb1a162feb9d6bd454096f90d",
+      "source": "https://github.com/hyprwm/Hyprland/commit/7a058d7e4d7abb9513fcb61ea1beeadcb66a0f3a"
+    },
+    {
+      "commit": "cd731f5e9659a17189b3ac130436a68e17cdb00b",
+      "subject": "protocols/dmabuf: refresh format feedback after config updates",
+      "patch": "0003-protocols-dmabuf-refresh-format-feedback-after-config-updates.patch",
+      "sha256": "7266f33f09b585c532f1c8d0ae9fc8dc64f4fd263a9c8a26558c08243b28dd73",
+      "source": "https://github.com/hyprwm/Hyprland/commit/cd731f5e9659a17189b3ac130436a68e17cdb00b"
+    }
+  ],
+  "license": "BSD-3-Clause",
+  "upstream_patches_unmodified": true,
+  "installed_package": "hyprland 0.57.0-2.1",
+  "normal_reboot_desktop_human_accepted": true,
+  "whole_tree_upgrade_to_candidate_commit": false
+}
