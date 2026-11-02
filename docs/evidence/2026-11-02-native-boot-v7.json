@@ -88,5 +88,6 @@
   "sim_pin_service_resumed_after_failed_state_only": true,
   "live_sim_form_replaced_for_launcher_fix": false,
   "human_pin_entry_after_launcher_wait_fix_verified": false,
-  "new_launcher_source_included": false
+  "new_launcher_source_included": false,
+  "superseded_desktop_and_sim_state_by": "2026-11-02-cold-boot-sim-desktop.json"
 }

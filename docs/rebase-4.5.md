@@ -10,7 +10,7 @@ The current development track starts from a fresh ARM64 userspace and adapts the
 | Hyprland | `0.57.0` |
 | Mesa | `26.2.6`, Freedreno FD650 |
 | Kernel | R10/R11: `7.1.0-apollo-native-r5`; R12/R13 desktop: `7.1.0-apollo-native-r6` with AW8697/IR additions and `cma=256M`; R16 minimal rescue and R17 desktop also reported R6 |
-| Mobile shell | `0.2.62.apollo45-5` |
+| Mobile shell | Earlier baseline `0.2.62.apollo45-5`; later controller-labelled shell `.8` installed with normal GPG/ALPM/Qkk verification. Gesture/keyboard r2 basic human acceptance passed; recurrent startup rendering remains open |
 | Mobile core | `0.1.23.apollo45-2` |
 | Phone runtime | R11/R12: `20261101-4` with the R12 haptic rule added in RAM; R13/R19: `20261101-6`, including the haptic rule and sensor scratch-file fix |
 | libcamera / IPA / GStreamer bridge | `0.7.2.apollo1-1` |
@@ -20,7 +20,7 @@ The current development track starts from a fresh ARM64 userspace and adapts the
 | libcamera base | `v0.7.2`, with the pinned mobile patch series retained |
 | HexagonRPC base | [`93f3467dcfe1601bb70547611866a069ae914de5`](https://github.com/linux-msm/hexagonrpc/tree/93f3467dcfe1601bb70547611866a069ae914de5), then the pinned Apollo `hexagonrpcd-apollo/apollo-sensor-fixes.patch`, then the R13 scratch-file patch |
 | Original boot / login V2 | Omarchy assets/design at [`5978d93ae7da0a325b7493501911e3f1266cadd3`](https://github.com/omacom/omarchy/tree/5978d93ae7da0a325b7493501911e3f1266cadd3); theme package `apollo-mobile-boot 0.2.0-1` verified in PC builder; target Qt `6.12.0-3` / SDDM `0.21.0-7` test-mode load |
-| Local SIM UI | Installed `0.2.1-1`: compact button/password-buffer keypad, no Gtk.Editable/OSK surface; controller reports unchanged core/13 flow methods, 18 classification + 17 ARM GTK synthetic checks. **Cold-boot human PIN entry unconfirmed.** Published source `0.1.3-1` is historical R18/R19 material; no new UI source included |
+| Local SIM UI | Installed `0.2.1-1`: compact button/password-buffer keypad, no Gtk.Editable/OSK surface; controller reports unchanged core/13 flow methods, 18 classification + 17 ARM GTK synthetic checks. **Later cold-boot human access-PIN entry passed**, connected/home with secondary PIN2 remaining. Published source `0.1.3-1` is historical R18/R19 material; no new UI source included |
 | Dialer | R19: GNOME Calls `51.1`, opened without number/dial URI; user manually dialed voicemail |
 | Native profile / owner source | Current profile `20261101-6`: normal GPG/ALPM-verified launcher-wait fix only; owner form source remains r5 from `20261101-5`, with its isolated synthetic harness |
 
@@ -58,9 +58,9 @@ R19 was the last full-desktop RAM-only trial before internal-root work: Omarchy 
 
 The initial internal-root transfer passed complete physical readback before first writable native boot and filesystem expansion. Native boot revision 7 was then written and verified through normal reboot, without `fastboot boot`; systemd, internal root and firmware/calibration guards passed. Expected boot/recovery image-prefix readbacks matched. Android super/metadata/cache were cleared after userdata was repurposed, and the third reported normal boot passed.
 
-The user saved a local credential, then completed actual SDDM/PAM login, including after normal boot. Original theme, empty autologin User and ordinary-user Wayland socket were checked. Polkit remains unverified. HOME and hold-for-recents worked; gesture/keyboard refinement continues. Visual6 failed human acceptance; boot7’s logo was missed by the user, so visual acceptance is open.
+The user saved a local credential, then completed actual SDDM/PAM login, including after normal boot. Original theme, empty autologin User and ordinary-user Wayland socket were checked. Polkit remains unverified. Installed shell .8/gesture-keyboard r2 basic HOME/recents/keyboard closing passed human acceptance. A black desktop center recurred after cold-boot login and recovered through an official Quickshell-only restart; its root cause and definitive startup fix remain open. Visual6 failed human acceptance; boot7’s logo was missed by the user, so visual acceptance is open.
 
-Automatic profile r2 created a fresh cellular profile after normal boot and returned IPv4 HTTPS 204 with Wi-Fi off on one network. This does not validate any SIM/operator, IPv6 or throughput; latest cold-boot SIM-PIN completion was pending. No profile identities or new automatic-profile source are published. [Latest evidence and limits](validation-2026-11-02.md) · [owner r5 source and test](../experiments/owner-setup/README.md).
+Automatic profile r2 created a fresh cellular profile after normal boot and returned IPv4 HTTPS 204 with Wi-Fi off on one network. Later cold-boot local SIM-PIN entry passed and a cellular-bound IPv4 request returned HTTPS204 while Wi-Fi was connected/preferred. Other SIMs/operators, IPv6 and throughput remain unvalidated. No profile identities or new automatic-profile source are published. [Latest evidence and limits](validation-2026-11-02.md) · [owner r5 source and test](../experiments/owner-setup/README.md).
 
 ## Next release gate
 

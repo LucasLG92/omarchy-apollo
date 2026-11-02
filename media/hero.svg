@@ -20,7 +20,7 @@
     <path d="M62 432h574" stroke="#7f9cbb" stroke-opacity=".3"/>
     <text x="62" y="473" fill="#cfdfef" font-size="18">Touch interface</text><text x="258" y="473" fill="#cfdfef" font-size="18">GPU camera pipeline</text><text x="492" y="473" fill="#cfdfef" font-size="18">Open evidence</text>
     <g fill="#8cf4ce"><circle cx="66" cy="498" r="3"/><circle cx="262" cy="498" r="3"/><circle cx="496" cy="498" r="3"/></g>
-    <text x="62" y="565" fill="#8ca2bd" font-size="17">4.5 RC2 · installed natively · normal boot verified</text>
+    <text x="62" y="565" fill="#8ca2bd" font-size="17">4.5 RC2 · native boot · desktop issue under investigation</text>
   </g>
   <g transform="translate(875 48) rotate(8 115 265)">
     <rect x="-6" y="-6" width="254" height="550" rx="40" fill="#000" fill-opacity=".35"/>

@@ -564,6 +564,47 @@ def installed_native_boot_boundaries():
     assert not data["new_launcher_source_included"]
 
 
+def cold_boot_sim_and_desktop_recurrence_boundaries():
+    directory = ROOT / "docs/evidence"
+    name = "2026-11-02-cold-boot-sim-desktop.json"
+    previous = json.loads((directory / "2026-11-02-native-boot-v7.json").read_text(encoding="utf-8"))
+    assert previous["superseded_desktop_and_sim_state_by"] == name
+    data = json.loads((directory / name).read_text(encoding="utf-8"))
+    assert data["evidence_type"] == "sanitized supervised-device result summary"
+    assert data["supersedes_desktop_and_sim_state_in"] == "2026-11-02-native-boot-v7.json"
+    for field in ("native_boot_and_internal_root_installation_remain_verified", "actual_pam_login_after_cold_boot_verified",
+                  "human_entered_primary_sim_pin_only_on_handset", "human_sim_pin_entry_with_0_2_1_after_cold_boot_verified",
+                  "primary_sim_access_pin_no_longer_required", "fresh_auto_profile_active",
+                  "https_request_bound_to_cellular_interface", "wifi_connected_during_bound_cellular_test",
+                  "human_confirmed_network_coverage", "recurring_black_desktop_center_after_cold_boot_login_observed",
+                  "bar_and_search_pill_visible_while_center_black", "home_model_loaded_during_failure",
+                  "normal_gpg_alpm_qkk_installation_verified", "official_quickshell_restart_recovery_verified",
+                  "controller_review_confirmed_wallpaper_clock_and_8_icons_recovered",
+                  "human_basic_home_recents_and_keyboard_close_acceptance_verified"):
+        assert data[field] is True, ("cold-boot follow-up", field)
+    for field in ("independent_reproduction", "cellular_is_default_route_while_wifi_preferred",
+                  "other_sim_or_operator_coverage_verified", "cellular_ipv6_verified", "throughput_or_5g_speed_measured",
+                  "startup_rendering_root_cause_identified", "definitive_startup_fix_verified",
+                  "hyprland_restarted_for_this_recovery", "active_pin_forms_present_during_restart",
+                  "private_recovery_capture_read_by_publication_agent", "private_recovery_capture_exported",
+                  "full_gesture_keyboard_finetuning_complete", "last_app_close_in_recents_returns_home_verified",
+                  "administrative_polkit_auth_verified", "full_phone_daily_driver_acceptance_verified",
+                  "new_ui_launcher_or_shell_source_payload_included", "pin_value_or_account_hash_read_or_exported",
+                  "device_subscriber_operator_apn_ip_or_network_identity_exported",
+                  "raw_logs_or_per_unit_geometry_exported", "phone_capture_exported",
+                  "private_calibration_firmware_or_unit_images_included"):
+        assert data[field] is False, ("cold-boot follow-up", field)
+    assert data["installed_sim_ui_package"] == "apollo-sim-unlock 0.2.1-1"
+    assert data["remaining_unlock_enum"] == 3 and data["remaining_unlock_label"] == "SIM_PIN2"
+    assert data["modem_state_enum"] == 11 and data["modem_state_label"] == "connected"
+    assert data["registration_state"] == "home" and data["cellular_ipv4_https_status"] == 204
+    assert data["quickshell_processes_observed_during_failure"] == 1
+    assert data["normal_application_windows_observed_during_failure"] == 0
+    assert data["installed_mobile_shell_revision_label"] == ".8"
+    assert data["installed_gesture_keyboard_revision_label"] == "r2"
+    assert data["controller_reported_offline_checks"] == {"integrated_touch": 14, "qt": 14, "helper": 9, "plugin_compile": 5}
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -610,6 +651,7 @@ def main():
     outgoing_call_trial_boundaries()
     internal_root_and_owner_setup_review()
     installed_native_boot_boundaries()
+    cold_boot_sim_and_desktop_recurrence_boundaries()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")
