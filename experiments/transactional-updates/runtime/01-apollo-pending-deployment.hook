@@ -1,0 +1,12 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Checking pending Apollo generation
+When = PreTransaction
+Exec = /usr/bin/python3 -I -B /usr/lib/apollo/transactional/pending_guard.py
+AbortOnFail

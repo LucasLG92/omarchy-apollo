@@ -1,0 +1,3 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+exec /usr/bin/python3 -I -B /usr/lib/apollo/transactional/apollo_updates.py "$@"

@@ -9,13 +9,15 @@
 Hyprland 0.57.0-2.4 y shell29. El escritorio, las correcciones de repintado y el
 nuevo cambio de orientación están instalados. [Último hito y pruebas](../milestone-2026-11-03.md).
 
-## Capturas actuales del Apollo
+**Nuevo checkpoint de código:** base mínima con Web/Epiphany y Bazaar, asistente de primera cuenta y actualizador transaccional con el mismo kernel. Han pasado **66 comprobaciones pequeñas, seis arranques ARM64 virtuales y una preparación aislada real en el móvil**. El nuevo selector de arranque todavía no se ha probado físicamente ni activado. [Código, resultados y límites](../checkpoint-2026-11-03.md) · [Lista de pruebas pendientes](../pruebas-pendientes.md).
+
+## Capturas del Apollo
 
 <p align="center"><a href="../../media/apollo-home-portrait-r33.png"><img src="../../media/apollo-home-portrait-r33.png" width="245" alt="Inicio real del Apollo en vertical con reloj e iconos"></a></p>
 
 <p align="center"><a href="../../media/apollo-home-landscape-r33.png"><img src="../../media/apollo-home-landscape-r33.png" width="880" alt="Inicio real del Apollo en horizontal con las barras compactas"></a></p>
 
-Son capturas del móvil, no maquetas. La SIM estaba retirada. Los iconos indican
+Son capturas del móvil anteriores a la limpieza posterior de apps, no maquetas. El inventario de aplicaciones ya ha cambiado. La SIM estaba retirada. Los iconos indican
 aplicaciones instaladas; no certifican su hardware. La [galería](../gallery.md)
 incluye Teléfono y Recientes, con datos desechables y sin números ni contactos.
 
@@ -67,10 +69,14 @@ velocidad.** No se ha aplicado overclock, undervolt ni retirada de límites tér
 | SIM y datos | Continuidad del PIN y HTTPS IPv4 con perfil automático en pruebas anteriores de una red | No repetido con SIM en R14; otras redes, IPv6 y reconexión |
 | Llamadas | GNOME Calls es el único marcador; antes se escuchó el buzón | **Manos libres sin resolver:** hubo distorsión y un reinicio posterior. Micrófono, entrantes, SMS y AEC pendientes |
 | Sensores y vibración | Acelerómetro/luz y vibración AW8697 muy suave comprobados antes | Proximidad, intensidad e integración amplia |
-| APK | Android 13/Freedreno y F-Droid con icono/ventana propios funcionaron antes | Usa **Waydroid**; no convierte las APK en apps Linux. Más apps/hardware y repetición en R14; sin Google Play/GMS |
+| Apps nativas / investigación APK | Base actual con Web/Epiphany y Bazaar; **Android/Waydroid retirado**. Las pruebas anteriores se conservan como históricas | Revisar apps/servicios nativos; las APK no son binarios Linux nativos. No se promete WhatsApp nativo oficial ni Google Play |
 | GPS y huella | Investigación y requisitos | GPS sin posición verificada; **captura de huella y desbloqueo no operativos** |
 | Energía y carga apagado | Mecanismos de consumo y política de carga integrados | Autonomía, suspensión/despertar, apagado/conexión en frío y animación de carga con el sistema apagado |
 | Bluetooth, NFC e IR | Detección previa de servicios/interfaces | Emparejar/audio, etiquetas NFC y emitir IR |
+
+## Actualización y primera cuenta
+
+El asistente preparado pide usuario administrador, contraseña o PIN y preferencias locales; no vuelve a crear la cuenta existente. Falta probar una imagen realmente limpia y su primer acceso SDDM/logind. El actualizador prepara conjuntos firmados y empareja archivos con ALPM; todavía no se ha arrancado ni instalado físicamente el nuevo initramfs, el conjunto inocuo no está encolado y la actualización automática del kernel sigue desactivada. [Resultados y fuentes](../checkpoint-2026-11-03.md) · [Próximas pruebas](../pruebas-pendientes.md).
 
 ## Código y colaboración
 

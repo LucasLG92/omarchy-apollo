@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.apollo.OwnerProvisioning1
+Exec=/usr/lib/apollo/firstboot-provisioner
+User=root
+SystemdService=apollo-owner-provisioner.service

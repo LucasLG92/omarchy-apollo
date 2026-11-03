@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "date": "2026-11-03",
+  "development_units_tested": 1,
+  "unit_checks": {
+    "selector_manifest": 38,
+    "mobile_integration": 9,
+    "additive_installer": 6,
+    "pending_guard": 8,
+    "private_configuration": 5
+  },
+  "unit_check_total": 66,
+  "unit_signature_and_authorization_mocks_used": true,
+  "PC_ARM64_ALPM": {
+    "passed": true,
+    "real_ARM64_pacman_install_and_query": true,
+    "real_project_signature_verified": true,
+    "tampered_signature_rejected": true,
+    "active_usr_unchanged": true,
+    "fallback_usr_unchanged": true,
+    "candidate_usr_updated": true,
+    "candidate_has_no_etc_or_home": true,
+    "synthetic_identity_unchanged": true,
+    "shared_config_change_rejected": true,
+    "ALPM_lock_released_after_failure": true,
+    "real_ARM64_pending_guard_blocks_transaction": true,
+    "generation_queued_in_fixture_only": true,
+    "no_generation_activated": true,
+    "phone_operations": 0,
+    "personal_config_used": false,
+    "adapter_metadata_versioned": true,
+    "DownloadUser_present_in_live_fixture": true,
+    "download_identity_adjusted_only_in_private_copy": true,
+    "live_pacman_configuration_preserved": true
+  },
+  "PC_ARM64_QEMU": {
+    "passed": true,
+    "shipping_selector_and_mount_helper_used": true,
+    "real_switch_root": true,
+    "real_R14_kernel_and_ext4": true,
+    "usr_opt_and_ALPM_local_db_switched_together": true,
+    "synthetic_identity_home_and_app_state_preserved": true,
+    "health_and_applications_are_synthetic": true,
+    "full_Omarchy_or_phone_hardware_tested": false,
+    "kexec_tested": false,
+    "phone_operations": 0,
+    "boot_count": 6,
+    "scenarios": [
+      "SIMULATED_HEALTH_FAILURE",
+      "SIMULATED_HEALTH_FAILURE",
+      "PRODUCTION_SELECTOR_FALLBACK_CONFIRMED",
+      "PRODUCTION_SELECTOR_ACCEPTED",
+      "PRODUCTION_SELECTOR_COMMIT_PERSISTED",
+      "PRODUCTION_SELECTOR_ROLLBACK_CONFIRMED"
+    ]
+  },
+  "handset_preparation": {
+    "ok": true,
+    "real_native_ARM64_preparation": true,
+    "actual_signed_ALPM_ran_only_in_isolated_candidate": true,
+    "candidate_adapter_metadata_present": true,
+    "candidate_has_no_etc_home_or_owner_profile": true,
+    "active_usr_and_package_database_unchanged": true,
+    "ALPM_lock_released": true,
+    "owner_session_and_configuration_preserved": true,
+    "boot_state_unchanged": true,
+    "cohort_not_queued": true,
+    "partitions_written": false,
+    "phone_rebooted": false
+  },
+  "installed_state": {
+    "initialized": true,
+    "boot_integration_active": false,
+    "kernel": "7.3.1-apollo-native-r14",
+    "kernel_updates_enabled": false,
+    "new_boot_not_installed": true,
+    "candidate_queued": false,
+    "physical_selector_boot_passed": false,
+    "packages": [
+      "apollo-minimal-system 0.1.0-8",
+      "omamobile-omarchy 0.1.23.apollo45-9",
+      "apollo-transactional-updates 0.1.0-5"
+    ]
+  },
+  "firstboot": {
+    "exported_mocked_python_tests": 35,
+    "clean_image_physical_acceptance": false,
+    "ARM64_PAM_check_previously_run_in_disposable_environment": true,
+    "ARM64_QML_checks_previously_run": 60,
+    "current_owner_reprovisioned": false
+  },
+  "current_apps": {
+    "browser": "GNOME Web / Epiphany (Flatpak)",
+    "optional_native_store": "Bazaar (Flatpak)",
+    "Android_Waydroid_installed": false,
+    "APKs_are_native_Linux_binaries": false
+  },
+  "not_established": {
+    "public_update_channel": false,
+    "automatic_kernel_update": false,
+    "kexec_validation": false,
+    "general_configuration_or_app_data_migrations": false,
+    "full_hardware_acceptance": false,
+    "fingerprint_enrollment_or_unlock": false,
+    "speakerphone_fix": false,
+    "measured_battery_life_improvement": false,
+    "generic_public_R14_installer": false
+  },
+  "privacy": {
+    "raw_logs_included": false,
+    "device_identifiers_included": false,
+    "account_or_authentication_files_included": false,
+    "biometric_data_included": false,
+    "private_boot_images_included": false,
+    "device_storage_bindings_included": false
+  }
+}

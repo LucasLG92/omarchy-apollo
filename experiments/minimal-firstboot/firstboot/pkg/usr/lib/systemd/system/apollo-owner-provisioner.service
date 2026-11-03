@@ -1,0 +1,17 @@
+[Unit]
+Description=Apollo first owner provisioning adapter
+After=local-fs.target dbus.service systemd-logind.service
+ConditionPathExists=/etc/apollo/native-root-v1
+
+[Service]
+Type=dbus
+BusName=org.apollo.OwnerProvisioning1
+ExecStart=/usr/lib/apollo/firstboot-provisioner
+User=root
+UMask=0077
+LimitCORE=0
+NoNewPrivileges=yes
+PrivateTmp=yes
+StandardOutput=null
+StandardError=null
+UnsetEnvironment=G_DBUS_DEBUG G_MESSAGES_DEBUG DBUS_VERBOSE OMAMOBILE_FIRSTBOOT_ROOT OMAMOBILE_LOCK_PAM OMARCHY_PATH PYTHONPATH

@@ -13,13 +13,15 @@
 
 **Current milestone · 3 November 2026:** Linux **7.3.1 R14**, accelerated Adreno graphics, persistent repaint fixes and a faster, frame-aware rotation handoff. This is an independent experimental port, tested on one Pro development unit. [Latest results and limits](docs/milestone-2026-11-03.md).
 
+**Latest source checkpoint:** minimal native apps, a prepared first-user wizard and a same-kernel transactional updater. **66 small tests, six ARM64 virtual boots and real isolated preparation on the handset passed. The new boot selector is not physically activated.** [Code and exact scope](docs/checkpoint-2026-11-03.md) · [Pending test checklist / pruebas pendientes](docs/pruebas-pendientes.md).
+
 ## On the phone
 
 <p align="center"><a href="media/apollo-home-portrait-r33.png"><img src="media/apollo-home-portrait-r33.png" width="245" alt="Actual Apollo: current portrait Home with clock and application icons"></a></p>
 
 <p align="center"><a href="media/apollo-home-landscape-r33.png"><img src="media/apollo-home-landscape-r33.png" width="880" alt="Actual Apollo: landscape Home with compact bars and the search field"></a></p>
 
-<p align="center"><em>Fresh captures from the Apollo itself, with the installed R14 kernel and shell29. No mockups. The SIM was removed for this session. Icons show installed apps, not completed hardware support. <a href="docs/gallery.md">Phone, Recents and capture provenance →</a></em></p>
+<p align="center"><em>R14/shell29 handset captures from before the later minimal-app cleanup. App inventory has since changed. No mockups. The SIM was removed for this session. Icons show installed apps, not completed hardware support. <a href="docs/gallery.md">Phone, Recents and capture provenance →</a></em></p>
 
 ## What you can see working
 
@@ -55,12 +57,16 @@ There is **no measured battery-life improvement or blanket performance percentag
 | SIM and cellular data | Earlier local SIM-PIN continuation and automatic-profile IPv4 HTTPS passed on one network | Not retested on R14 with a SIM; more operators, IPv6 and reconnection |
 | Calls | GNOME Calls with Omarchy appearance; earlier manual voicemail/downlink success | **Speakerphone unresolved:** distortion and a later unexpected restart were reported. Uplink, incoming calls, SMS and AEC remain open |
 | Sensors and haptics | Earlier accelerometer/light checks and a physically confirmed, very soft AW8697 vibration | Proximity, strength, broader app feedback and R14 acceptance |
-| Optional Android apps | Earlier Android 13/Freedreno and F-Droid installation/independent app windows passed | Uses **Waydroid**, not native Linux APK execution; broader apps/hardware and R14 retesting; no Google Play/GMS included |
+| Native apps / earlier APK research | Current base uses Web/Epiphany and Bazaar; **Android/Waydroid was removed**. Earlier Android/F-Droid results remain historical | Validate native app layouts and services; APKs do not run as native Linux binaries; no official native WhatsApp or Google Play claim |
 | GPS / fingerprint | Research and prerequisites only | **No verified GPS fix; fingerprint enrollment and unlock are not operational** |
 | Power / charging | Runtime power mechanisms and charge-policy integration checked | Physical suspend/wake, battery life, shutdown/cold-plug behavior and powered-off charging animation |
 | Bluetooth / NFC / IR | Earlier service/interface detection | Pairing/audio, NFC tag transactions and actual IR transmission |
 
 An icon, driver binding, screenshot or passing fixture is not full hardware acceptance. [Detailed status](docs/status.md) · [Prior trials](docs/validation-2026-11-02.md).
+
+## Native updates and clean setup
+
+The prepared setup flow asks for an administrator account, password/PIN and local preferences. The current owner is preserved; a genuinely clean image and first SDDM/logind login still need acceptance. The updater pairs userspace files and ALPM state, with signed cohorts and bounded fallback. Its runtime is installed, but the new initramfs is **not physically boot-tested or installed**, the harmless test cohort is **not queued**, and automatic kernel updates remain disabled. [Checkpoint](docs/checkpoint-2026-11-03.md) · [Small reproducible tests](experiments/transactional-updates/README.md) · [Next physical tests](docs/pruebas-pendientes.md).
 
 ## Review the project
 

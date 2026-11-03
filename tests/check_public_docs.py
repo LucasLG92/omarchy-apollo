@@ -773,6 +773,44 @@ def current_r14_gallery_and_scope():
         assert offset == len(image)
 
 
+def native_system_checkpoint(files):
+    """Keep PC/fixture preparation distinct from physical update acceptance."""
+    data = json.loads((ROOT / "docs/evidence/2026-11-03-native-updates.json").read_text())
+    assert data["development_units_tested"] == 1
+    assert data["unit_checks"] == {"selector_manifest": 38, "mobile_integration": 9,
+                                   "additive_installer": 6, "pending_guard": 8,
+                                   "private_configuration": 5}
+    assert sum(data["unit_checks"].values()) == data["unit_check_total"] == 66
+    guest = data["PC_ARM64_QEMU"]
+    assert guest["passed"] and guest["boot_count"] == 6
+    assert guest["shipping_selector_and_mount_helper_used"] and guest["real_R14_kernel_and_ext4"]
+    assert guest["health_and_applications_are_synthetic"]
+    assert not guest["full_Omarchy_or_phone_hardware_tested"] and not guest["kexec_tested"]
+    assert guest["phone_operations"] == 0
+    native = data["handset_preparation"]
+    assert native["ok"] and native["real_native_ARM64_preparation"]
+    assert native["cohort_not_queued"] and native["active_usr_and_package_database_unchanged"]
+    assert not native["partitions_written"] and not native["phone_rebooted"]
+    state = data["installed_state"]
+    assert state["initialized"] and state["new_boot_not_installed"]
+    assert not any(state[key] for key in ("boot_integration_active", "kernel_updates_enabled",
+                                         "candidate_queued", "physical_selector_boot_passed"))
+    assert not data["current_apps"]["Android_Waydroid_installed"]
+    assert not data["firstboot"]["clean_image_physical_acceptance"]
+    assert not any(data["not_established"].values()) and not any(data["privacy"].values())
+    snapshot = json.loads((ROOT / "experiments/transactional-updates/source-snapshot.json").read_text())
+    assert not snapshot["device_images_or_profiles_included"]
+    for name, digest in snapshot["exact_development_source_files"].items():
+        assert name in files
+        assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest, name
+    for name in files:
+        if not name.startswith(("experiments/transactional-updates/", "experiments/minimal-firstboot/")):
+            continue
+        path = ROOT / name
+        if path.suffix == ".py":
+            ast.parse(path.read_text(encoding="utf-8")), name
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -823,6 +861,7 @@ def main():
     installed_mobile_milestone()
     android_and_layout_followup()
     current_r14_gallery_and_scope()
+    native_system_checkpoint(files)
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

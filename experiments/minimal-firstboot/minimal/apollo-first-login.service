@@ -1,0 +1,15 @@
+[Unit]
+Description=Apply the owner's chosen language, keyboard and optional apps
+After=graphical-session-pre.target
+PartOf=graphical-session.target
+ConditionPathExists=%h/.config/apollo/first-run.json
+
+[Service]
+Type=exec
+ExecStart=/usr/lib/apollo/profile-first-login.py
+TimeoutStartSec=35min
+Restart=on-failure
+RestartSec=5min
+
+[Install]
+WantedBy=graphical-session.target

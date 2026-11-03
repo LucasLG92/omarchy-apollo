@@ -1,0 +1,84 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+"""Unprivileged, fixed owner toggle operation; no credential values accepted."""
+import os
+import pwd
+import stat
+import sys
+
+
+def directory(parent, name):
+    try:
+        os.mkdir(name, 0o700, dir_fd=parent)
+    except FileExistsError:
+        pass
+    fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent)
+    info = os.fstat(fd)
+    if info.st_uid != 1000 or info.st_mode & 0o022:
+        os.close(fd)
+        raise PermissionError('INVALID_MODE_DIRECTORY')
+    return fd
+
+
+def apply(mode):
+    if os.geteuid() != 1000 or os.getuid() != 1000 or mode not in ('pin', 'password'):
+        return 1
+    owner = pwd.getpwuid(1000)
+    if owner.pw_dir != '/home/' + owner.pw_name:
+        return 1
+    fds = []
+    try:
+        home = os.open(owner.pw_dir, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        fds.append(home)
+        if os.fstat(home).st_uid != 1000:
+            return 1
+        parent = home
+        for component in ('.local', 'state', 'omarchy', 'toggles'):
+            parent = directory(parent, component)
+            fds.append(parent)
+        name = 'credential-password'
+        try:
+            info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != 1000:
+                return 1
+            if mode == 'pin':
+                os.unlink(name, dir_fd=parent)
+        except FileNotFoundError:
+            if mode == 'password':
+                fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=parent)
+                os.close(fd)
+        os.fsync(parent)
+        # Keep Omarchy Mobile's non-secret enum in sync with the lock/polkit
+        # toggle. This file contains only "pin" or "password", never a code.
+        config = directory(home, '.config'); fds.append(config)
+        mobile = directory(config, 'omamobile'); fds.append(mobile)
+        try:
+            current = os.stat('credential', dir_fd=mobile, follow_symlinks=False)
+            if not stat.S_ISREG(current.st_mode) or current.st_uid != 1000:
+                return 1
+        except FileNotFoundError:
+            pass
+        temporary = '.credential-mode-' + os.urandom(16).hex()
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=mobile)
+        try:
+            try:
+                os.write(fd, (mode + '\n').encode('ascii'))
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+            os.rename(temporary, 'credential', src_dir_fd=mobile, dst_dir_fd=mobile)
+        finally:
+            try: os.unlink(temporary, dir_fd=mobile)
+            except FileNotFoundError: pass
+        os.fsync(mobile)
+        return 0
+    finally:
+        for fd in reversed(fds):
+            os.close(fd)
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(apply(sys.argv[1]) if len(sys.argv) == 2 else 1)
+    except Exception:
+        sys.exit(1)

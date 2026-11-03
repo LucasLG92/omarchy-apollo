@@ -1,4 +1,6 @@
-# Hardware status
+# Hardware and native-system status
+
+**New source checkpoint:** [minimal apps, first-user setup and transactional userspace updates](checkpoint-2026-11-03.md), with [the physical acceptance checklist](pruebas-pendientes.md). Android/Waydroid has been removed from the current development installation. The new selector is **inactive**, the harmless cohort is **not queued**, and kernel updates are disabled. Existing R14 hardware results below retain their original test scope.
 
 **Current · 3 November 2026: Linux 7.3.1 R14, Omarchy 4.5 RC2 and shell29 on
 one Mi 10T Pro.** The native boot, normal owner login and accelerated desktop
@@ -20,7 +22,7 @@ transactions and three five-window closing bursts passed.
 | Wi-Fi | R14 connection and HTTPS passed | Bands, reconnect, sustained transfer and suspend |
 | Cameras | R14 sensor drivers/CAMSS graph bound; earlier four-sensor RGB and main/ultrawide higher-resolution frames remain historical | New R14 quality, optical focus, orientation and video tests; no 108 MP mode |
 | SIM / cellular / voice | Earlier SIM-PIN continuation, one-network IPv4 and outgoing voicemail/downlink results | SIM removed during R14 test; calls/SMS/data not revalidated. Speaker distortion and later reported call-time restart remain unresolved |
-| Optional APK integration | Earlier Android 13/Freedreno/F-Droid and independent app-window tests passed through Waydroid | R14 retest, wider APK/device hardware; no Google Play/GMS |
+| Current native app base | Web/Epiphany and Bazaar installed; Android/Waydroid removed | Physical native-app/layout acceptance; earlier APK results below are historical |
 | Fingerprint / GPS | Research and integration prerequisites only | Fingerprint enrollment/verification/unlock not operational; no verified GPS fix |
 | Charging / shutdown / suspend | USB-C/PD policy ported and checked; powered-off charging controller/theme integration retained | Actual shutdown/cold-plug behavior and charging-only animation, physical suspend/wake and battery runtime |
 | Bluetooth / NFC / IR / other sensors | Earlier interface/service detection; accelerometer/light and very soft haptics have dated checks | Pairing/audio, tag transactions, IR transmission, proximity and wider R14 acceptance |

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Applications
+Name[es]=Aplicaciones
+Comment=Choose native applications from Flathub
+Exec=/usr/bin/flatpak run io.github.kolunmi.Bazaar %U
+Icon=/var/lib/flatpak/exports/share/icons/hicolor/scalable/apps/io.github.kolunmi.Bazaar.svg
+Terminal=false
+Categories=System;PackageManager;
+StartupNotify=true

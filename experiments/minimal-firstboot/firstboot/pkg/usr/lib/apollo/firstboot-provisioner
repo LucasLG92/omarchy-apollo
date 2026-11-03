@@ -1,0 +1,38 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+from pathlib import Path
+import os
+import resource
+import sys
+
+
+def main():
+    if len(sys.argv) != 1 or os.geteuid() != 0:
+        return 1
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    os.umask(0o077)
+    for key in ('G_DBUS_DEBUG', 'G_MESSAGES_DEBUG', 'DBUS_VERBOSE', 'OMAMOBILE_FIRSTBOOT_ROOT',
+                'OMAMOBILE_LOCK_PAM', 'OMARCHY_PATH', 'PYTHONPATH'):
+        os.environ.pop(key, None)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import gi
+    from gi.repository import Gio, GLib
+    from firstboot_engine import Engine
+    from firstboot_ops import Operations
+    from firstboot_authorize import SenderGuard
+    from firstboot_broker import BUS_NAME, export
+
+    loop = GLib.MainLoop()
+    def acquired(connection, _name):
+        acquired.state = export(connection, Engine(Operations()), SenderGuard(connection))
+    Gio.bus_own_name(Gio.BusType.SYSTEM, BUS_NAME, Gio.BusNameOwnerFlags.NONE,
+                    acquired, None, lambda *_: loop.quit())
+    loop.run()
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except Exception:
+        sys.exit(1)

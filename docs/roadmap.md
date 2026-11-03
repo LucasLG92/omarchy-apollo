@@ -20,6 +20,10 @@ and [hardware status](status.md) separate working observations from unfinished w
   outgoing voicemail/downlink and optional Android-app milestones. These retain
   their dates and are not newly certified R14 call/hardware results.
 
+## Next acceptance batch
+
+Follow the [checkbox test plan](pruebas-pendientes.md): first RAM-boot the new selector, then the harmless signed marker update, a second RAM boot, health acceptance and rollback. Only then promote the initramfs to the normal boot. The current development handset retains the original R14 boot; no kernel update or general upstream update has been accepted. [Published implementation and results](checkpoint-2026-11-03.md).
+
 ## 1. Phone audio and essential reliability
 
 - Resolve speakerphone distortion and the later reported call-time restart.
@@ -42,7 +46,7 @@ and [hardware status](status.md) separate working observations from unfinished w
 - Validate physical suspend/resume, power-key and radio wake sources. An active
   idle daemon alone does not prove successful suspend or reliable wake.
 - Extend clean rotation tests to both directions, app switching, keyboard,
-  natural dialogs, Android windows and repeated rapid changes. Measure sensor
+  natural dialogs, native app windows and repeated rapid changes. Measure sensor
   detection separately from the frame handoff and keep pixel/input pairing.
 - Retain no-reload wallpaper behavior and avoid continuous idle repaint/polling.
 
@@ -61,7 +65,7 @@ and [hardware status](status.md) separate working observations from unfinished w
 - **Variant coverage:** regular Mi 10T 5G needs its own main-camera, memory/storage
   and calibration validation. Pro results do not certify the non-Pro model.
 
-## 4. Reproducible installation, updates and optional APKs
+## 4. Reproducible installation, native updates and optional apps
 
 - Export the complete reviewable R14 build/provenance and package path without
   private boot/storage bindings, firmware, calibration or credentials.
@@ -70,10 +74,7 @@ and [hardware status](status.md) separate working observations from unfinished w
   not a clean-install wizard test.
 - Finish public update/recovery/rollback instructions and repeated power-cycle
   tests. Retained private R12 fallback artifacts are not a generic download.
-- Revalidate Waydroid/Android 13 and F-Droid on R14, then wider APK/ABI/API,
-  gesture/keyboard/lifecycle and camera/microphone/GPS paths. Independent app
-  windows still require the Android compatibility container; VANILLA includes
-  no Google Play/GMS or Play Integrity/banking/DRM guarantee.
+- Keep the default base native and minimal: Web/Epiphany, Bazaar and essential phone tools. Android/Waydroid has been removed; its earlier source/tests remain historical. Future compatibility work would need a separate explicit scope and would not turn APKs into native Linux binaries. Validate each optional app and its mobile layout.
 - Extend responsive layouts, natural dialog containment and mobile plugin
   compatibility. Installing a community plugin does not certify its phone UI.
 

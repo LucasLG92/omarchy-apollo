@@ -1,0 +1,8 @@
+[Unit]
+Description=Restart an unconfirmed Apollo system through its fixed loader
+ConditionPathExists=/run/apollo-deployment-v1
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl --no-block reboot
+

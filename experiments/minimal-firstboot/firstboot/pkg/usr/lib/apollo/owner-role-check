@@ -1,0 +1,14 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from owner_account import ROLE, read_record, role_matches
+
+if __name__ == '__main__':
+    try:
+        if len(sys.argv) != 2 or not role_matches(read_record(ROLE), sys.argv[1]):
+            sys.exit(1)
+        sys.stdout.write('owner\n')
+    except Exception:
+        sys.exit(1)

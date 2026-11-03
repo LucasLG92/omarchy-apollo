@@ -1,7 +1,7 @@
 # Omarchy 4.5 RC2 rebase
 
 **Current update · 3 November 2026:** the development phone now uses Linux
-7.3.1 R14, Hyprland 0.57.0-2.4, Omarchy 4.5.0rc2-1.12 and mobile shell29.
+7.3.1 R14, Hyprland 0.57.0-2.4, Omarchy 4.5.0rc2-1.14 and mobile shell29. The later [native-system checkpoint](checkpoint-2026-11-03.md) adds minimal apps, first-user sources and an inactive transactional-update prototype; its [physical test plan](pruebas-pendientes.md) remains pending.
 See the [current kernel migration](kernel-7.3.1.md) and
 [installed UI milestone](milestone-2026-11-03.md). The source/export and public
 builder remain incomplete; the older package references below describe their

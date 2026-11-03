@@ -1,0 +1,15 @@
+--- a/shell/plugins/lock/LockView.qml
++++ b/shell/plugins/lock/LockView.qml
+@@ -47,10 +47,10 @@
+   readonly property bool padShown: keypad && (passwordFirst === switchedInput)
+   readonly property real inputSwitchReserve: keypad ? Math.round(inputSwitch.implicitWidth + 12) : 0
+   readonly property real fieldSideReserve: Math.max(fingerprintReserve, inputSwitchReserve)
+-  readonly property int keypadBottomMargin: Math.round(height * (keypadClearsSensor ? 0.34 : 0.08))
++  readonly property int keypadBottomMargin: Math.round(height * (keypadClearsSensor ? 0.34 : 0.18))
+ 
+   readonly property string placeholderText: padShown ? Commons.I18n.t("mobile.lock.enterPin", "Enter PIN") : Commons.I18n.t("lock.enterPassword")
+-  readonly property int fieldWidth: 381
++  readonly property int fieldWidth: Math.min(381, Math.max(200, root.width - 40))
+   readonly property int fieldHeight: 67
+   readonly property int outlineThickness: 3
+   readonly property int fieldFontSize: Math.round(Style.font.heading * 1.125)

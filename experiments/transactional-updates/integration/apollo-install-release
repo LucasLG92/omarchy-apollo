@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+"""Install a signed, tested Apollo cohort through normal ALPM."""
+from pathlib import Path
+import hashlib,json,os,re,stat,subprocess,sys
+KEY='37F17024795607039EB4293D7B111A2281AB64AC'
+PUB=Path('/usr/share/apollo/release-keyring.gpg')
+OVERRIDE=Path('/etc/pacman.d/hooks/00-apollo-update-compatibility.hook')
+PENDING=Path('/var/lib/apollo/release-in-progress.json')
+def require(ok,message):
+ if not ok:raise RuntimeError(message)
+def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def trusted(p):
+ s=p.lstat();require(stat.S_ISREG(s.st_mode) and s.st_uid==0 and not s.st_mode&0o022,'Untrusted release file')
+def run(args,timeout=30):
+ r=subprocess.run(list(map(str,args)),capture_output=True,text=True,timeout=timeout)
+ require(r.returncode==0,'Release validation or package transaction failed');return r.stdout
+def recover():
+ if not PENDING.exists():return
+ trusted(PENDING);data=json.loads(PENDING.read_text())
+ require(data.get('schema')==1 and data.get('override')==str(OVERRIDE),'Invalid pending release marker')
+ if OVERRIDE.is_symlink():
+  require(OVERRIDE.lstat().st_uid==0 and os.readlink(OVERRIDE)=='/dev/null','Hook override changed')
+  OVERRIDE.unlink()
+ require(not OVERRIDE.exists(),'Unexpected hook override')
+ PENDING.unlink()
+def validate(manifest):
+ require(manifest.is_absolute() and manifest.parent.is_relative_to(Path('/var/cache/pacman')),'Stage releases under /var/cache/pacman')
+ cursor=manifest.parent
+ while cursor!=Path('/'):
+  s=cursor.lstat();require(stat.S_ISDIR(s.st_mode) and s.st_uid==0 and not s.st_mode&0o022,'Untrusted release directory');cursor=cursor.parent
+ trusted(manifest);require(manifest.stat().st_size<=1024*1024,'Release manifest too large')
+ signature=Path(str(manifest)+'.sig');trusted(signature);trusted(PUB)
+ out=run(['gpgv','--keyring',PUB,'--status-fd=1',signature,manifest])
+ require([s.split()[2] for s in out.splitlines() if s.startswith('[GNUPG:] VALIDSIG ')]==[KEY],'Unexpected release signer')
+ data=json.loads(manifest.read_text())
+ require(set(data)=={'schema','kernel','expected_current','packages'} and data['schema']==1,'Invalid release manifest')
+ require(data['kernel']==os.uname().release and Path('/etc/apollo/native-root-v1').is_file() and not Path('/etc/apollo/ram-trial').exists(),'Native release/kernel mismatch')
+ require(isinstance(data['packages'],list) and 0<len(data['packages'])<=128,'Invalid package set')
+ require(set(data['expected_current'])=={r['name'] for r in data['packages']},'Expected-version set differs from the release')
+ paths=[];names=[]
+ for row in data['packages']:
+  require(set(row)=={'name','version','file','sha256'} and re.fullmatch(r'[a-z0-9][a-z0-9@+_.-]*',row['name']) is not None,'Invalid package name')
+  require(re.fullmatch(r'[A-Za-z0-9@+_.:-]+\.pkg\.tar\.zst',row['file']) is not None and re.fullmatch('[a-f0-9]{64}',row['sha256']) is not None,'Invalid package artifact')
+  p=manifest.parent/row['file'];trusted(p);trusted(Path(str(p)+'.sig'));require(digest(p)==row['sha256'],'Package hash mismatch')
+  run(['pacman-key','--verify',str(p)+'.sig',p])
+  require(run(['pacman','-Qp',p]).strip()==row['name']+' '+row['version'],'Package metadata mismatch')
+  expected=data['expected_current'][row['name']]
+  require(expected is None or isinstance(expected,str),'Invalid expected installed version')
+  query=subprocess.run(['pacman','-Q',row['name']],capture_output=True,text=True,timeout=30)
+  require((query.returncode==1 if expected is None else query.returncode==0 and query.stdout.strip()==row['name']+' '+expected),'Installed version differs from the tested starting point')
+  paths.append(p);names.append(row['name'])
+ require(len(set(names))==len(names),'Duplicate package')
+ planned=run(['pacman','-U','--noconfirm','--print','--print-format','%n %v',*paths],60).splitlines()
+ require(sorted(planned)==sorted(r['name']+' '+r['version'] for r in data['packages']),'Unexpected dependency transaction')
+ return data,paths
+def main(args):
+ require(os.geteuid()==0,'Run with sudo')
+ if args==['--recover']:recover();return
+ require(len(args) in (1,2) and (len(args)==1 or args[0]=='--check'),'Usage: apollo-install-release [--check] /var/cache/pacman/.../release.json')
+ data,paths=validate(Path(args[-1]))
+ if args[0]=='--check':print('Signed Apollo release and exact dependency plan verified.');return
+ require(not PENDING.exists() and not OVERRIDE.exists() and not OVERRIDE.is_symlink(),'Another release or hook override needs attention')
+ PENDING.parent.mkdir(mode=0o700,exist_ok=True)
+ with PENDING.open('x') as f:
+  os.fchmod(f.fileno(),0o600);json.dump({'schema':1,'override':str(OVERRIDE),'manifest_sha256':digest(Path(args[-1]))},f);f.flush();os.fsync(f.fileno())
+ try:
+  OVERRIDE.parent.mkdir(mode=0o755,parents=True,exist_ok=True);OVERRIDE.symlink_to('/dev/null')
+  run(['pacman','-U','--noconfirm',*paths],600)
+  run(['omamobile-omarchy-patches','verify'],60)
+  for row in data['packages']:require(run(['pacman','-Q',row['name']]).strip()==row['name']+' '+row['version'],'Installed release mismatch')
+ finally:recover()
+ print('Signed Apollo release installed. Compatibility guard restored.')
+if __name__=='__main__':
+ try:main(sys.argv[1:])
+ except Exception as e:print(str(e),file=sys.stderr);sys.exit(1)

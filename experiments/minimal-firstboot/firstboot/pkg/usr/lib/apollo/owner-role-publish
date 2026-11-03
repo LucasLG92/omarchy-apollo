@@ -1,0 +1,22 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+from pathlib import Path
+import json
+import os
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from owner_account import ROLE, resolve_owner, protected
+from firstboot_ops import atomic_json
+
+if __name__ == '__main__':
+    try:
+        if len(sys.argv) != 1 or os.geteuid() != 0:
+            sys.exit(1)
+        record = resolve_owner()
+        ROLE.parent.mkdir(mode=0o755, exist_ok=True)
+        protected(ROLE.parent, directory=True)
+        atomic_json(ROLE, record, 0o644)
+    except Exception:
+        # No account mutation and no identity diagnostics. Missing ownership
+        # means no public role cache, never a broad permission fallback.
+        sys.exit(1)

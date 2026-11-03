@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Web
+Name[es]=Navegador
+Comment=Browse the web with GNOME Web
+Exec=/usr/bin/apollo-browser %U
+Icon=org.gnome.Epiphany
+Terminal=false
+NoDisplay=true
+Categories=Network;WebBrowser;
+MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;
+StartupNotify=true
+StartupWMClass=org.gnome.Epiphany

@@ -24,3 +24,8 @@ experiments/mobile-rotation/layout-followup/LICENSE-* -text whitespace=cr-at-eol
 experiments/mobile-rotation/layout-followup/*.qml whitespace=cr-at-eol
 experiments/waydroid-apollo/profile-1.0.0-6/** -text
 experiments/waydroid-apollo/waydroid-1.6.3.apollo2-1/** -text
+
+# Exact reviewed development source bytes in the native-system checkpoint.
+experiments/transactional-updates/** -text whitespace=cr-at-eol,-blank-at-eof
+experiments/minimal-firstboot/** -text whitespace=cr-at-eol,-blank-at-eof
+experiments/minimal-firstboot/**/*.patch whitespace=-blank-at-eol

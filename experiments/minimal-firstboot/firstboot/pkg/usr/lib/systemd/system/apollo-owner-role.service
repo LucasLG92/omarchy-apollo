@@ -1,0 +1,18 @@
+[Unit]
+Description=Publish validated non-secret owner role metadata
+After=local-fs.target
+Before=polkit.service display-manager.service
+ConditionPathExists=/etc/apollo/native-root-v1
+ConditionPathExists=/var/lib/apollo/owner-ready
+
+[Service]
+Type=oneshot
+UMask=0077
+LimitCORE=0
+NoNewPrivileges=yes
+StandardOutput=null
+StandardError=null
+ExecStart=/usr/lib/apollo/owner-role-publish
+
+[Install]
+WantedBy=multi-user.target

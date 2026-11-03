@@ -1,0 +1,17 @@
+[Unit]
+Description=Confirm a recoverable Apollo system generation
+After=display-manager.service systemd-user-sessions.service
+ConditionPathExists=/run/apollo-deployment-v1
+OnFailure=apollo-deployment-recover.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I -B /usr/lib/apollo/transactional/health.py
+TimeoutStartSec=15min
+UMask=0077
+PrivateTmp=yes
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+

@@ -1,0 +1,6 @@
+[Unit]
+Description=Legacy owner setup disabled; clean setup belongs to SDDM
+ConditionPathExists=/run/apollo-legacy-owner-setup-disabled
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/false

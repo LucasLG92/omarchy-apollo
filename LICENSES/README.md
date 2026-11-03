@@ -37,6 +37,10 @@ For R13, the [original apps_std.c notice](https://github.com/linux-msm/hexagonrp
 
 V2 assets are from [Omarchy commit 5978d93a](https://github.com/omacom/omarchy/tree/5978d93ae7da0a325b7493501911e3f1266cadd3), under its original MIT license. The [asset manifest](../experiments/original-boot-v2/source-manifest.json) records original Git blobs; the native `LICENSE-Omarchy` files retain the full DHH notice. The [R16 media provenance](../media/README.md) distinguishes the native KMS capture from Qt renders. No endorsement or ownership of upstream branding is claimed.
 
+## Native-system checkpoint sources
+
+The [transactional update experiment](../experiments/transactional-updates/README.md), synthetic test adaptations and original [firstboot/minimal integration](../experiments/minimal-firstboot/README.md) are MIT licensed under the root license. Omarchy Mobile-derived integration retains its source notices and the full [Derek Ross / contributors MIT notice](MIT-Omarchy-Mobile.txt). Original Omarchy theme/branding assets retain David Heinemeier Hansson's full MIT notice in the two exported `LICENSE-Omarchy` files. Linux, pacman, Qt, Web, Flatpak and Bazaar are dependencies, not relicensed or redistributed binaries in this snapshot. The PIN-layout patch follows the MIT-licensed Omarchy Mobile source it changes.
+
 ## Upstream projects
 
 [Omarchy](https://github.com/omacom/omarchy) · [Omarchy Mobile](https://github.com/derekross/omarchy-mobile) · [Apollo hardware packages](https://github.com/royka1/Xiaomi-Apollo-pmOS-packages) · [Linux](https://www.kernel.org/) · [Arch Linux ARM](https://archlinuxarm.org/) · [Hyprland](https://github.com/hyprwm/Hyprland) · [Quickshell](https://github.com/quickshell-mirror/quickshell) · [libcamera](https://libcamera.org/) · [Waydroid](https://github.com/waydroid/waydroid)

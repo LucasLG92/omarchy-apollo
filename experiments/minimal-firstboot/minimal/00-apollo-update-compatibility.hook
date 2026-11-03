@@ -1,0 +1,42 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = apollo-*
+Target = omamobile-*
+Target = omarchy
+Target = omarchy-settings
+Target = hyprland
+Target = aquamarine
+Target = hyprlang
+Target = hyprutils
+Target = hyprgraphics
+Target = quickshell
+Target = qt6-*
+Target = mesa
+Target = lib32-mesa
+Target = vulkan-*
+Target = linux
+Target = linux-*
+Target = limine*
+Target = grub
+Target = mkinitcpio
+Target = dracut
+Target = fwupd
+Target = snapper
+Target = systemd-ukify
+Target = gnome-calls
+Target = modemmanager
+Target = alsa-ucm-conf
+Target = wireplumber
+Target = pipewire*
+Target = libcamera*
+Target = squeekboard
+
+[Action]
+Description = Verifying Apollo mobile compatibility
+When = PreTransaction
+Exec = /usr/lib/apollo/update_policy.py --alpm
+AbortOnFail
+NeedsTargets

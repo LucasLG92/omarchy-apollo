@@ -1,5 +1,11 @@
 # Development update boundaries
 
+## Current prototype · 3 November 2026
+
+See the [native-system checkpoint](checkpoint-2026-11-03.md) and [test plan](pruebas-pendientes.md). A same-kernel transactional userspace engine is installed, with isolated signed preparation, paired payload/ALPM state, health and pending guards. **Boot integration is inactive; the new initramfs has not been physically tested or installed.** One harmless marker cohort was prepared on-device but not queued. Automatic kernel updates, general configuration/app-data migrations and a maintained public channel remain unfinished. Earlier signed in-place component releases and the historical protections below are different mechanisms; they do not demonstrate completed boot rollback or an upstream full-system upgrade.
+
+## Earlier integration
+
 > **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
 
 

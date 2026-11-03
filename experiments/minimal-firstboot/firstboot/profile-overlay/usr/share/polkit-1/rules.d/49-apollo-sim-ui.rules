@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: MIT
+// One fixed service only. Root-published non-secret identity cache is bound
+// to NSS UID1000 by a read-only helper; Polkit JS has no subject.uid field.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        subject.local && subject.active &&
+        action.lookup("unit") == "apollo-sim-pin.service" &&
+        (action.lookup("verb") == "start" || action.lookup("verb") == "restart")) {
+        try {
+            if (polkit.spawn(["/usr/lib/apollo/owner-role-check", subject.user]).trim() == "owner")
+                return polkit.Result.YES;
+        } catch (error) { /* fail closed; preserve normal authorization */ }
+    }
+});

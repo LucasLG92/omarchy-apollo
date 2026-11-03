@@ -6,6 +6,8 @@ Hyprland 0.57.0-2.4 and mobile shell29. They are not host renders or an Android
 desktop. [Current milestone](milestone-2026-11-03.md) · [English](../README.md) ·
 [Español](es/README.md).
 
+These captures precede the later minimal-app cleanup. They are retained as dated graphics evidence, not a current installed-app inventory. [New system checkpoint](checkpoint-2026-11-03.md).
+
 ## Home, portrait
 
 <p align="center"><a href="../media/apollo-home-portrait-r33.png"><img src="../media/apollo-home-portrait-r33.png" width="324" alt="Real Apollo Home in portrait: clock, installed app shortcuts and bottom search"></a></p>

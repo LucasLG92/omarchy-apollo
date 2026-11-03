@@ -14,3 +14,7 @@ jobs:
           persist-credentials: false
       - name: Validate public docs, evidence and source manifest
         run: python3 tests/check_public_docs.py
+      - name: First-user synthetic backend tests
+        run: python3 -m unittest discover -s experiments/minimal-firstboot/firstboot/tests -p 'test_*.py'
+      - name: Transactional updater synthetic tests (disposable runner)
+        run: sudo python3 -m unittest discover -s experiments/transactional-updates -p 'test_*.py'
