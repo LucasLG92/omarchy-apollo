@@ -1,0 +1,172 @@
+{
+  "schema": "apollo-public-milestone-v1",
+  "date": "2026-11-03",
+  "tested_model": "Xiaomi Mi 10T Pro (apollo)",
+  "development_units_tested": 1,
+  "evidence_type": "selected sanitized native-device and test-result summary",
+  "installed": {
+    "kernel_release": "7.3.1-apollo-native-r14",
+    "kernel_package_version": "7.3.1.apollo.r14-1",
+    "hyprland": "0.57.0-2.4",
+    "omarchy": "4.5.0rc2-1.12",
+    "omamobile-shell": "0.2.62.apollo45-29",
+    "omamobile-apollo-rotation": "0.4.9-1"
+  },
+  "kernel_checks": {
+    "normal_native_boot_verified": true,
+    "owner_confirmed_desktop_icons_widgets": true,
+    "module_count": 502,
+    "Landlock_ABI": 11,
+    "MGLRU_active": true,
+    "hardware_MSM_EGL_verified": true,
+    "llvmpipe_used": false,
+    "GPU_runtime_suspend_observed_between_activity": true,
+    "wifi_HTTPS_passed": true,
+    "camera_drivers_bound": 4,
+    "new_R14_photo_quality_verified": false,
+    "charge_policy_C_cases": 3341,
+    "device_tree_checks": 646,
+    "reserved_memory_preserved": true,
+    "zram_codecs_roundtrip_tested": [
+      "lzo-rle",
+      "lz4",
+      "zstd"
+    ],
+    "default_zram_codec": "lzo-rle",
+    "idle_governor_selected": "menu",
+    "TEO_available_not_selected": true,
+    "overclock_or_undervolt_applied": false,
+    "thermal_protections_removed": false,
+    "battery_runtime_improvement_measured": false
+  },
+  "mobile_UI": {
+    "persistent_damage_tracking_mode": 1,
+    "human_confirmed_complete_interfaces": true,
+    "idle_frame_damage_gating_retained": true,
+    "font_zoom_or_output_scale_changed": false,
+    "GTK_keyboard_phases": [
+      {
+        "keyboard_visible": false,
+        "client_dimensions": [
+          960,
+          372
+        ],
+        "fits_workarea": true
+      },
+      {
+        "keyboard_visible": true,
+        "client_dimensions": [
+          960,
+          192
+        ],
+        "fits_workarea": true
+      },
+      {
+        "keyboard_visible": false,
+        "client_dimensions": [
+          960,
+          372
+        ],
+        "fits_workarea": true
+      }
+    ],
+    "rotation_transaction_release_ms": [
+      680.1,
+      499.8,
+      498.4,
+      647.6
+    ],
+    "rotation_timing_includes_sensor_detection": false,
+    "rotation_all_bars_fit": true,
+    "rotation_wallpaper_reloaded": false,
+    "rotation_original_display_touch_pair_restored": true,
+    "rotation_final_physical_visual_smoothness_certified": false,
+    "burst_close_cycles": 3,
+    "synthetic_windows_closed": 15,
+    "same_shell_process_across_final_bursts": true,
+    "burst_watchdog_timeouts": 0,
+    "Home_remapped_in_final_bursts": false,
+    "wallpaper_reloaded_in_final_bursts": false,
+    "user_clients_closed_by_test": 0
+  },
+  "limitations": {
+    "full_phone_functionality_verified": false,
+    "independent_device_reproduction": false,
+    "non_Pro_Mi10T_validated": false,
+    "SIM_inserted_during_R14_checks": false,
+    "calls_SMS_cellular_data_revalidated_on_R14": false,
+    "speakerphone_verified": false,
+    "fingerprint_enrollment_or_unlock_operational": false,
+    "GPS_fix_verified": false,
+    "physical_suspend_wake_verified_on_R14": false,
+    "powered_off_charging_cold_plug_animation_verified": false,
+    "clean_first_user_end_to_end_verified": false,
+    "complete_public_R14_builder_available": false,
+    "generic_flash_image_published": false,
+    "R14_Android_hardware_revalidated": false
+  },
+  "privacy": {
+    "device_identifiers_included": false,
+    "account_or_network_names_included": false,
+    "subscriber_identifiers_or_phone_numbers_included": false,
+    "credentials_verifiers_or_biometrics_included": false,
+    "raw_logs_or_process_memory_included": false,
+    "unit_boot_storage_bindings_or_image_hashes_included": false,
+    "partition_images_firmware_or_calibration_included": false,
+    "personal_conversations_notifications_or_photos_included": false
+  },
+  "gallery": [
+    {
+      "file": "media/apollo-home-portrait-r33.png",
+      "dimensions": [
+        1080,
+        2400
+      ],
+      "sha256": "3e52879902ff327c0000a268ae3ba42f3ea9dd942c480e7f2343dd8cf6ba66c0",
+      "origin": "actual handset Home",
+      "manually_visually_reviewed": true,
+      "personal_content_present": false,
+      "text_or_EXIF_chunks_present": false,
+      "UI_pixels_retouched": false
+    },
+    {
+      "file": "media/apollo-home-landscape-r33.png",
+      "dimensions": [
+        2400,
+        1080
+      ],
+      "sha256": "86cbce113089768af5969c732eb414061fd096007f5f5b94c619872103361a63",
+      "origin": "actual handset Home",
+      "manually_visually_reviewed": true,
+      "personal_content_present": false,
+      "text_or_EXIF_chunks_present": false,
+      "UI_pixels_retouched": false
+    },
+    {
+      "file": "media/apollo-calls-r33.png",
+      "dimensions": [
+        1080,
+        2400
+      ],
+      "sha256": "9c6bc206fba0f8dd97513faa3700e2a78c7348222b2c82918e7d161b72dacf7b",
+      "origin": "actual handset app; disposable data and dummy voice provider",
+      "manually_visually_reviewed": true,
+      "personal_content_present": false,
+      "text_or_EXIF_chunks_present": false,
+      "UI_pixels_retouched": false
+    },
+    {
+      "file": "media/apollo-recents-r33.png",
+      "dimensions": [
+        2400,
+        1080
+      ],
+      "sha256": "6f66aac526c674ad82adb26b87c579033e6a8049f451f9bc67932177c948fc11",
+      "origin": "actual handset overview; owned disposable apps",
+      "manually_visually_reviewed": true,
+      "personal_content_present": false,
+      "text_or_EXIF_chunks_present": false,
+      "UI_pixels_retouched": false
+    }
+  ]
+}

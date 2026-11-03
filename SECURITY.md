@@ -1,5 +1,26 @@
 # Security and privacy
 
+**Current scope · 3 November 2026:** Linux 7.3.1 R14 is the installed native
+kernel. Existing-owner local login and authenticated administration/password
+change have device evidence; clean-first-user installation, disk-encryption
+unlock and broad security acceptance remain incomplete. A graphical lock is
+not disk encryption. [Current state](docs/status.md).
+
+The new [gallery](docs/gallery.md) contains manually reviewed real-device
+captures. App captures used disposable data and a dummy voice provider, with
+no call placed. No credentials, biometrics, account names, network names,
+subscriber identifiers, personal notifications/conversations or private photos
+are included. Screenshots do not certify fingerprint or call functionality.
+
+Boot images, storage bindings, authentication material, proprietary firmware,
+partition backups and per-unit calibration stay private. Public evidence is
+an explicit field selection, not an upload of device logs or controller state.
+
+## Historical security observations
+
+The following dated trial/provisioning observations retain their original
+scope. Pending states in those checkpoints are not current acceptance claims.
+
 This is a development port, not a hardened consumer phone release. R20 completed native installation on the development unit: flashed native boot and the internal ext4 root passed repeated normal boot, including after Android cleanup. The owner entered the local credential and reached the desktop after normal boot; autologin is empty and the original theme is selected. Android userdata was repurposed for the root; super/metadata/cache were cleared. A graphical lock is not disk encryption. Polkit authentication, encrypted-storage unlock, broad hardware acceptance and a public end-to-end installer remain unvalidated. See [current status](docs/status.md).
 
 R17 required hardware-button recovery through the full bootloader. R18/R19 returned automatically with original readbacks verified, but general return reliability remains unproven. The experimental Linux account stayed locked in R18: its SIM UI ran as root only in supervised RAM, without changing modem authorization policy, local credentials or PAM. That locked-account state describes R18. R20 later configured a local credential and verified actual login, including after normal boot; administrative Polkit authentication remains pending. R19's manual outgoing call/downlink result does not establish microphone/uplink, incoming calls, SMS, cellular IP Internet or phone PAM login.

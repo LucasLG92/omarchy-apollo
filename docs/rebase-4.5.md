@@ -1,8 +1,15 @@
 # Omarchy 4.5 RC2 rebase
 
+**Current update · 3 November 2026:** the development phone now uses Linux
+7.3.1 R14, Hyprland 0.57.0-2.4, Omarchy 4.5.0rc2-1.12 and mobile shell29.
+See the [current kernel migration](kernel-7.3.1.md) and
+[installed UI milestone](milestone-2026-11-03.md). The source/export and public
+builder remain incomplete; the older package references below describe their
+own historical checkpoints, not a complete current R14 build recipe.
+
 The current development track starts from a fresh ARM64 userspace and adapts the touch interface to Omarchy 4.5. R9–R19 acceptance came from RAM trials ending in restored Android. R20 later completed native installation on the development unit: flashed native boot and internal ext4 root passed repeated normal boot/login, including after Android cleanup. A complete public installer and full phone acceptance are still unvalidated.
 
-## Latest installed milestone
+## Earlier published R9 milestone
 
 Permanent kernel **R9** now boots normally with Landlock ABI9 and 503 module checks.
 Installed **Hyprland 0.57.0-2.1**, **Calls 51.1.apollo3-1** and **SIM 0.2.2-1** passed

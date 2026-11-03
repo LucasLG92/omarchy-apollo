@@ -723,6 +723,56 @@ def android_and_layout_followup():
         assert cursor == len(image) and set(chunks) <= {b"IHDR", b"IDAT", b"IEND", b"sRGB", b"cICP", b"pHYs"}
 
 
+def current_r14_gallery_and_scope():
+    """Keep the current public milestone distinct from historic trials."""
+    data = json.loads((ROOT / "docs/evidence/2026-11-03-r14-ui.json").read_text(encoding="utf-8"))
+    assert data["development_units_tested"] == 1
+    assert data["installed"]["kernel_release"] == "7.3.1-apollo-native-r14"
+    assert data["installed"]["hyprland"] == "0.57.0-2.4"
+    assert data["installed"]["omamobile-shell"] == "0.2.62.apollo45-29"
+    kernel = data["kernel_checks"]
+    assert kernel["normal_native_boot_verified"] and kernel["module_count"] == 502
+    assert kernel["Landlock_ABI"] == 11 and kernel["reserved_memory_preserved"]
+    assert kernel["charge_policy_C_cases"] == 3341 and kernel["device_tree_checks"] == 646
+    assert not kernel["battery_runtime_improvement_measured"]
+    assert not kernel["thermal_protections_removed"] and not kernel["overclock_or_undervolt_applied"]
+    ui = data["mobile_UI"]
+    assert ui["human_confirmed_complete_interfaces"] and ui["persistent_damage_tracking_mode"] == 1
+    assert ui["idle_frame_damage_gating_retained"] and not ui["font_zoom_or_output_scale_changed"]
+    assert [row["client_dimensions"] for row in ui["GTK_keyboard_phases"]] == [[960, 372], [960, 192], [960, 372]]
+    assert all(row["fits_workarea"] for row in ui["GTK_keyboard_phases"])
+    assert len(ui["rotation_transaction_release_ms"]) == 4
+    assert not ui["rotation_timing_includes_sensor_detection"]
+    assert not ui["rotation_final_physical_visual_smoothness_certified"]
+    assert ui["rotation_all_bars_fit"] and not ui["rotation_wallpaper_reloaded"]
+    assert ui["burst_close_cycles"] == 3 and ui["synthetic_windows_closed"] == 15
+    assert ui["same_shell_process_across_final_bursts"] and ui["burst_watchdog_timeouts"] == 0
+    assert not ui["Home_remapped_in_final_bursts"] and not ui["wallpaper_reloaded_in_final_bursts"]
+    assert ui["user_clients_closed_by_test"] == 0
+    assert not any(data["privacy"].values())
+    assert not any(data["limitations"].values())
+    expected = {
+        "media/apollo-home-portrait-r33.png": [1080, 2400],
+        "media/apollo-home-landscape-r33.png": [2400, 1080],
+        "media/apollo-calls-r33.png": [1080, 2400],
+        "media/apollo-recents-r33.png": [2400, 1080],
+    }
+    assert {row["file"]: row["dimensions"] for row in data["gallery"]} == expected
+    for row in data["gallery"]:
+        image = (ROOT / row["file"]).read_bytes()
+        assert hashlib.sha256(image).hexdigest() == row["sha256"]
+        assert list(struct.unpack(">II", image[16:24])) == row["dimensions"]
+        assert row["manually_visually_reviewed"] and not row["personal_content_present"]
+        assert not row["text_or_EXIF_chunks_present"] and not row["UI_pixels_retouched"]
+        offset = 8
+        while offset < len(image):
+            size = struct.unpack(">I", image[offset:offset + 4])[0]
+            chunk = image[offset + 4:offset + 8]
+            assert chunk in {b"IHDR", b"IDAT", b"IEND", b"pHYs", b"sRGB", b"gAMA", b"cHRM"}
+            offset += 12 + size
+        assert offset == len(image)
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -772,6 +822,7 @@ def main():
     cold_boot_sim_and_desktop_recurrence_boundaries()
     installed_mobile_milestone()
     android_and_layout_followup()
+    current_r14_gallery_and_scope()
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")

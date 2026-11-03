@@ -1,8 +1,39 @@
 # Hardware status
 
+**Current · 3 November 2026: Linux 7.3.1 R14, Omarchy 4.5 RC2 and shell29 on
+one Mi 10T Pro.** The native boot, normal owner login and accelerated desktop
+are verified. The repaint fix is permanent; four frame-aware rotation
+transactions and three five-window closing bursts passed.
+
+[Latest milestone and exact software](milestone-2026-11-03.md) ·
+[Kernel changes](kernel-7.3.1.md) · [Current handset captures](gallery.md) ·
+[Sanitized current evidence](evidence/2026-11-03-r14-ui.json).
+
+| Area | Current result | Remaining gap |
+| --- | --- | --- |
+| Native boot / owner session | R14 installed and normally booted; owner confirmed Home/icons/widgets and later logged into the updated compositor | Wider cold-boot/session coverage; clean-first-user flow and public installer |
+| CPU / GPU / memory | Eight CPUs, stock limits, MSM hardware EGL, GPU runtime suspend between activity, MGLRU and Landlock ABI 11; 502 modules checked | Controlled workloads, physical energy and sustained battery-life measurements |
+| Home / keyboard / windows | Human-confirmed complete repaint persisted; GTK allocation followed keyboard workarea across three phases | Wider app/widget accessibility, natural-window and resize coverage |
+| Rotation | Four transactions: 498.4–680.1 ms after transaction start, no wallpaper reload, bars fit, original display/touch pairing restored | Sensor-inclusive timing and broader app/physical visual coverage |
+| Recents | Previous burst-close shell restart reproduced; final 15-window test retained the same shell process, no Home remaps or wallpaper reloads | Broader repeated-use and unsaved-dialog coverage |
+| Refresh rate | Manual 60/90/120/144 Hz and auto90 battery/144 charging available | Sustained power/thermal comparisons |
+| Wi-Fi | R14 connection and HTTPS passed | Bands, reconnect, sustained transfer and suspend |
+| Cameras | R14 sensor drivers/CAMSS graph bound; earlier four-sensor RGB and main/ultrawide higher-resolution frames remain historical | New R14 quality, optical focus, orientation and video tests; no 108 MP mode |
+| SIM / cellular / voice | Earlier SIM-PIN continuation, one-network IPv4 and outgoing voicemail/downlink results | SIM removed during R14 test; calls/SMS/data not revalidated. Speaker distortion and later reported call-time restart remain unresolved |
+| Optional APK integration | Earlier Android 13/Freedreno/F-Droid and independent app-window tests passed through Waydroid | R14 retest, wider APK/device hardware; no Google Play/GMS |
+| Fingerprint / GPS | Research and integration prerequisites only | Fingerprint enrollment/verification/unlock not operational; no verified GPS fix |
+| Charging / shutdown / suspend | USB-C/PD policy ported and checked; powered-off charging controller/theme integration retained | Actual shutdown/cold-plug behavior and charging-only animation, physical suspend/wake and battery runtime |
+| Bluetooth / NFC / IR / other sensors | Earlier interface/service detection; accelerometer/light and very soft haptics have dated checks | Pairing/audio, tag transactions, IR transmission, proximity and wider R14 acceptance |
+
+A visible icon or bound driver does not certify a hardware feature. No battery
+improvement percentage, complete-call-path result or generic R14 flash release
+is claimed. The current [roadmap](roadmap.md) prioritizes those gaps.
+
+## Historical published R9 and Android checkpoint
 
 
-**Current: Omarchy 4.5 RC2, permanent kernel R9 and independent Android-app integration on one Mi 10T Pro. The focused Home/rotation cycle passed; wider physical coverage remains open.**
+
+**Earlier checkpoint: Omarchy 4.5 RC2, permanent kernel R9 and independent Android-app integration on one Mi 10T Pro. The focused Home/rotation cycle passed; wider physical coverage remained open.**
 Normal native boot, Landlock ABI9 and 503 module-integrity checks passed. Hyprland
 0.57.0-2.1 and its upstream DMA-BUF backport are installed; the normal-reboot
 human test accepted desktop, Phone 51.1.apollo3-1 and uninterrupted SIM 0.2.2-1.

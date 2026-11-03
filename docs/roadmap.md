@@ -1,44 +1,85 @@
 # Roadmap
 
-The goal is a complete, responsive native Omarchy phone. The latest [4.5 RC2 status](status.md) has a completed native installation with repeated normal boot and local login on the Pro development unit. **The targeted upstream DMA-BUF backport and a normal-reboot human test now pass** for desktop, Phone and SIM continuity. Wider reboot coverage remains useful. Complete phone acceptance, a public installer and maintenance/recovery coverage remain unfinished. The earlier installation remains a [historical reference](history/README-2026-10-30.md).
+The goal is a dependable native Omarchy phone. The current development unit runs
+**Linux 7.3.1 R14** with a normally booted internal root, an accelerated desktop
+and the latest mobile rendering fixes. [Current evidence](milestone-2026-11-03.md)
+and [hardware status](status.md) separate working observations from unfinished work.
 
-## 1. Reproducible, recoverable native installation
+## Completed milestones, with their tested scope
 
-- Publish a complete builder with source pins, licenses and verified package provenance.
-- R20 completed the unit’s native boot/storage installation and Android cleanup, with repeated normal boot and human login. Extend power-cycle/recovery coverage and make the procedure reproducible without distributing per-device artifacts.
-- Validate repeated unplugged boot, recovery and an update/rollback path that retains the device stack.
-- Resolve recovery variability: R17 required buttons/full bootloader; R18/R19 returned automatically with original readbacks verified. Repeat and diagnose before claiming general automatic-return reliability.
-- Keep generic PC reset/installer/updater paths guarded until their Apollo equivalents are proven.
-- R20 actual local login passed after normal boot, with original theme/autologin checks. Confirm the latest logo/animation visually: visual6 failed and the user missed boot7’s logo. The [owner form r5](../experiments/owner-setup/README.md) still needs separate human auto-close acceptance. Later graphical Polkit/password change passed; clean-first-user setup needs completed integration before a disposable clean-device test.
+- Native internal-root installation and ordinary owner login on one Mi 10T Pro.
+- Linux 7.3.1 Apollo port, 502 modules, ThinLTO, USB-C/PD charge-policy checks,
+  MGLRU/zram support and hardware CPU/GPU checks. No autonomy benchmark yet.
+- Human-confirmed repaint correction made permanent, plus a GTK keyboard/workarea
+  regression check after reloading the session.
+- Frame-boundary rotation release: four measured transactions, bars fitted and
+  wallpaper unchanged; sensor-inclusive and wider app timings remain separate.
+- Recents burst-close restart reproduced, then a 15-window regression passed
+  with the same shell process and no Home/wallpaper reloads.
+- Earlier gesture, Phone/SIM continuation, one-network cellular IPv4,
+  outgoing voicemail/downlink and optional Android-app milestones. These retain
+  their dates and are not newly certified R14 call/hardware results.
 
-## 2. Finish the hardware acceptance
+## 1. Phone audio and essential reliability
 
-- **Variant coverage:** validate the regular Mi 10T 5G separately, including its main camera, memory/storage profile and per-unit calibration. Pro evidence does not establish non-Pro compatibility; follow the [model matrix](compatibility.md).
-- **Cameras:** front high-resolution/stride failure, macro focus, rotation, video, optical focus and color. The current main driver has no 108 MP mode.
-- **Phone/audio:** R19 verified one manual outgoing voicemail call and audible downlink. Validate microphone/uplink, incoming calls, SMS, AEC, VoLTE path and broader routing. R20 automatic profile r2 created a fresh profile after normal boot and passed cellular IPv4 HTTPS with Wi-Fi off on one network; latest local PIN entry in SIM UI 0.2.1 passed, connected/home and a cellular-bound IPv4 HTTPS 204 result passed with Wi-Fi connected/preferred. Validate other SIMs/networks, IPv6, reconnection, sustained transfer and broader UI/error/retry coverage separately. The public0.1.3 source remains historical; selected 0.2.2 continuation source and accepted reboot flow are now published. Resolve physical/logical slot mapping without treating slot-entry count as card count; validate Polkit use of the local R20 credential without changing SIM protection or general modem authorization policy.
-- **Connectivity:** R13 connected Wi-Fi and completed a Wi-Fi-bound HTTPS request. Test both bands, sustained transfer, reconnect/suspend and Bluetooth pairing/audio.
-- **Sensors/NFC:** R13 fixed one missing scratch-file creation failure and retained accelerometer/light availability. Test longer operation, sensor integration, proximity and NFC tags. GPS needs a reliable fix; fingerprint needs enrollment/verification/unlock.
-- **Haptics:** R12 confirmed a very soft AW8697 rumble; R13 booted runtime v6 with local access and feedbackd discovery without manual restart. Test strength, application feedback and repeated boots.
-- **IR:** R12 detected the LIRC interface and queried capabilities without transmitting. Optical emission, real carrier/duty behavior and remote-control use still need physical tests.
+- Resolve speakerphone distortion and the later reported call-time restart.
+  Diagnose the actual route/cause before claiming AEC, microphone clipping or
+  a particular component fault. Keep earpiece and speaker results separate.
+- Revalidate calls and cellular data with a SIM on R14. Test microphone/uplink,
+  incoming calls, SMS, reconnection, IPv6, other networks and the VoLTE path.
+- Extend reboot/login/session coverage. Check the latest boot branding,
+  shutdown-versus-reboot behavior and powered-off cable insertion physically.
+- Verify the Omarchy charging-only animation on the real bootloader/cold-plug
+  path; controller/theme integration is not completed physical acceptance.
 
-## 3. Make it comfortable all day
+## 2. Battery, thermal behavior and rotation polish
 
-- Extend reboot and app coverage beyond the accepted Hyprland 0.57.0-2.1 DMA-BUF configuration. The [latest batch](mobile-milestone-2026-11-02.md) passed normal-reboot desktop/Phone/SIM acceptance; earlier restart-only recovery remains historical.
-- R9 is permanent and normal-boot verified with Landlock ABI9 and 503 module checks. Extend physical suspend/wake, calibrated power and battery-life tests. The earlier [candidate checkpoint](engineering-2026-11-02.md) is historical; no accepted wattage or autonomy benchmark exists.
-- First-user r3 userland 0.1.0-3 / profile 20261101-11 is installed on R9 with the existing-owner guard preserved; the wizard did not activate. Test a disposable clean SDDM/logind/session installation without resetting the current owner; r2 is obsolete. No first-user candidate is distributed in this update.
-- Installed gesture/keyboard r2 passed basic human HOME/recents/keyboard-closing acceptance; later last-app-close→Home passed. Refine thresholds and broader behavior/accessibility. The later DMA-BUF/reboot result supersedes the earlier startup checkpoint; the gesture tests alone did not establish startup rendering.
-- Translation coverage and readable device/lens names.
-- Safe screen-off/wake, suspend, alarms, charging, thermal and battery measurements on real storage.
-- Implement and test a separate touch-based encrypted-storage unlock path if LUKS is used; the SDDM keyboard does not provide it.
-- Performance profiles measured against latency and power, not guessed from service startup.
-- Keep LTE/NR5G registration and the R19 call result separate from throughput claims; later R20 cellular IPv4 HTTPS is one connectivity result, with no speed measurement.
+- Measure controlled unplugged idle and screen-on workloads: brightness,
+  radio state, refresh rate, temperature and duration recorded without identifiers.
+- Compare manual refresh rates and the auto90/144 policy, stock CPU policies,
+  GPU runtime behavior, `menu` versus TEO and zram algorithms before selecting
+  defaults based on numbers. No overclock or thermal-protection removal.
+- Validate physical suspend/resume, power-key and radio wake sources. An active
+  idle daemon alone does not prove successful suspend or reliable wake.
+- Extend clean rotation tests to both directions, app switching, keyboard,
+  natural dialogs, Android windows and repeated rapid changes. Measure sensor
+  detection separately from the frame handoff and keep pixel/input pairing.
+- Retain no-reload wallpaper behavior and avoid continuous idle repaint/polling.
 
-- Rotation 0.3.1-3 and Home pager correction are installed; physical rotation works but global visual/touch/layout acceptance remains open. Calls4, compact bars and the search-pill fix are installed; generic 0.3.0 app policy/restore tests passed. Complete the combined physical acceptance.
+## 3. Finish the hardware
 
-## 4. Revalidate optional Android compatibility
+- **Fingerprint:** establish the actual supported sensor/secure-world path,
+  then enrollment, retry/error handling, verification and locked-session unlock.
+  No current enrollment or fingerprint unlock is operational; never publish templates.
+- **GPS/proximity:** obtain a real fix and a reliable proximity path, then
+  integrate them into normal applications and call/display behavior.
+- **Cameras:** revalidate R14 capture, color, optical focus, orientation and video.
+  The existing main driver does not expose 108 MP.
+- **Bluetooth/NFC/IR:** pairing/audio/reconnection, tag transactions and actual
+  optical IR emission; interface detection is only a prerequisite.
+- **Haptics:** improve useful strength and normal app feedback, with repeated-boot checks.
+- **Variant coverage:** regular Mi 10T 5G needs its own main-camera, memory/storage
+  and calibration validation. Pro results do not certify the non-Pro model.
 
-Current Android 13/API 33 boot, Freedreno renderer and official F-Droid installation/activity through the normal user handler passed. Normal stop/reopen through the mobile launcher also passed. Complete physical layout/rotation/keyboard and broader lifecycle coverage; one successful normal cycle is not unlimited reliability. Wider APK/ABI/API use and Android camera/microphone/GPS remain open. VANILLA has no Google Play/GMS; no Play Integrity, banking or DRM guarantee. [Current evidence and exact sources](mobile-layout-android-2026-11-02.md).
+## 4. Reproducible installation, updates and optional APKs
 
-## What moves an item to complete
+- Export the complete reviewable R14 build/provenance and package path without
+  private boot/storage bindings, firmware, calibration or credentials.
+- Validate clean-first-user creation, administrator policy and the first normal
+  SDDM/logind session on a disposable clean target. Existing-owner success is
+  not a clean-install wizard test.
+- Finish public update/recovery/rollback instructions and repeated power-cycle
+  tests. Retained private R12 fallback artifacts are not a generic download.
+- Revalidate Waydroid/Android 13 and F-Droid on R14, then wider APK/ABI/API,
+  gesture/keyboard/lifecycle and camera/microphone/GPS paths. Independent app
+  windows still require the Android compatibility container; VANILLA includes
+  no Google Play/GMS or Play Integrity/banking/DRM guarantee.
+- Extend responsive layouts, natural dialog containment and mobile plugin
+  compatibility. Installing a community plugin does not certify its phone UI.
 
-A source change, a reproducible test, the precise tested configuration and a successful physical result. Record regressions and recovery. Keep live-device findings separate from fixtures and earlier releases. Publish only reviewed summaries, never raw calibration, firmware dumps or personal diagnostics.
+## What closes an item
+
+A reviewed source change, a precise configuration, a reproducible check and a
+successful physical result for that feature. Keep failed trials and recovery
+honestly dated. Publish selected evidence and reviewed screenshots, never raw
+logs, device images, calibration, personal data or credentials.
