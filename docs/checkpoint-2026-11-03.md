@@ -1,3 +1,5 @@
+> Historical checkpoint. The [4 November milestone](milestone-2026-11-04.md) supersedes its browser, installed kernel, inactive selector and fingerprint-prerequisite state. Historical tests below retain their original scope.
+
 # Native-system checkpoint · 3 November 2026
 
 Source publication for the work after the [R14 graphics milestone](milestone-2026-11-03.md). This remains an experimental port on one Mi 10T Pro. [Physical acceptance checklist — español](pruebas-pendientes.md) · [Sanitized evidence](evidence/2026-11-03-native-updates.json).

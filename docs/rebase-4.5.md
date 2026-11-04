@@ -1,3 +1,5 @@
+> Current development handset: R15 / Hyprland 0.57.1; real fingerprint enrollment and verification passed. Standard fingerprint login/admin remains prepared, not enabled. [4 November milestone](milestone-2026-11-04.md). Earlier version/acceptance entries below are dated history.
+
 # Omarchy 4.5 RC2 rebase
 
 **Current update · 3 November 2026:** the development phone now uses Linux

@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "date": "2026-11-04",
+  "evidence_type": "explicitly selected public result summary, not raw device logs",
+  "tested_device": "Xiaomi Mi 10T Pro (apollo)",
+  "development_units_tested": 1,
+  "installed": {
+    "kernel_release": "7.3.1-apollo-native-r15",
+    "kernel_variant": "r15-ddr-pm1",
+    "hyprland": "0.57.1-1.1",
+    "aquamarine": "0.15.1-1.3",
+    "fingerprint_runtime": "0.1.0-4",
+    "minimal_policy": "0.1.0-21",
+    "browser": "Chromium",
+    "Android_Waydroid_installed": false,
+    "ZapFast_installed": true,
+    "ZapFast_linked_or_workflow_tested": false
+  },
+  "physical_fingerprint": {
+    "capture": true,
+    "one_finger_enrolled": true,
+    "enrollment_capture_count": 29,
+    "authenticated_encrypted_database_persisted_and_reloaded": true,
+    "enrolled_finger_matched_after_reload": true,
+    "different_finger_rejected": true,
+    "secure_services_stopped_and_sensor_unloaded_after_trials": true,
+    "standard_fprintd_provider_tested_on_phone": false,
+    "initial_login_lock_sudo_polkit_fingerprint_enabled": false
+  },
+  "physical_desktop": {
+    "human_confirmed_Home_icons_widgets": true,
+    "human_accepted_rotation_bars_windows_keyboard_after_0_57_1": true,
+    "human_accepted_centered_animated_login_and_wallpaper": true,
+    "earlier_freeze_recovered": true
+  },
+  "native_updates": {
+    "recoverable_boot_selector_installed": true,
+    "paired_payload_and_ALPM_mounts_verified": true,
+    "signed_marker_candidate_booted_on_phone": true,
+    "current_generation_health_accepted": true,
+    "automatic_kernel_updates_enabled": false,
+    "unrestricted_upstream_updates_supported": false,
+    "public_maintained_channel_complete": false,
+    "physical_forced_failure_rollback_fully_accepted": false
+  },
+  "prepared_not_installed": {
+    "fingerprint_runtime": "0.1.0-6",
+    "minimal_policy": "0.1.0-23",
+    "firstboot_userland": "0.2.0-5",
+    "omarchy": "4.5.0rc2-1.18",
+    "libfprint": "1.94.100-1.8",
+    "fprintd": "1.94.5-2",
+    "signed_packages": 7,
+    "signed_rollback_packages": 4,
+    "PAM_scope": [
+      "sddm",
+      "omarchy-lock-fingerprint",
+      "sudo",
+      "polkit-1"
+    ],
+    "physical_acceptance_required_before_activation": true
+  },
+  "PC_validation": {
+    "ARM64_PAM_cases": 340,
+    "activation_restore_filesystem_cases": 11,
+    "ARM64_libfprint_fake_bridge_cases": 32,
+    "native_decision_gate_cases": 1732,
+    "ARM64_Qt_synthetic_auth_layout_checks_passed": true,
+    "signed_cohort_and_content_audit_passed": true,
+    "phone_operations_during_preparation": 0
+  },
+  "power": {
+    "CPU_DDR_DTB_tag_changes": 16,
+    "kernel_code_modules_ramdisk_unchanged_from_R15_for_PM1": true,
+    "battery_life_improvement_measured": false,
+    "high_idle_drain_still_under_investigation": true,
+    "fingerprint_only_wake_from_full_suspend_implemented": false
+  },
+  "not_established": {
+    "daily_driver_acceptance": false,
+    "speakerphone_fixed": false,
+    "GPS_fix_verified": false,
+    "broader_cellular_revalidation_on_R15": false,
+    "generic_flashable_image_available": false,
+    "non_Pro_device_accepted": false
+  },
+  "privacy": {
+    "credentials_or_tokens_included": false,
+    "biometric_images_or_templates_included": false,
+    "device_or_subscriber_identifiers_included": false,
+    "network_identity_or_private_addresses_included": false,
+    "private_boot_image_hashes_or_bindings_included": false,
+    "raw_logs_firmware_or_calibration_included": false
+  }
+}

@@ -1,3 +1,5 @@
+> Current update, 4 November: Chromium is restored and R15 is installed. A genuinely clean first-user installation remains pending. The [current milestone](milestone-2026-11-04.md) and [acceptance plan](pruebas-pendientes.md) supersede older installed-state notes below.
+
 # Clean Omarchy installation
 
 > **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).

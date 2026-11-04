@@ -1,3 +1,31 @@
+# Current hardware and software status — 4 November 2026
+
+**Installed: Linux 7.3.1 R15 (`r15-ddr-pm1`), Hyprland 0.57.1 and Chromium.**
+This is still an experimental port tested on one Pro development unit.
+[Current milestone](milestone-2026-11-04.md) · [Fingerprint sources](../experiments/native-fingerprint/README.md) · [Acceptance checklist](pruebas-pendientes.md).
+
+| Area | Current observation | Still pending |
+| --- | --- | --- |
+| Native boot / desktop | R15 installed; Home/icons/widgets and latest login/wallpaper accepted | More cold boots and long sessions; clean first-user acceptance |
+| Hyprland / mobile UI | 0.57.1 retains mobile patches; user accepted rotation, bars, windows and keyboard | Wider app and repeated-use coverage |
+| Fingerprint backend | Capture, one encrypted enrollment/reload, real same-finger match and other-finger rejection | Standard fprintd/PAM integration and physical login/lock/admin acceptance |
+| Prepared authentication | Seven signed PC packages; explicit fingerprint choices and password fallback; 340 ARM64 PAM cases and 11 configuration/restore cases | Install provider, verify both outcomes, then enable and test each route |
+| CPU/GPU/memory / battery | Existing mechanisms retained; PM1 changes 16 DTB CPU-DDR tag bytes only | No measured autonomy gain; idle drain remains under investigation |
+| Native updates | Recoverable selector installed, signed marker candidate booted, matching payload/ALPM mounts and accepted current health | Forced-failure recovery, interrupted updates, migrations, public channel; automatic kernel updates remain disabled |
+| Apps | Chromium restored; Android/Waydroid removed; ZapFast installed but unlinked/untested | Optional app/service layouts and workflows |
+| Wi-Fi | Connection checked on R15; earlier HTTPS retained | Reconnect, bands and suspend/transfer coverage |
+| Calls / SIM / cellular | Earlier voicemail/downlink and one-network data results retain their date | Speakerphone distortion/restart unresolved; no broader R15 cellular acceptance |
+| GPS / cameras / other radios | Historical capture/detection results below | No verified GPS fix; new camera quality/video, Bluetooth/NFC/IR/proximity and charging/suspend acceptance |
+
+No full daily-driver, battery-improvement, generic-flash-image or non-Pro support
+claim is made. Existing gallery captures remain dated R14 images. No new private
+handset screenshot or biometric data is published.
+
+## Historical R14 and earlier status
+
+The following records retain their original scope. Their pending states are
+superseded only by the precise current observations above.
+
 # Hardware and native-system status
 
 **New source checkpoint:** [minimal apps, first-user setup and transactional userspace updates](checkpoint-2026-11-03.md), with [the physical acceptance checklist](pruebas-pendientes.md). Android/Waydroid has been removed from the current development installation. The new selector is **inactive**, the harmless cohort is **not queued**, and kernel updates are disabled. Existing R14 hardware results below retain their original test scope.

@@ -1,3 +1,5 @@
+> 4 November update: the handset is now on R15 / Hyprland 0.57.1. The images below remain genuine **3 November R14 captures**; they do not show the latest fingerprint UI or certify fingerprint unlock. [Current status](milestone-2026-11-04.md).
+
 # Apollo gallery
 
 **3 November 2026 · actual Mi 10T Pro display captures.**

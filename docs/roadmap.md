@@ -1,8 +1,8 @@
 # Roadmap
 
 The goal is a dependable native Omarchy phone. The current development unit runs
-**Linux 7.3.1 R14** with a normally booted internal root, an accelerated desktop
-and the latest mobile rendering fixes. [Current evidence](milestone-2026-11-03.md)
+**Linux 7.3.1 R15 / Hyprland 0.57.1** with a normally booted internal root, an accelerated desktop
+and the latest mobile rendering fixes. [Current evidence](milestone-2026-11-04.md)
 and [hardware status](status.md) separate working observations from unfinished work.
 
 ## Completed milestones, with their tested scope
@@ -22,7 +22,11 @@ and [hardware status](status.md) separate working observations from unfinished w
 
 ## Next acceptance batch
 
-Follow the [checkbox test plan](pruebas-pendientes.md): first RAM-boot the new selector, then the harmless signed marker update, a second RAM boot, health acceptance and rollback. Only then promote the initramfs to the normal boot. The current development handset retains the original R14 boot; no kernel update or general upstream update has been accepted. [Published implementation and results](checkpoint-2026-11-03.md).
+Follow the [checkbox test plan](pruebas-pendientes.md): install the signed native
+fingerprint cohort without enabling PAM, verify match/rejection through fprintd,
+then test password fallback, lock, sudo, polkit and initial SDDM login. Preserve
+the enrolled print. The recoverable userspace selector is already installed;
+broader physical rollback and clean-first-user acceptance remain open.
 
 ## 1. Phone audio and essential reliability
 
@@ -52,9 +56,10 @@ Follow the [checkbox test plan](pruebas-pendientes.md): first RAM-boot the new s
 
 ## 3. Finish the hardware
 
-- **Fingerprint:** establish the actual supported sensor/secure-world path,
-  then enrollment, retry/error handling, verification and locked-session unlock.
-  No current enrollment or fingerprint unlock is operational; never publish templates.
+- **Fingerprint:** real enrollment, encrypted reload, match and rejection passed.
+  Install/test the standard provider, then initial login, lock, sudo/polkit and
+  password fallback. Multiple fingers and full-suspend fingerprint wake remain open;
+  never publish templates. [Implementation](../experiments/native-fingerprint/README.md).
 - **GPS/proximity:** obtain a real fix and a reliable proximity path, then
   integrate them into normal applications and call/display behavior.
 - **Cameras:** revalidate R14 capture, color, optical focus, orientation and video.
@@ -67,14 +72,14 @@ Follow the [checkbox test plan](pruebas-pendientes.md): first RAM-boot the new s
 
 ## 4. Reproducible installation, native updates and optional apps
 
-- Export the complete reviewable R14 build/provenance and package path without
+- Export the complete reviewable R15 build/provenance and package path without
   private boot/storage bindings, firmware, calibration or credentials.
 - Validate clean-first-user creation, administrator policy and the first normal
   SDDM/logind session on a disposable clean target. Existing-owner success is
   not a clean-install wizard test.
 - Finish public update/recovery/rollback instructions and repeated power-cycle
   tests. Retained private R12 fallback artifacts are not a generic download.
-- Keep the default base native and minimal: Web/Epiphany, Bazaar and essential phone tools. Android/Waydroid has been removed; its earlier source/tests remain historical. Future compatibility work would need a separate explicit scope and would not turn APKs into native Linux binaries. Validate each optional app and its mobile layout.
+- Keep the default base native and minimal: Chromium, optional native app selection/Bazaar and essential phone tools. Android/Waydroid has been removed; its earlier source/tests remain historical. Future compatibility work would need a separate explicit scope and would not turn APKs into native Linux binaries. Validate each optional app and its mobile layout.
 - Extend responsive layouts, natural dialog containment and mobile plugin
   compatibility. Installing a community plugin does not certify its phone UI.
 

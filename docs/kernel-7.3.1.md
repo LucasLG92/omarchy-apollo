@@ -1,3 +1,28 @@
+# Current kernel: Linux 7.3.1 R15
+
+**Installed on the development Mi 10T Pro · 4 November 2026.** R15 retains the
+Apollo Linux 7.3.1 base and adds the native fingerprint prerequisites used for
+the real enrollment/match/rejection milestone. No new kernel was flashed for
+the prepared PAM integration. [Current results](milestone-2026-11-04.md).
+
+The installed `r15-ddr-pm1` experiment differs from the earlier R15 image only
+in **16 CPU-DDR device-tree tag bytes**. Kernel code, modules and ramdisk are
+unchanged for that comparison. It is an installed experiment, **not a proven
+battery optimization**; high idle drain remains under investigation.
+No overclock, undervolt or thermal-protection removal is claimed.
+
+The secure fingerprint path uses the native sensor/TEE services. Capture,
+enrollment, encrypted persistence/reload, same-finger match and a different-finger
+rejection passed. Standard PAM unlock is still awaiting handset deployment/tests.
+Fingerprint-only wake from full suspend and its energy cost remain open.
+Private images/calibration and the complete reproducible public builder are
+not distributed. [Sources and boundaries](../experiments/native-fingerprint/README.md).
+
+## Retained R14 migration and dated validation
+
+The following describes the earlier R14 hardware port and its measured checks.
+It is provenance for the retained base, not a new R15 battery benchmark.
+
 # Apollo kernel: Linux 7.3.1 R14
 
 **Installed and normally booted on one Mi 10T Pro · 3 November 2026.**

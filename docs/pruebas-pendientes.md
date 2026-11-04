@@ -1,66 +1,91 @@
-# Pruebas pendientes del Apollo
+# Pruebas pendientes del Apollo — 4 de noviembre de 2026
 
-Estado al **3 de noviembre de 2026**. Esta lista acompaña al [checkpoint de código](checkpoint-2026-11-03.md). Las casillas sin marcar son trabajo pendiente, no resultados.
+Esta lista acompaña al [estado actual](milestone-2026-11-04.md) y a las
+[fuentes del lector](../experiments/native-fingerprint/README.md). Las casillas
+marcadas son resultados concretos, no una aceptación completa del teléfono.
 
-## Qué está comprobado antes de tocar el arranque
+## Ya comprobado
 
-- [x] Kernel 7.3.1 R14 instalado y arranque nativo anterior comprobado en un Mi 10T Pro.
-- [x] Correcciones de repintado, área útil con teclado, giro y cierre de ventanas documentadas en el [hito gráfico](milestone-2026-11-03.md).
-- [x] Paquetes del actualizador experimental instalados con firmas y verificación de integridad. La integración del nuevo initramfs está **inactiva**.
-- [x] **66 comprobaciones pequeñas** del actualizador: selector/manifiesto 38, integración móvil 9, instalador aditivo 6, bloqueo de transacciones pendientes 8 y configuración privada 5.
-- [x] **Seis arranques ARM64 virtuales en PC**, con R14, ext4, el selector C y el montador de esta versión: fallo de salud, retorno tras intentos limitados, aceptación, persistencia y reversión. La interfaz, las aplicaciones y la identidad eran sintéticas.
-- [x] ALPM/pacman ARM64 real en PC: firmas auténticas del proyecto, rechazo de manipulación y cambios de configuración, bloqueo y limpieza de la transacción.
-- [x] Preparación ARM64 real en el móvil de un conjunto inocuo que sólo añade un paquete marcador al candidato aislado. `/usr` y la base ALPM activos no cambiaron. El conjunto **no está encolado**; no se reinició ni se grabó ninguna partición.
+- [x] R15 (`r15-ddr-pm1`) instalado y Hyprland 0.57.1 en uso.
+- [x] Inicio, iconos y widgets; giro, barras, ventanas y teclado aceptados por el usuario.
+- [x] Acceso original de Omarchy centrado con entrada suave y fondo posterior aceptado.
+- [x] Captura y registro de una huella real; 29 muestras seguras.
+- [x] Base cifrada autenticada guardada y recargada únicamente en el móvil.
+- [x] Dedo registrado reconocido y otro dedo real rechazado.
+- [x] Servicios seguros detenidos y módulo del sensor descargado al terminar las pruebas.
+- [x] Selector recuperable instalado; candidata con marcador firmada arrancada;
+  archivos/ALPM emparejados y salud de la generación actual aceptada.
+- [x] Nueva cohorte de huella/autenticación preparada y firmada en el PC:
+  340 casos de PAM ARM64, 32 del adaptador simulado, 1.732 de decisión,
+  11 de activación/restauración y controles de interfaz Qt ARM64.
 
-[Evidencia pública saneada](evidence/2026-11-03-native-updates.json). Los arranques virtuales no son seis arranques físicos del teléfono. Los resultados de PC no certifican la interfaz o el hardware del Apollo.
+## 1. Próxima prueba de huella — conservar el dedo existente
 
-## 1. Primer arranque físico del selector nuevo
+- [ ] Recuperar conexión USB/SSH del Apollo y confirmar el estado instalado.
+- [ ] Instalar la cohorte firmada sin activar PAM. Comprobar firmas, versiones,
+  coherencia de actualización y adopción sólo de metadatos del dedo ya guardado.
+- [ ] Abrir Huellas y usar el dedo registrado: fprintd debe comunicar coincidencia.
+- [ ] Repetir con un dedo no registrado: debe comunicar que no coincide. Un
+  resultado inesperado impide la activación; no sustituirlo por una simulación.
+- [ ] Verificar cancelación, lector ocupado/no disponible y limpieza: servicios
+  seguros detenidos y sensor descargado al finalizar.
+- [ ] Sólo después de ambas pruebas, activar la política por servicio con copia
+  local de los archivos originales y alternativa por contraseña.
 
-- [ ] Confirmar modelo Pro y correspondencia de la imagen privada con ese dispositivo. Tener batería suficiente, cable fiable, copias verificadas del arranque/DTBO y recuperación conocida. Mantener las copias fuera del repositorio.
-- [ ] Arrancar primero la imagen de prueba **en RAM**, conservando R14 en la partición de inicio. No hay una imagen pública genérica ni instrucciones de flasheo universal en este checkpoint.
-- [ ] Comprobar selección coherente de `/usr`, `/opt`, base local ALPM y metadatos de adaptación, y conservación de la protección de almacenamiento.
-- [ ] Acceder con la contraseña existente únicamente en el móvil. Confirmar usuario administrador, bloqueo seguro, Inicio, iconos y widgets. No exportar contraseñas, hashes ni archivos de identidad.
-- [ ] Abrir una app nativa; probar teclado, Inicio/Recientes, cierre de la última app y giro en ambos sentidos. No debe haber negro, recortes, cambios de escala ni reinicios de la interfaz.
-- [ ] Verificar que el servicio de salud espera al escritorio real y acepta la generación correcta; la pantalla de acceso sola no debe contar como éxito.
+## 2. Bloqueo, administración y acceso inicial
 
-## 2. Actualización inocua desde Omarchy
+- [ ] Bloquear: dedo incorrecto no entra; dedo registrado desbloquea.
+- [ ] Confirmar que la contraseña habitual sigue entrando y que cancelar no
+  deja la lectura activa ni impide usar el teclado.
+- [ ] sudo: Enter vacío selecciona huella; una contraseña escrita usa la ruta
+  original sin esperar al lector. Probar una operación inocua autorizada.
+- [ ] Polkit: Huella, Confirmar y Cancelar deben caber y responder, también en
+  horizontal y con teclado. Mantener sudoers y controles de cuenta/sesión.
+- [ ] Con el usuario presente, cerrar sesión y comprobar «Usar huella» en SDDM.
+  Repetir tras reinicio y probar la contraseña alternativa.
+- [ ] Probar restauración de la configuración gestionada antes de dar por
+  aceptada la actualización. No borrar huellas ni credenciales.
+- [ ] Ampliar dedos/gestión y despertar desde suspensión completa sólo con huella.
+  **Este último despertar todavía no está implementado.**
 
-- [ ] Usar Actualizar de Omarchy con el conjunto marcador ya preparado. Comprobar autorización habitual, firmas, versiones de partida, plan de dependencias y aviso de reinicio.
-- [ ] Confirmar que la generación queda pendiente, sin modificar la generación activa ni `/home`. Las operaciones ALPM nativas posteriores deben quedar bloqueadas mientras haya una generación pendiente o sin confirmar.
-- [ ] Hacer un **segundo arranque en RAM de la misma imagen nueva**. Antes de activar permanentemente ese initramfs, un reinicio ordinario volvería al R14 físico anterior y no ejecutaría el nuevo selector.
-- [ ] Confirmar el paquete marcador en los archivos y en ALPM de la misma generación; comprobar escritorio/salud y persistencia de la identidad existente.
-- [ ] Sólo tras superar lo anterior, activar el initramfs revisado como arranque habitual y comprobar un reinicio normal. Conservar una recuperación independiente.
+## 3. Consumo, giro y fiabilidad
 
-## 3. Reversión y recuperación
+- [ ] Medir reposo desconectado con hora inicial/final, capacidad, temperatura,
+  brillo, refresco y radios controlados, sin publicar identificadores.
+- [ ] Comparar PM1 con el R15 anterior en condiciones equivalentes. No hay un
+  porcentaje demostrado de mejora de batería; el drenaje sigue investigándose.
+- [ ] Suspensión y despertar repetidos, USB tras reanudación, bloqueo y lector
+  sin bucles de lectura que mantengan el hardware despierto.
+- [ ] Giros rápidos/lentos, ambos lados, apps pequeñas, diálogos, teclado y cierre
+  repetido. Separar detección del sensor y entrega del fotograma.
+- [ ] Repetir arranques y sesiones largas; conservar historial de bloqueos y recuperación.
 
-- [ ] Solicitar reversión del conjunto marcador y comprobarla después del reinicio: desaparece el marcador y coinciden `/usr`, `/opt`, ALPM y metadatos.
-- [ ] En una prueba controlada con datos sintéticos, provocar falta de salud y confirmar el límite de intentos y retorno. El selector no demuestra recuperación automática de todos los bloqueos de hardware.
-- [ ] Confirmar que usuario, contraseña, archivos personales y configuración conservada siguen funcionando. Registrar sólo resultados y versiones, nunca esos archivos.
-- [ ] Comprobar actualización interrumpida, espacio insuficiente, cambio concurrente de la base ALPM y paquete que intenta modificar configuración compartida. Deben fallar antes de aceptar un estado incoherente.
+## 4. Actualización, instalación limpia y aplicaciones
 
-## 4. Instalación limpia y sistema mínimo
+- [ ] Ampliar reversión real y fallo de salud controlado con datos desechables.
+- [ ] Interrupciones, espacio insuficiente, ALPM concurrente y migraciones deben
+  fallar sin aceptar archivos y base de paquetes de generaciones distintas.
+- [ ] Crear una imagen limpia reproducible, sin cuenta ni datos de desarrollo.
+- [ ] Completar usuario administrador, nombre visible, contraseña/PIN, idioma,
+  zona horaria, teclado y selección de apps; aceptar su primera sesión real.
+- [ ] Comprobar Chromium, enlaces, tienda de plugins y una instalación/retirada
+  de app nativa. Android/Waydroid sigue retirado; APK no equivale a app Linux nativa.
+- [ ] Validar ZapFast sin publicar cuentas, claves, conversaciones ni datos personales.
+- [ ] Canal público, nuevas bases de Omarchy y actualización segura de
+  kernel/initramfs/DTB siguen pendientes. No ejecutar una actualización genérica
+  ni desactivar sus guardas: los cambios automáticos de kernel no están aceptados.
 
-- [ ] Generar una imagen limpia reproducible sin usuario propietario ni datos de desarrollo. El asistente preparado no equivale a una imagen completa de instalación.
-- [ ] En un destino limpio y desechable, completar usuario administrador, nombre visible, contraseña o PIN, nombre del equipo, idioma, zona horaria, teclado y selección de aplicaciones.
-- [ ] Confirmar primera sesión SDDM/logind, sudo con la misma contraseña de la cuenta y cambio posterior de contraseña con letras. Recuperar un alta interrumpida sin sobrescribir una cuenta existente.
-- [ ] Revisar físicamente posición del PIN/teclado, vertical/horizontal y tamaños naturales de diálogos. La nueva distribución necesita aceptación humana.
-- [ ] Probar Web/Epiphany, enlaces de Omarchy y tienda de plugins; instalar y retirar una app desde Bazaar. Verificar actualizaciones Flatpak sin sustituir la pila nativa protegida.
-- [ ] Probar la navegación de servicios web con la cuenta del usuario sólo en el móvil. Un acceso web no es un cliente Linux oficial ni garantiza funciones de una APK.
+## 5. Hardware pendiente
 
-## 5. Pendientes de hardware y uso diario
+- [ ] SIM/datos con operador automático, otras redes, reconexión, IPv6 y SMS.
+- [ ] Auricular, micrófono, llamadas entrantes y manos libres. **El altavoz sigue
+  sin resolver: hubo distorsión y un reinicio reportado.** Diagnosticar antes
+  de repetir ganancias altas; no prometer AEC ni micrófono corregido.
+- [ ] GPS con posición real; calidad/vídeo/orientación de cámaras en R15.
+- [ ] Bluetooth/audio, NFC, emisión IR, proximidad y vibración útil.
+- [ ] Apagado real, conexión de cargador en frío y animación de carga apagado.
+- [ ] Pruebas separadas del Mi 10T no Pro: los resultados del Pro no lo certifican.
 
-- [ ] SIM en la ranura física 1: PIN en el móvil, cobertura, datos con detección de operador, reconexión, IPv6 y SMS. La SIM estaba retirada en la última validación de R14.
-- [ ] Llamadas: auricular, micrófono, entrantes y manos libres. **El altavoz sigue sin resolver; hubo distorsión y un reinicio reportado.** Diagnosticar la ruta antes de repetir pruebas de ganancia alta.
-- [ ] Huella: soporte real del sensor y ruta segura, captura guiada, verificación, errores/reintentos, desbloqueo de sesión y alternativa por contraseña. **No es funcional en esta versión.** No registrar plantillas ni sustituir la autenticación por una simulación.
-- [ ] GPS con posición real, cámaras/calidad/vídeo en R14, Bluetooth/audio, NFC, IR, proximidad y vibración.
-- [ ] Apagado real frente a reinicio, conexión del cargador con el sistema apagado y animación de carga centrada con logo. No dar por cerrado este punto por una previsualización.
-- [ ] Suspensión y despertar físicos; consumo en reposo y con pantalla, temperaturas y refrescos 60/90/120/144 Hz y automático 90/144 en condiciones comparables.
-- [ ] Giros rápidos y lentos, ventanas pequeñas, teclado, diálogos, varias apps y cierre repetido. Medir detección del sensor por separado de la entrega del fotograma.
-
-## Qué falta para actualizar la base y el kernel
-
-- [ ] Canal público mantenido de conjuntos firmados, compatibilidad de nuevas bases de Omarchy y migraciones de configuración/datos de aplicaciones.
-- [ ] Actualización de kernel/initramfs/DTB con recuperación validada. **kexec y el cambio automático de kernel no están implementados ni validados.** El prototipo actual conserva el mismo kernel.
-- [ ] Constructor público completo y pruebas de instalación/recuperación reproducibles; validación separada del Mi 10T no Pro.
-
-Si falla el acceso, el escritorio, la salud o la coherencia de versiones, detener la promoción y volver al arranque conocido. No marcar una casilla por un icono visible, una unidad activa o una prueba sintética. Un resultado público debe incluir versión, escenario y resultado sin números, redes, credenciales, calibración, registros completos ni imágenes privadas.
+No publicar números, redes, credenciales, plantillas, calibración, imágenes
+privadas ni registros completos. Una interfaz visible o prueba sintética no
+marca una función como aceptada físicamente.

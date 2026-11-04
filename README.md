@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="docs/status.md"><img src="https://img.shields.io/badge/status-experimental-f3c46b?style=flat-square" alt="Experimental"></a>
-  <a href="docs/kernel-7.3.1.md"><img src="https://img.shields.io/badge/Linux-7.3.1%20%C2%B7%20R14-9ece6a?style=flat-square" alt="Linux 7.3.1 R14 installed"></a>
+  <a href="docs/kernel-7.3.1.md"><img src="https://img.shields.io/badge/Linux-7.3.1%20%C2%B7%20R15-9ece6a?style=flat-square" alt="Linux 7.3.1 R15 installed"></a>
   <a href="https://github.com/omacom/omarchy/releases/tag/v4.5.0-rc2"><img src="https://img.shields.io/badge/Omarchy-4.5%20RC2-87c8ff?style=flat-square" alt="Omarchy 4.5 RC2"></a>
   <a href="docs/gallery.md"><img src="https://img.shields.io/badge/screenshots-real%20Apollo-c7b5ff?style=flat-square" alt="Real Apollo captures"></a>
 </p>
@@ -11,9 +11,9 @@
 
 **Native Omarchy on the Xiaomi Mi 10T Pro (`apollo`).** A real Linux desktop with a touch Home screen, mobile gestures and native applications, running from the phone's internal storage.
 
-**Current milestone · 3 November 2026:** Linux **7.3.1 R14**, accelerated Adreno graphics, persistent repaint fixes and a faster, frame-aware rotation handoff. This is an independent experimental port, tested on one Pro development unit. [Latest results and limits](docs/milestone-2026-11-03.md).
+**Current milestone · 4 November 2026:** Linux **7.3.1 R15**, **Hyprland 0.57.1** and real fingerprint enrollment: the saved finger is recognized and a different finger rejected. System login, lock and admin authentication with a finger are **prepared, not activated**. [Results, sources and limits](docs/milestone-2026-11-04.md).
 
-**Latest source checkpoint:** minimal native apps, a prepared first-user wizard and a same-kernel transactional updater. **66 small tests, six ARM64 virtual boots and real isolated preparation on the handset passed. The new boot selector is not physically activated.** [Code and exact scope](docs/checkpoint-2026-11-03.md) · [Pending test checklist / pruebas pendientes](docs/pruebas-pendientes.md).
+**Next physical batch:** standard fprintd verification, fingerprint login/lock/sudo/polkit and password fallback. The signed cohort passed **340 ARM64 PAM cases** plus mobile UI and reversible-configuration fixtures. The recoverable userspace selector is now installed and its current generation accepted; automatic kernel updates remain disabled. [Fingerprint code](experiments/native-fingerprint/README.md) · [Pruebas pendientes](docs/pruebas-pendientes.md).
 
 ## On the phone
 
@@ -34,7 +34,7 @@
 
 ## Kernel: Linux 7.3.1, with the Apollo hardware port
 
-R14 is a port to the signature-verified Linux 7.3.1 release, with **502 modules**, updated panel/camera/firmware interfaces and preserved device support. It is more than a release-name change.
+R15 builds on the signature-verified Linux 7.3.1 Apollo migration, retaining its CPU/GPU, memory, display and charging work, and adding the native fingerprint prerequisites. The installed CPU-DDR PM1 experiment changes only DTB tags relative to the earlier R15 build; its battery benefit is **not established**. The table below describes retained mechanisms, with dated checks in the kernel report.
 
 | Implemented or retained | What it means |
 | --- | --- |
@@ -52,13 +52,14 @@ There is **no measured battery-life improvement or blanket performance percentag
 | Area | Demonstrated | Remaining work |
 | --- | --- | --- |
 | Display, GPU, touch | Native accelerated desktop, touch UI, rotation/workarea checks and current Home captures | Wider app, reboot, accessibility and long-session coverage |
-| Wi-Fi | Connected and HTTPS verified on R14 | Both bands, sustained transfer, reconnect and suspend/resume |
+| Wi-Fi | Connection checked again on R15; earlier HTTPS result retained | Both bands, sustained transfer, reconnect and suspend/resume |
 | Cameras | Earlier RGB capture from all four sensors; main **3000×2256**, ultrawide **4200×3120**. R14 drivers and CAMSS graph present | Revalidate image quality/video on R14; the main driver has **no 108 MP mode** |
 | SIM and cellular data | Earlier local SIM-PIN continuation and automatic-profile IPv4 HTTPS passed on one network | Not retested on R14 with a SIM; more operators, IPv6 and reconnection |
 | Calls | GNOME Calls with Omarchy appearance; earlier manual voicemail/downlink success | **Speakerphone unresolved:** distortion and a later unexpected restart were reported. Uplink, incoming calls, SMS and AEC remain open |
 | Sensors and haptics | Earlier accelerometer/light checks and a physically confirmed, very soft AW8697 vibration | Proximity, strength, broader app feedback and R14 acceptance |
-| Native apps / earlier APK research | Current base uses Web/Epiphany and Bazaar; **Android/Waydroid was removed**. Earlier Android/F-Droid results remain historical | Validate native app layouts and services; APKs do not run as native Linux binaries; no official native WhatsApp or Google Play claim |
-| GPS / fingerprint | Research and prerequisites only | **No verified GPS fix; fingerprint enrollment and unlock are not operational** |
+| Native apps / earlier APK research | Chromium restored; native app selection/Bazaar remain available; **Android/Waydroid was removed**. Earlier Android/F-Droid results remain historical | Validate native app layouts and services; APKs do not run as native Linux binaries; no official native WhatsApp or Google Play claim |
+| Fingerprint | Real capture, encrypted enrollment/reload, same-finger match and different-finger rejection | Standard fprintd/PAM installation and physical login/lock/admin tests; fingerprint-only wake pending |
+| GPS | Research and prerequisites | **No verified GPS fix** |
 | Power / charging | Runtime power mechanisms and charge-policy integration checked | Physical suspend/wake, battery life, shutdown/cold-plug behavior and powered-off charging animation |
 | Bluetooth / NFC / IR | Earlier service/interface detection | Pairing/audio, NFC tag transactions and actual IR transmission |
 
@@ -66,11 +67,11 @@ An icon, driver binding, screenshot or passing fixture is not full hardware acce
 
 ## Native updates and clean setup
 
-The prepared setup flow asks for an administrator account, password/PIN and local preferences. The current owner is preserved; a genuinely clean image and first SDDM/logind login still need acceptance. The updater pairs userspace files and ALPM state, with signed cohorts and bounded fallback. Its runtime is installed, but the new initramfs is **not physically boot-tested or installed**, the harmless test cohort is **not queued**, and automatic kernel updates remain disabled. [Checkpoint](docs/checkpoint-2026-11-03.md) · [Small reproducible tests](experiments/transactional-updates/README.md) · [Next physical tests](docs/pruebas-pendientes.md).
+The prepared first-user flow asks for an administrator account, password/PIN and local preferences. A genuinely clean first SDDM/logind session still needs acceptance. The recoverable same-kernel userspace selector is now installed: a signed marker candidate booted on the phone, paired payload/ALPM mounts were verified and the current generation was accepted. Broader rollback/migration acceptance and a maintained public channel remain open; **automatic kernel updates and unrestricted upstream upgrades remain disabled**. [Current result](docs/milestone-2026-11-04.md) · [Next physical tests](docs/pruebas-pendientes.md).
 
 ## Review the project
 
-This repository contains source integrations, selected patches and sanitized test records. **A complete public R14 builder, generic flash image and end-to-end installer are still pending.** The development boot image contains device-specific configuration and is not distributed.
+This repository contains source integrations, selected patches and sanitized test records. **A complete public R15 builder, generic flash image and end-to-end installer are still pending.** The development boot image contains device-specific configuration and is not distributed.
 
 ```sh
 git clone https://github.com/LucasLG92/omarchy-apollo.git

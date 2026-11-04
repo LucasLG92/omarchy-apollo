@@ -29,3 +29,7 @@ experiments/waydroid-apollo/waydroid-1.6.3.apollo2-1/** -text
 experiments/transactional-updates/** -text whitespace=cr-at-eol,-blank-at-eof
 experiments/minimal-firstboot/** -text whitespace=cr-at-eol,-blank-at-eof
 experiments/minimal-firstboot/**/*.patch whitespace=-blank-at-eol
+
+# Preserve the exact reviewed fingerprint snapshot and upstream CRLF client.
+experiments/native-fingerprint/** -text whitespace=cr-at-eol,-blank-at-eof
+LICENSES/Linux-syscall-note.txt whitespace=-blank-at-eof

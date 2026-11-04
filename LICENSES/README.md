@@ -1,3 +1,13 @@
+## Native fingerprint source checkpoint — 4 November 2026
+
+The [native fingerprint snapshot](../experiments/native-fingerprint/README.md)
+preserves per-file licenses: original Apollo codecs/runtime/tests are MIT;
+the libfprint adapter and QSEE transport retain LGPL-2.1-or-later; the ioctl UAPI
+retains GPL-2.0 WITH [Linux-syscall-note](Linux-syscall-note.txt). Omarchy UI and
+Omarchy Mobile client adaptations keep their original MIT attribution. No vendor
+HAL, trusted-application binary or firmware is redistributed. The root MIT license
+does not replace these notices.
+
 # License scope and attribution
 
 The root [MIT license](../LICENSE) covers original Omarchy Apollo integration and documentation. It does **not** relicense imported software, patches or third-party media. Existing source headers and nested license notices continue to apply.

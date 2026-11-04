@@ -1,12 +1,26 @@
 # Development update boundaries
 
-## Current prototype · 3 November 2026
+## Current development state · 4 November 2026
 
-See the [native-system checkpoint](checkpoint-2026-11-03.md) and [test plan](pruebas-pendientes.md). A same-kernel transactional userspace engine is installed, with isolated signed preparation, paired payload/ALPM state, health and pending guards. **Boot integration is inactive; the new initramfs has not been physically tested or installed.** One harmless marker cohort was prepared on-device but not queued. Automatic kernel updates, general configuration/app-data migrations and a maintained public channel remain unfinished. Earlier signed in-place component releases and the historical protections below are different mechanisms; they do not demonstrate completed boot rollback or an upstream full-system upgrade.
+The recoverable same-kernel userspace selector is now installed and has booted
+on hardware. A harmless signed marker candidate booted, its payload/ALPM mounts
+were paired, and current generation health was accepted. This supersedes the
+inactive-boot-selector state in the [3 November checkpoint](checkpoint-2026-11-03.md).
+[Current milestone](milestone-2026-11-04.md) · [Acceptance plan](pruebas-pendientes.md).
+
+The new fingerprint/authentication cohort is signed and checked on the PC,
+but **not installed or activated**. Installation alone does not enable PAM.
+Real standard fprintd matching and rejection must precede scope activation.
+Password routing and service configuration have a tested reversible path.
+
+Wider physical rollback/forced-failure/interruption acceptance, migrations and
+a maintained public channel remain open. **Automatic kernel updates and
+unrestricted upstream Omarchy upgrades are not supported.** The userspace engine
+does not hide a kernel replacement or make every new upstream release compatible.
 
 ## Earlier integration
 
-> **Historical track — 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
+> **Historical track â€” 2026-10-30.** This page describes the earlier integration, not current acceptance for the 4.5 RC2 RAM rebase. See [current status](status.md) and [the rebase record](rebase-4.5.md).
 
 
 Apollo uses an Android boot image and a persistent ext4 overlay. It has no PC EFI boot partition. A successful package upgrade alone cannot establish that a replacement kernel, initramfs, device tree, firmware or camera stack will boot and retain the hardware work.

@@ -1,6 +1,6 @@
 # Security and privacy
 
-**Current scope · 3 November 2026:** Linux 7.3.1 R14 is the installed native
+**Current scope · 4 November 2026:** Linux 7.3.1 R15 is the installed native
 kernel. Existing-owner local login and authenticated administration/password
 change have device evidence; clean-first-user installation, disk-encryption
 unlock and broad security acceptance remain incomplete. A graphical lock is
@@ -15,6 +15,26 @@ are included. Screenshots do not certify fingerprint or call functionality.
 Boot images, storage bindings, authentication material, proprietary firmware,
 partition backups and per-unit calibration stay private. Public evidence is
 an explicit field selection, not an upload of device logs or controller state.
+
+## Fingerprint security boundary
+
+Real enrollment, authenticated encrypted persistence/reload, a matching finger
+and a different-finger rejection passed. The standard libfprint/fprintd/PAM
+cohort is prepared on the PC, **not active on the handset**. Its method selector
+only selects a mandatory authentication branch; neither GPIO events, UI JSON
+nor an ordinary plugin can grant access. Account rules and password fallback
+remain in the trusted PAM path. Whole-disk/keyring decryption is separate.
+
+Capture images stay in the trusted application. Its authenticated encrypted
+database and Gatekeeper credential stay root-only on the phone; no such bytes
+are published. Verification uses a fresh challenge and a secure-world result.
+The host checks result structure/freshness; it does not claim independent HAT
+MAC verification outside the TEE. The UFS transport rejects key programming and
+uncertain-write retries. This is not a universal secure-storage implementation.
+
+The initial profile supports one owner and one finger. Provider acceptance,
+actual initial login/lock/admin, cancellation, suspend and energy tests must
+precede broader functionality claims. See the [current source boundary](experiments/native-fingerprint/README.md).
 
 ## Historical security observations
 

@@ -811,6 +811,52 @@ def native_system_checkpoint(files):
             ast.parse(path.read_text(encoding="utf-8")), name
 
 
+def current_r15_fingerprint_scope(files):
+    data = json.loads((ROOT / "docs/evidence/2026-11-04-r15-fingerprint.json").read_text())
+    assert data["development_units_tested"] == 1
+    assert data["installed"]["kernel_release"] == "7.3.1-apollo-native-r15"
+    assert data["installed"]["hyprland"] == "0.57.1-1.1"
+    assert data["installed"]["fingerprint_runtime"] == "0.1.0-4"
+    assert data["prepared_not_installed"]["fingerprint_runtime"] == "0.1.0-6"
+    bio = data["physical_fingerprint"]
+    for field in ("capture", "one_finger_enrolled", "authenticated_encrypted_database_persisted_and_reloaded",
+                  "enrolled_finger_matched_after_reload", "different_finger_rejected",
+                  "secure_services_stopped_and_sensor_unloaded_after_trials"):
+        assert bio[field]
+    assert bio["enrollment_capture_count"] == 29
+    assert not bio["standard_fprintd_provider_tested_on_phone"]
+    assert not bio["initial_login_lock_sudo_polkit_fingerprint_enabled"]
+    checks = data["PC_validation"]
+    assert checks["ARM64_PAM_cases"] == 340
+    assert checks["activation_restore_filesystem_cases"] == 11
+    assert checks["phone_operations_during_preparation"] == 0
+    assert data["native_updates"]["recoverable_boot_selector_installed"]
+    assert data["native_updates"]["current_generation_health_accepted"]
+    assert not data["native_updates"]["automatic_kernel_updates_enabled"]
+    assert not data["native_updates"]["unrestricted_upstream_updates_supported"]
+    assert not data["power"]["battery_life_improvement_measured"]
+    assert not any(data["not_established"].values())
+    assert not any(data["privacy"].values())
+    directory = ROOT / "experiments/native-fingerprint"
+    pins = json.loads((directory / "SOURCEPINS.json").read_text())
+    assert not pins["firmware_templates_credentials_or_private_images_included"]
+    assert not pins["PAM_enabled_on_phone"]
+    for name, digest in pins["exact_development_source_files"].items():
+        path = directory / name
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == digest, name
+        if path.suffix == ".py":
+            ast.parse(path.read_text())
+    policy = (directory / "auth-policy.py").read_text()
+    assert "SERVICES=('sddm','sudo','polkit-1')" in policy
+    assert "auth [success=2 default=ignore] pam_apollo_method.so select-fingerprint" in policy
+    assert "auth substack apollo-fingerprint-auth" in policy
+    assert "auth [default=1] pam_succeed_if.so quiet uid >= 0" in policy
+    for expected in ("provider-verified.json", "wrong_finger_rejected", "original['mode']"):
+        assert expected in policy
+    assert "pam_permit" not in policy
+    assert (ROOT / "LICENSES/Linux-syscall-note.txt").is_file()
+
+
 def privacy_tripwires(files):
     # Tripwires supplement manual review; they cannot prove that arbitrary
     # screenshots, prose or diagnostics contain no personal information.
@@ -862,6 +908,7 @@ def main():
     android_and_layout_followup()
     current_r14_gallery_and_scope()
     native_system_checkpoint(files)
+    current_r15_fingerprint_scope(files)
     privacy_tripwires(files)
     source_manifest(files)
     print(f"Public checks passed: {len(files)} files, links, SVGs, evidence boundaries, privacy tripwires and source hashes.")
